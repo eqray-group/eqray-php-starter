@@ -25,7 +25,6 @@ use Symfony\Component\Routing\RouteCollection;
  * 显示系统中所有注册的路由，包括：
  * - 手动路由 (config/routes.php)
  * - 主应用注解路由 (app/Controllers)
- * - 插件注解路由 (plugins/Controllers)
  *
  * 使用方法：
  *   php novaphp route:list
@@ -49,7 +48,7 @@ class RouteListCommand extends Command
     {
         $this->setName('route:list') // ✅ 关键修复
             ->setDescription('列出所有路由')
-            ->setHelp('此命令显示系统中所有注册的路由，包括手动路由、注解路由和插件路由。')
+            ->setHelp('此命令显示系统中所有注册的路由，包括手动路由和注解路由。')
             ->addOption('method', 'm', InputOption::VALUE_OPTIONAL, '按 HTTP 方法筛选')
             ->addOption('path', 'p', InputOption::VALUE_OPTIONAL, '按路径前缀筛选')
             ->addOption('name', null, InputOption::VALUE_OPTIONAL, '按路由名称筛选')
@@ -103,13 +102,7 @@ class RouteListCommand extends Command
             }
         }
 
-        // 3. 加载插件路由
-        $pluginRoutes = $this->loadPluginRoutes();
-        foreach ($pluginRoutes as $name => $route) {
-            $allRoutes[] = $this->formatRoute($name, $route, '插件');
-        }
-
-        // 4. 应用筛选
+        // 3. 应用筛选
         $allRoutes = $this->filterRoutes($allRoutes, $methodFilter, $pathFilter, $nameFilter);
 
         // 5. 排序（按路径）
@@ -187,53 +180,6 @@ class RouteListCommand extends Command
         $result = [];
         foreach ($routes->all() as $name => $route) {
             $result[$name] = $route;
-        }
-
-        return $result;
-    }
-
-    /**
-     * 加载插件路由.
-     *
-     * @return array<mixed> */
-    private function loadPluginRoutes(): array
-    {
-        $pluginDir = BASE_PATH . '/plugins';
-        if (! is_dir($pluginDir)) {
-            return [];
-        }
-
-        $result = [];
-
-        // 扫描插件目录
-        $directories = scandir($pluginDir);
-        if ($directories === false) {
-            return [];
-        }
-
-        foreach ($directories as $dir) {
-            if ($dir === '.' || $dir === '..') {
-                continue;
-            }
-
-            $manifestPath = "{$pluginDir}/{$dir}/plugin.json";
-            if (! file_exists($manifestPath)) {
-                continue;
-            }
-
-            // 解析插件获取命名空间
-            $json      = file_get_contents($manifestPath);
-            $data      = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-            $namespace = $data['namespace'] ?? "Plugins\\{$dir}";
-
-            // 加载插件控制器路由
-            $controllerDir = "{$pluginDir}/{$dir}/Controllers";
-            if (is_dir($controllerDir)) {
-                $routes = $this->loadAnnotatedRoutes($controllerDir, $namespace . '\Controllers');
-                foreach ($routes as $name => $route) {
-                    $result[$name] = $route;
-                }
-            }
         }
 
         return $result;

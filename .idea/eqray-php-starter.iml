@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/app/admin" isTestSource="false" packagePrefix="App\Admin\" />
       <sourceFolder url="file://$MODULE_DIR$/app/system" isTestSource="false" packagePrefix="App\System\" />
       <sourceFolder url="file://$MODULE_DIR$/framework" isTestSource="false" packagePrefix="Framework\" />
-      <sourceFolder url="file://$MODULE_DIR$/plugins" isTestSource="false" packagePrefix="Plugins\" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" packagePrefix="Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/tests/Unit" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/storage/cache" />
@@ -63,7 +62,6 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/monolog/monolog" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/mtdowling/jmespath.php" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/myclabs/deep-copy" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/myclabs/php-enum" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/nesbot/carbon" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/nette/schema" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/nette/utils" />
@@ -94,7 +92,6 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/psr/log" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/psr/simple-cache" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/qcloud/cos-sdk-v5" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/qiniu/php-sdk" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/ralouphie/getallheaders" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/ramsey/collection" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/ramsey/uuid" />

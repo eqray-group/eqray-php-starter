@@ -51,21 +51,5 @@ return [
                 'timeout' => 5.0,
             ],
         ],
-        
-        // restful 驱动配置（同样放在 enforcers 下）
-        'restful' => [
-            'model' => [
-                'config_type' => 'file',
-                'config_file_path' => __DIR__ . '/plugin/casbin/webman-permission/restful-model.conf', // 修正路径：去掉 config_path()，改用 __DIR__
-                'config_text' => '',
-            ],
-            // 使用统一的 DatabaseAdapter
-            'adapter' => \App\Services\Casbin\DatabaseAdapter::class,
-            'database' => [
-                'connection' => '',
-                'rules_table' => 'restful_casbin_rule',
-                'rules_name' => null
-            ],
-        ],
     ],
 ];

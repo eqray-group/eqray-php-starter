@@ -5,7 +5,7 @@
  */
 
 return [
-	'default' => 'local', // local：本地 oss：阿里云 cos：腾讯云 qos：七牛云
+	'default' => 'local', // local：本地 oss：阿里云 cos：腾讯云
 	'single_limit' => 1024 * 1024 * 200, // 单个文件的大小限制，默认200M 1024 * 1024 * 200
 	'total_limit' => 1024 * 1024 * 200, // 所有文件的大小限制，默认200M 1024 * 1024 * 200
 	'nums' => 10, // 文件数量限制，默认10
@@ -47,15 +47,6 @@ return [
 		'dirname' => 'storage',
 		'domain' => 'http://files.oss.xxxx.com',
 		'region' => 'ap-shanghai',
-	],
-	// 七牛云对象存储
-	'qiniu' => [
-		'adapter' => \Framework\Storage\Adapter\QiniuAdapter::class,
-		'accessKey' => 'xxxxxxxxxxxxx',
-		'secretKey' => 'xxxxxxxxxxxxx',
-		'bucket' => 'resty-files',
-		'dirname' => 'storage',
-		'domain' => 'http://files.oss.xxxx.com',
 	],
 	// aws
 	's3' => [

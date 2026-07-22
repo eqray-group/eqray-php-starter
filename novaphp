@@ -25,16 +25,6 @@ use Framework\Console\Commands\MakeModelCommand;
 use Framework\Console\Commands\MakeMiddlewareCommand;
 use Framework\Console\Commands\MakeEventCommand;
 use Framework\Console\Commands\MakeListenerCommand;
-// 插件命令
-use Framework\Console\Commands\PluginListCommand;
-use Framework\Console\Commands\PluginInstallCommand;
-use Framework\Console\Commands\PluginUninstallCommand;
-use Framework\Console\Commands\PluginEnableCommand;
-use Framework\Console\Commands\PluginDisableCommand;
-use Framework\Console\Commands\MakePluginCommand;
-use Framework\Console\Commands\PluginCacheCommand;
-use Framework\Console\Commands\PluginMarketCommand;
-
 // 路由命令
 use Framework\Console\Commands\RouteListCommand;
 
@@ -51,16 +41,6 @@ $application->add(new MakeModelCommand());
 $application->add(new MakeMiddlewareCommand());
 $application->add(new MakeEventCommand());
 $application->add(new MakeListenerCommand());
-
-// ============ 插件命令 ============
-$application->add(new PluginListCommand());
-$application->add(new PluginInstallCommand());
-$application->add(new PluginUninstallCommand());
-$application->add(new PluginEnableCommand());
-$application->add(new PluginDisableCommand());
-$application->add(new MakePluginCommand());
-$application->add(new PluginCacheCommand());
-$application->add(new PluginMarketCommand());
 
 // ============ 路由命令 ============
 $application->add(new RouteListCommand());
@@ -83,23 +63,6 @@ $application->run();
 #
 # 生成监听器：
 #   php novaphp make:listener UserNotification
-#
-# 创建插件骨架：
-#   php novaphp make:plugin blog
-#
-# 插件管理：
-#   php novaphp plugin:list
-#   php novaphp plugin:install blog
-#   php novaphp plugin:uninstall blog
-#   php novaphp plugin:enable blog
-#   php novaphp plugin:disable blog
-#   php novaphp plugin:cache:clear
-#
-# 插件市场：
-#   php novaphp plugin:market search blog
-#   php novaphp plugin:market detail blog
-#   php novaphp plugin:market install blog
-#   php novaphp plugin:market markets
 #
 # 路由查看：
 #   php novaphp route:list

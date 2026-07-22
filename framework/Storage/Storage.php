@@ -13,7 +13,6 @@ class Storage
     public const MODE_LOCAL = 'local';
     public const MODE_OSS = 'oss';
     public const MODE_COS = 'cos';
-    public const MODE_QINIU = 'qiniu';
     public const MODE_S3 = 's3';
 
     /**
@@ -23,7 +22,6 @@ class Storage
         self::MODE_LOCAL,
         self::MODE_OSS,
         self::MODE_COS,
-        self::MODE_QINIU,
         self::MODE_S3
     ];
 

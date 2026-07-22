@@ -61,7 +61,6 @@
         "topthink/think-orm": "^4.0",
         "aliyuncs/oss-sdk-php": "^2.4",
         "qcloud/cos-sdk-v5": "^2.5",
-        "qiniu/php-sdk": "^7.4",
         "league/flysystem-aws-s3-v3": "^1.0"
     },
     "require-dev": {
@@ -76,8 +75,7 @@
             "Framework\\": "framework/",
             "App\\": "app/",
             "App\\Admin\\": "app/admin/",
-            "App\\System\\": "app/system/",
-            "Plugins\\": "plugins/"
+            "App\\System\\": "app/system/"
         },
         "files": [
             "framework/helpers.php"

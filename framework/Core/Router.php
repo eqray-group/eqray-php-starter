@@ -35,8 +35,6 @@ class Router
 {
     private const AUTO_ROUTE_PREFIX = 'auto_route_';
 
-    private const PLUGIN_AUTO_ROUTE_PREFIX = 'plugin_auto_route_';
-
     private const DEFAULT_CONTROLLER_NAMESPACE = 'App\Controllers';
 
     private const CACHE_KEY_PREFIX = ':route_match_v1_'; // redis 分组
@@ -76,17 +74,6 @@ class Router
     // 禁止自动路由的控制器命名空间前缀黑名单
     /** @var array<mixed> */
     private array $blacklist = [];
-
-    /**
-     * 插件自动路由映射：
-     * [
-     *   'blog' => 'Plugins\Blog\Controllers',
-     *   'bbs'  => 'Plugins\Bbs\Controllers'
-     * ].
-     *
-     * @var array<string, string>
-     */
-    private array $pluginRouteNamespaces = [];
 
     /**
      * 应用自动路由映射：
@@ -159,29 +146,6 @@ class Router
             $normalized[$slug] = $namespace;
         }
         $this->appRouteNamespaces = $normalized;
-        return $this;
-    }
-
-    /**
-     * 设置插件自动路由命名空间映射.
-     *
-     * @param array<string, string> $namespaces
-     */
-    public function setPluginAutoRouteNamespaces(array $namespaces): self
-    {
-        $normalized = [];
-        foreach ($namespaces as $slug => $namespace) {
-            if (! is_string($slug) || ! is_string($namespace)) {
-                continue;
-            }
-            $slug      = strtolower(trim($slug));
-            $namespace = trim($namespace, '\\');
-            if ($slug === '' || $namespace === '') {
-                continue;
-            }
-            $normalized[$slug] = $namespace;
-        }
-        $this->pluginRouteNamespaces = $normalized;
         return $this;
     }
 
@@ -311,12 +275,6 @@ class Router
             return $this->tryHomeController($request);
         }
 
-        // 插件自动路由：/blog/post/list => Plugins\Blog\Controllers\PostController::list
-        $pluginRoute = $this->matchPluginAutoRoute($segments, $method, $request);
-        if ($pluginRoute !== null) {
-            return $pluginRoute;
-        }
-
         // 应用自动路由：/admin/user/list => App\Admin\Controllers\UserController::list
         $appRoute = $this->matchAppAutoRoute($segments, $method, $request);
         if ($appRoute !== null) {
@@ -360,60 +318,6 @@ class Router
                 // 自动生成路由名称
                 $routeName = self::AUTO_ROUTE_PREFIX . md5($controller . $route['method']);
 
-                return $this->finalizeRoute(
-                    $request,
-                    $controller,
-                    $route['method'],
-                    $route['params'],
-                    $routeName
-                );
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * 匹配插件自动路由（仅在第一段命中插件标识时生效）.
-     *
-     * @param array<int, string> $segments
-     *
-     * @return ?array<mixed>
-     */
-    private function matchPluginAutoRoute(array $segments, string $httpMethod, Request $request): ?array
-    {
-        if (count($segments) < 2) {
-            return null;
-        }
-
-        $pluginSlug = strtolower((string) ($segments[0] ?? ''));
-        if ($pluginSlug === '' || ! isset($this->pluginRouteNamespaces[$pluginSlug])) {
-            return null;
-        }
-
-        $pluginControllerNamespace = $this->pluginRouteNamespaces[$pluginSlug];
-        $controllerSegments        = array_slice($segments, 1);
-        if (empty($controllerSegments)) {
-            return null;
-        }
-
-        for ($i = count($controllerSegments); $i >= 1; --$i) {
-            $controller = $this->buildControllerClassForNamespace(
-                $pluginControllerNamespace,
-                array_slice($controllerSegments, 0, $i)
-            );
-            if (! $controller || ! $this->isControllerAllowed($controller)) {
-                continue;
-            }
-
-            $route = $this->matchActionAndParams(
-                $controller,
-                array_slice($controllerSegments, $i),
-                $httpMethod
-            );
-
-            if ($route) {
-                $routeName = self::PLUGIN_AUTO_ROUTE_PREFIX . md5($pluginSlug . $controller . $route['method']);
                 return $this->finalizeRoute(
                     $request,
                     $controller,

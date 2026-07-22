@@ -10,10 +10,8 @@ declare(strict_types=1);
 namespace Framework\Core;
 
 use Composer\Autoload\ClassLoader;
-use Framework\Basic\BaseJsonResponse;
 use Framework\Container\Container;
 use Framework\Middleware\MiddlewareDispatcher;
-use Framework\Plugin\PluginManager;
 use Framework\Utils\ReflectionTypes;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -38,8 +36,6 @@ final class Framework
 
     private const ROUTE_CACHE_FILE = BASE_PATH . '/storage/cache/routes.php';
 
-    private const PLUGIN_CONFIG_FILE = BASE_PATH . '/config/plugin/plugins.php';
-
     private const DIR_PERMISSION = 0755; // 目录默认权限
 
     private static ?Framework $instance = null;
@@ -55,8 +51,6 @@ final class Framework
     private Kernel $kernel;
 
     private ?LoggerInterface $logger = null;
-
-    private ?PluginManager $pluginManager = null;
 
     /**
      * 单例模式：禁止外部实例化.
@@ -125,14 +119,6 @@ final class Framework
     public function getContainer(): ContainerInterface
     {
         return $this->container;
-    }
-
-    /**
-     * 获取插件管理器.
-     */
-    public function getPluginManager(): ?PluginManager
-    {
-        return $this->pluginManager;
     }
 
     /**
@@ -268,14 +254,10 @@ final class Framework
      */
     private function initializeDependencies(): void
     {
-        // 1. 初始化插件管理器
-        $this->initializePluginManager();
-
-        // 2. 加载路由（主应用 + 插件，支持缓存）
+        // 1. 加载路由（支持缓存）
         $allRoutes = $this->loadAllRoutes();
 
-        // 3. 初始化中间件调度器
-        // 优先尝试容器获取，否则新建
+        // 2. 初始化中间件调度器
         try {
             if ($this->container->has(MiddlewareDispatcher::class)) {
                 $this->middlewareDispatcher = $this->container->get(MiddlewareDispatcher::class);
@@ -283,81 +265,36 @@ final class Framework
                 $this->middlewareDispatcher = new MiddlewareDispatcher($this->container);
             }
         } catch (\Throwable $e) {
-            // 回退
             $this->middlewareDispatcher = new MiddlewareDispatcher($this->container);
             $this->logError('Failed to initialize MiddlewareDispatcher: ' . $e->getMessage());
         }
 
-        // 4. 初始化路由
+        // 3. 初始化路由
         $this->router = new Router(
             $allRoutes,
             self::MAIN_CONTROLLER_NAMESPACE
         );
-        // 5. 从容器获取缓存实例
+
+        // 4. 从容器获取缓存实例
         $cacheService = app('cache');
 
-        // 6. 注入到 Router
-        // 必须做类型检查，因为 Router 强类型要求 Psr\SimpleCache\CacheInterface
+        // 5. 注入到 Router
         if ($cacheService instanceof CacheInterface) {
             $this->router->setCache($cacheService);
         } else {
-            // 假如你的 cache 是 PSR-6 (Symfony CacheItemPool)，可以用适配器转一下
-            // $psr16Cache = new \Symfony\Component\Cache\Psr16Cache($cacheService);
-            // $router->setCache($psr16Cache);
-
-            // 或者记录个日志警告
             error_log("Warning: app('cache') does not implement PSR-16 SimpleCache.");
         }
 
-        // 7. 配置安全策略 (可选，但推荐)
+        // 6. 配置安全策略
         $this->router->setSecurityPolicy(
-            requireExplicitAction: false, // 默认关闭，建议开启，强制要求 #[Action]
+            requireExplicitAction: false,
             blacklist: []
         );
 
-        // 8. 注入插件自动路由映射（/blog/post/list 风格）
-        if ($this->pluginManager !== null) {
-            $pluginAutoNamespaces = [];
-            foreach ($this->pluginManager->getLoaded() as $pluginName => $manifest) {
-                if (! is_string($pluginName) || $pluginName === '') {
-                    continue;
-                }
-                $pluginAutoNamespaces[strtolower($pluginName)] = rtrim($manifest->namespace, '\\') . '\Controllers';
-            }
-            $this->router->setPluginAutoRouteNamespaces($pluginAutoNamespaces);
-        }
-
-        // 9. 注入应用自动路由映射（/admin/xxx, /api/xxx 风格）
+        // 7. 注入应用自动路由映射（/admin/xxx, /api/xxx 风格）
         $appNamespaces = $this->getAppAutoRouteNamespaces();
         if (! empty($appNamespaces)) {
             $this->router->setAppAutoRouteNamespaces($appNamespaces);
-        }
-    }
-
-    /**
-     * 初始化插件管理器.
-     */
-    private function initializePluginManager(): void
-    {
-        // 检查插件配置文件是否存在
-        if (! file_exists(self::PLUGIN_CONFIG_FILE)) {
-            $this->pluginManager = null;
-            return;
-        }
-
-        try {
-            $pluginConfig        = require self::PLUGIN_CONFIG_FILE;
-            $this->pluginManager = new PluginManager($pluginConfig);
-            $this->pluginManager->discover();
-            $this->pluginManager->loadEnabled();
-
-            $loadedPlugins = array_keys($this->pluginManager->getLoaded());
-            if (! empty($loadedPlugins)) {
-                $this->logger?->info('[Plugins] Loaded: ' . implode(', ', $loadedPlugins));
-            }
-        } catch (\Throwable $e) {
-            $this->logError('Failed to initialize PluginManager: ' . $e->getMessage());
-            $this->pluginManager = null;
         }
     }
 
@@ -502,28 +439,16 @@ final class Framework
         $allRoutes->addCollection($annotatedRoutes);
         $annotatedCount = $annotatedRoutes->count();
 
-        // 3. 加载插件路由
-        $pluginCount = 0;
-        if ($this->pluginManager !== null) {
-            $pluginControllerDirs = $this->pluginManager->getControllerDirs();
-            if (! empty($pluginControllerDirs)) {
-                $pluginRoutes = $attrLoader->loadRoutesFromMultipleDirs($pluginControllerDirs);
-                $allRoutes->addCollection($pluginRoutes);
-                $pluginCount = $pluginRoutes->count();
-            }
-        }
-
         // 生产环境缓存路由
         if ($isProduction) {
             $this->cacheRoutes($allRoutes);
         }
 
         $this->logger?->info(sprintf(
-            '[Route Loaded] Loaded %d routes (manual: %d, annotated: %d, plugins: %d)',
+            '[Route Loaded] Loaded %d routes (manual: %d, annotated: %d)',
             $allRoutes->count(),
             $manualCount,
-            $annotatedCount,
-            $pluginCount
+            $annotatedCount
         ));
 
         return $allRoutes;
@@ -642,14 +567,7 @@ final class Framework
             return $this->handleNotFound();
         }
 
-        // 运行时兜底：插件未安装/已卸载(或未启用)时，禁止继续访问插件控制器
-        if (! $this->isPluginControllerAvailable($controllerClass)) {
-            return BaseJsonResponse::error('插件未安装或已卸载', Response::HTTP_NOT_FOUND);
-        }
-
         // 从容器获取控制器实例（支持依赖注入）
-        // $controller = $this->container->get($controllerClass);
-        // 它会尝试从容器获取，如果获取不到，会自动 new 并执行我们注入逻辑#
         $controller = App::make($controllerClass);
 
         // 处理路径参数和查询参数的类型转换
@@ -664,52 +582,6 @@ final class Framework
 
         // 统一处理返回值
         return $this->normalizeResponse($response);
-    }
-
-    /**
-     * 判断插件控制器当前是否可访问（已安装且启用）.
-     */
-    private function isPluginControllerAvailable(string $controllerClass): bool
-    {
-        if (! str_starts_with($controllerClass, 'Plugins\\')) {
-            return true;
-        }
-
-        $segments            = explode('\\', $controllerClass);
-        $pluginNamespaceName = $segments[1] ?? '';
-        if ($pluginNamespaceName === '') {
-            return false;
-        }
-
-        if (! file_exists(self::PLUGIN_CONFIG_FILE)) {
-            return false;
-        }
-
-        $config    = require self::PLUGIN_CONFIG_FILE;
-        $installed = is_array($config['installed'] ?? null) ? $config['installed'] : [];
-        if (empty($installed)) {
-            return false;
-        }
-
-        $pluginKey = null;
-        if (array_key_exists($pluginNamespaceName, $installed)) {
-            $pluginKey = $pluginNamespaceName;
-        } else {
-            $needle = strtolower($pluginNamespaceName);
-            foreach (array_keys($installed) as $name) {
-                if (strtolower((string) $name) === $needle) {
-                    $pluginKey = (string) $name;
-                    break;
-                }
-            }
-        }
-
-        if ($pluginKey === null) {
-            return false;
-        }
-
-        $pluginInfo = is_array($installed[$pluginKey] ?? null) ? $installed[$pluginKey] : [];
-        return ($pluginInfo['enabled'] ?? false) === true;
     }
 
     /**
