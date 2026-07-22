@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace Framework\Basic;
 
 use Framework\Basic\Casts\TimestampCast;
-use Framework\Basic\Traits\LaBelongsToTenant;
 use Framework\Schema\SchemaRegistry;
 use Framework\Utils\Snowflake;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,14 +17,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes as LaSoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use think\facade\Cache;
 
 /**
  * BaseLaORMModel - Laravel Eloquent ORM 模型基类.
  *
  * 提供以下核心功能：
  * - 雪花算法主键生成
- * - 多租户隔离
  * - 自动时间戳管理（可配置字段名）
  * - 软删除支持
  * - 表结构缓存优化
@@ -132,7 +129,6 @@ use think\facade\Cache;
  * @property bool            $incrementing
  * @property bool            $timestamps
  * @property bool            $wasRecentlyCreated
- * @property null|int|string $tenant_id
  * @property null|int|string $created_by
  * @property null|int|string $updated_by
  * @property null|string     $created_at
@@ -146,8 +142,6 @@ use think\facade\Cache;
  */
 class BaseLaORMModel extends Model
 {
-    use LaBelongsToTenant;
-
     /**
      * 创建时间字段名（Laravel Eloquent 标准常量）
      * 所有子模型统一使用 create_time.
@@ -773,23 +767,21 @@ class BaseLaORMModel extends Model
     /**
      * 获取表字段缓存.
      *
-     * 使用缓存系统存储表结构信息，提升性能。
-     *
      * @return array<mixed> 字段名列表
      */
     protected function getTableColumnsCached(): array
     {
-        $connection = $this->getConnection();
-        $driver     = $connection->getDriverName();
+        $table = $this->getTable();
 
-        $table    = $this->getTable();
-        $cacheKey = 'schema:columns:' . $driver . ':' . $table;
+        if (isset(self::$tableColumns[$table])) {
+            return self::$tableColumns[$table];
+        }
 
-        return Cache::remember($cacheKey, function () use ($table) {
-            return $this->getConnection()
-                ->getSchemaBuilder()
-                ->getColumnListing($table);
-        });
+        $columns = $this->getConnection()
+            ->getSchemaBuilder()
+            ->getColumnListing($table);
+
+        return self::$tableColumns[$table] = $columns;
     }
 
     /**

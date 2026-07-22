@@ -7,16 +7,16 @@
 3. [核心模块详解](#3-核心模块详解)
    - 3.1 [DI 容器](#31-di-容器)
    - 3.2 [路由系统](#32-路由系统)
-   - 3.3 [中间件系统](#33-中间件系统)
-   - 3.4 [多租户 (SaaS)](#34-多租户-saas)
-   - 3.5 [认证与授权](#35-认证与授权)
-   - 3.6 [ORM 双适配层](#36-orm-双适配层)
-   - 3.7 [事件系统](#37-事件系统)
-   - 3.8 [连接池](#38-连接池)
-   - 3.9 [消息队列](#39-消息队列)
-   - 3.10 [WebSocket](#310-websocket)
-   - 3.11 [多应用架构](#311-多应用架构)
-   - 3.12 [文件存储](#312-文件存储)
+    - 3.3 [中间件系统](#33-中间件系统)
+    - 3.4 [认证与授权](#34-认证与授权)
+    - 3.5 [ORM 双适配层](#35-orm-双适配层)
+   - 3.5 [ORM 双适配层](#35-orm-双适配层)
+   - 3.6 [事件系统](#36-事件系统)
+   - 3.7 [连接池](#37-连接池)
+   - 3.8 [消息队列](#38-消息队列)
+   - 3.9 [WebSocket](#39-websocket)
+   - 3.10 [多应用架构](#310-多应用架构)
+   - 3.11 [文件存储](#311-文件存储)
 4. [配置参考](#4-配置参考)
 5. [开发指南](#5-开发指南)
 6. [测试](#6-测试)
@@ -28,7 +28,7 @@
 
 ### 1.1 项目定位
 
-eqrayphp 是一个基于 Workerman 常驻内存引擎驱动的现代化全栈 PHP 框架，采用 **多租户 SaaS 架构**，支持 **双 ORM**（Laravel Eloquent / ThinkPHP ORM），内置完整的 RBAC 权限体系和代码生成器。
+eqrayphp 是一个基于 Workerman 常驻内存引擎驱动的现代化全栈 PHP 框架，支持 **双 ORM**（Laravel Eloquent / ThinkPHP ORM），内置完整的 RBAC 权限体系和代码生成器。
 
 ### 1.2 技术架构图
 
@@ -148,7 +148,7 @@ eqrayphp 是一个基于 Workerman 常驻内存引擎驱动的现代化全栈 PH
     │       │       └── 默认兜底 (/Controller/Action/Param)
    │       ├── MiddlewareDispatcher::dispatch()
    │       │   ├── 框架级中间件 (CORS, CSRF, RateLimit, ...)
-   │       │   ├── 应用级中间件 (Auth, Permission, Tenant, ...)
+   │       │       ├── 应用级中间件 (Auth, Permission, ...)
    │       │   └── 控制器闭包
    │       └── callController()
    │           ├── App::make() — DI 获取或创建控制器
@@ -332,7 +332,6 @@ class UserController
   ├── CircuitBreakerMiddleware    — 熔断器
   └── 应用级中间件 (app/Middlewares/)
       ├── AuthMiddleware           — JWT/Session 认证
-      ├── TenantMiddleware         — 租户上下文
       ├── PermissionMiddleware     — 权限检查
       ├── CasbinRbacMiddleware     — Casbin RBAC 执行
       ├── RoleMiddleware           — 角色检查
@@ -359,47 +358,7 @@ class UserController { ... }
 
 ---
 
-### 3.4 多租户 (SaaS)
-
-**文件**: `framework/Tenant/`
-
-#### 租户隔离方案
-
-| 维度 | 隔离方式 |
-|------|----------|
-| 数据行级 | 每个表通过 `tenant_id` 字段隔离 |
-| 菜单权限 | 不同租户看到不同的菜单 |
-| 用户 | 用户可关联多个租户并切换 |
-| 配置 | 租户级系统配置 |
-
-#### 租户上下文解析
-
-```
-请求 → TenantMiddleware
-  ├── 从 JWT Claims 中提取 tenant_id（JWT 模式）
-  └── 从 Session 中提取 tenant_id（Session 模式）
-      └── 注入到 TenantContext
-```
-
-#### 租户切换流程
-
-1. 用户登录 → 返回该用户关联的租户列表
-2. 用户选择租户 → `POST /api/core/switch-tenant`
-3. 服务端生成新的 JWT/更新 Session，绑定新 tenant_id
-4. 后续请求携带新的令牌
-
-#### 数据模型
-
-```
-sa_system_tenant           — 租户表
-sa_system_user_tenant      — 用户-租户关联表（多对多）
-sa_system_user             — 用户表（含 tenant_id）
-sa_system_menu             — 菜单表（含 tenant_id）
-```
-
----
-
-### 3.5 认证与授权
+### 3.4 认证与授权
 
 #### 双认证模式
 
@@ -424,7 +383,6 @@ sa_system_menu             — 菜单表（含 tenant_id）
 Header:  { "alg": "HS256", "typ": "JWT" }
 Payload: {
   "sub": user_id,
-  "tenant_id": xxx,
   "roles": ["admin"],
   "permissions": ["user:list", "user:create"],
   "iat": timestamp,
@@ -453,7 +411,7 @@ Payload: {
 
 ---
 
-### 3.6 ORM 双适配层
+### 3.5 ORM 双适配层
 
 **文件**: `framework/ORM/Factories/`
 
@@ -496,7 +454,7 @@ if ($ormDriver === 'laravelORM') {
 
 ---
 
-### 3.7 事件系统
+### 3.6 事件系统
 
 **文件**: `framework/Event/`
 
@@ -530,7 +488,7 @@ EventDispatch(new UserLoginEvent($user));
 
 ---
 
-### 3.8 连接池
+### 3.7 连接池
 
 **文件**: `framework/Pool/`
 
@@ -558,7 +516,7 @@ PoolManager::register('redis.default', new RedisPool(config))
 
 ---
 
-### 3.9 消息队列
+### 3.8 消息队列
 
 **文件**: `framework/Queue/RedisConsumerService.php`, `server.php`
 
@@ -596,7 +554,7 @@ $consumer->registerHandlers([
 
 ---
 
-### 3.10 WebSocket
+### 3.9 WebSocket
 
 **文件**: `server.php`（WebSocketManager 类）
 
@@ -627,7 +585,7 @@ $consumer->registerHandlers([
 
 ---
 
-### 3.11 多应用架构
+### 3.10 多应用架构
 
 **配置**: `config/apps.php`
 
@@ -664,7 +622,7 @@ admin.example.com/user/list → App\Admin\Controllers\UserController::list
 
 ---
 
-### 3.12 文件存储
+### 3.11 文件存储
 
 **文件**: `framework/Storage/`
 
@@ -888,7 +846,7 @@ EventDispatch(new OrderCreatedEvent($orderData));
 | Event | 事件分发、监听器发现与注册 |
 | Middleware | 13 种中间件的独立与集成测试 |
 | Security | Casbin RBAC、CSRF、XSS 过滤 |
-| Tenant | 多租户上下文解析与隔离 |
+| Tenant | 租户上下文解析与隔离 |
 | ORM | Laravel/ThinkPHP 双适配层 |
 | Cache | PSR-16 缓存驱动 |
 | Validation | ThinkPHP 验证器工厂 |

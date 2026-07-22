@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace Framework\Repository\Builders;
 
 use Framework\Repository\Exceptions\DatabaseException;
-use think\Model;
 
 /**
  * 查询条件构建器
@@ -78,14 +77,8 @@ class QueryConditionBuilder
             return;
         }
 
-        if ($this->isEloquent) {
-            if ($this->query instanceof \Illuminate\Database\Eloquent\Model) {
-                $this->query = $this->query->newQuery();
-            }
-        } else {
-            if ($this->query instanceof Model) {
-                $this->query = $this->query->db();
-            }
+        if ($this->query instanceof \Illuminate\Database\Eloquent\Model) {
+            $this->query = $this->query->newQuery();
         }
     }
 
@@ -114,17 +107,16 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理悲观锁
+     * 处理锁
      * @param array<mixed> $criteria
      */
     protected function handleLock(array &$criteria): void
     {
         if (! empty($criteria['lock'])) {
-            if ($this->isEloquent) {
-                $this->query->lockForUpdate();
-            } else {
-                $this->query->lock(true);
-            }
+            $this->query->lockForUpdate();
+            unset($criteria['lock']);
+        }
+    }
             unset($criteria['lock']);
         }
     }
@@ -156,11 +148,7 @@ class QueryConditionBuilder
                     $operator = '=';
                 }
 
-                if (! $this->isEloquent) {
-                    $this->query->{$joinType}($table, "{$field1} {$operator} {$field2}");
-                } else {
-                    $this->query->{$joinType}($table, $field1, $operator, $field2);
-                }
+                $this->query->{$joinType}($table, $field1, $operator, $field2);
             }
 
             unset($criteria[$joinType]);
@@ -267,15 +255,9 @@ class QueryConditionBuilder
                     $val = $value[1] ?? $value[0];
                 }
 
-                if ($this->isEloquent) {
-                    $isFirst
-                        ? $subQuery->where($field, $op, $val)
-                        : $subQuery->orWhere($field, $op, $val);
-                } else {
-                    $isFirst
-                        ? $subQuery->where($field, $op, $val)
-                        : $subQuery->whereOr($field, $op, $val);
-                }
+                $isFirst
+                    ? $subQuery->where($field, $op, $val)
+                    : $subQuery->orWhere($field, $op, $val);
 
                 $isFirst = false;
             }
@@ -303,11 +285,7 @@ class QueryConditionBuilder
                     $builder->build($value);
                 };
 
-                if ($this->isEloquent) {
-                    $this->query->orWhere($callback);
-                } else {
-                    $this->query->whereOr($callback);
-                }
+                $this->query->orWhere($callback);
                 continue;
             }
 
@@ -318,11 +296,7 @@ class QueryConditionBuilder
                     $builder->build($value);
                 };
 
-                if ($this->isEloquent) {
-                    $this->query->where($callback);
-                } else {
-                    $this->query->where($callback);
-                }
+                $this->query->where($callback);
                 continue;
             }
 
@@ -399,11 +373,7 @@ class QueryConditionBuilder
     protected function handleOrderBy(array $orderBy): void
     {
         foreach ($orderBy as $field => $direction) {
-            if ($this->isEloquent) {
-                $this->query->orderBy($field, $direction);
-            } else {
-                $this->query->order($field, $direction);
-            }
+            $this->query->orderBy($field, $direction);
         }
     }
 }

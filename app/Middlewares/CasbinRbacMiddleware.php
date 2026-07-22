@@ -36,7 +36,6 @@ class CasbinRbacMiddleware
         '/api/core/logout',
         '/api/core/captcha',
         '/api/core/refresh',
-        '/api/core/tenants-by-username',
     ];
 
     /**
@@ -67,24 +66,19 @@ class CasbinRbacMiddleware
             return $next($request);
         }
 
-        // 3. 获取当前登录用户 ID 和租户 ID（需适配自研框架的用户认证逻辑）
+        // 3. 获取当前登录用户 ID
         $userId = $this->getCurrentUserId($request);
-
-        $tenantId = $this->getCurrentTenantId($request);
 
         // 4. 用户未登录，直接返回未授权
         if (empty($userId)) {
             return $this->responseError(401, '请先登录');
         }
 
-        //dump($this->casbinRbac);
-
         // 5. 调用 Casbin 进行权限校验
         $isAllowed = $this->casbinService->checkPermission(
             $userId,
             $currentPath,
-            $currentMethod,
-            $tenantId
+            $currentMethod
         );
 
         // 6. 无权限，返回 403
@@ -145,25 +139,6 @@ class CasbinRbacMiddleware
         } catch (\Throwable) {
             return null;
         }
-    }
-
-    /**
-     * 获取当前租户 ID（适配 SaaS 多租户场景）
-     * @param Request $request
-     * @return string
-     */
-    protected function getCurrentTenantId(Request $request)
-    {
-        // 1) 优先复用上游 AuthMiddleware 注入的租户上下文
-        $user = $request->attributes->get('user');
-        $tenantId = (string) ($user['tenant_id'] ?? '');
-        if ($tenantId !== '' && $tenantId !== '0') {
-            return $tenantId;
-        }
-
-        // 2) 兜底：请求头
-        $headerTenantId = (string) $request->headers->get('X-Tenant-ID', 'default');
-        return $headerTenantId !== '' ? $headerTenantId : 'default';
     }
 
     /**

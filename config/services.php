@@ -34,52 +34,12 @@ return function (ContainerConfigurator $configurator) {
 		->autoconfigure()
 		->public();	
 	
-	/*orm 别名切换*/
-	$databseConfig  = require BASE_PATH . '/config/database.php';
-	$engine = $databseConfig['engine'];
-
-	// === 再进行 class_alias 切换 ORM Model ===
-	if ($engine === 'laravelORM') {
-		class_alias(
-			//\Illuminate\Database\Eloquent\Model::class, #原始基类
-			\Framework\Basic\BaseLaORMModel::class,	//封装类
-			\Framework\Utils\BaseModel::class,
-			true
-		);
-	}
-
-	if ($engine === 'thinkORM') {
-		class_alias(
-			//\think\Model::class, #原始基类
-			\Framework\Basic\BaseTpORMModel::class,	//封装类
-			\Framework\Utils\BaseModel::class,
-			true
-		);
-	}	 
-
-
-	//$databseConfig  = require BASE_PATH . '/config/database.php';
-
-    // === 注册 ThinkORM 模型工厂服务 ===
-	/*
-    $services
-        ->set(\Framework\Utils\ThinkORMFactory::class)
-		->args([$databseConfig])
-        ->public(); // 可选：设为 public 以便直接从容器获取
-
-    // 可以额外 alias
-    $services->alias('thinkorm', \Framework\Utils\ThinkORMFactory::class);
-	*/
-	
-	/** 双orm同时注册
-	$databaseConfig  = require BASE_PATH . '/config/database.php';
-	$ormType = 'eloquent'; // eloquent 或 'think'，可从配置读取
-
-	$services
-		->set(\Framework\Utils\ORMFactory::class)
-		->args([$databaseConfig, $ormType])
-		->public();
-	**/
+	// Eloquent BaseModel alias
+	class_alias(
+		\Framework\Basic\BaseLaORMModel::class,
+		\Framework\Utils\BaseModel::class,
+		true
+	);
 	
 
     // ✅ 1. 自动加载应用 Provider

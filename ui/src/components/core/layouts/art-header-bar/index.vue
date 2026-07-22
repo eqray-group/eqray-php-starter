@@ -61,42 +61,6 @@
       </div>
 
       <div class="flex-c gap-2.5">
-        <!-- 租户切换 -->
-        <ElDropdown
-          v-if="sortedTenantList.length > 0"
-          @command="handleSwitchTenant"
-          trigger="click"
-          class="max-md:!hidden"
-        >
-          <div
-            class="flex-cb min-w-42 h-9 px-2.5 c-p border border-g-400 rounded-custom-sm text-xs text-g-700"
-          >
-            <div class="flex-c min-w-0">
-              <ArtSvgIcon icon="ri:building-4-line" class="text-sm text-g-500 shrink-0" />
-              <span class="ml-1 truncate">{{ currentTenantName }}</span>
-            </div>
-            <ArtSvgIcon icon="ri:arrow-down-s-line" class="ml-2 text-base text-g-500 shrink-0" />
-          </div>
-          <template #dropdown>
-            <ElDropdownMenu>
-              <ElDropdownItem
-                v-for="tenant in sortedTenantList"
-                :key="tenant.id"
-                :command="tenant.id"
-                :disabled="switchingTenant || tenant.id === currentTenantId"
-              >
-                <div class="flex-cb min-w-40">
-                  <span>{{ tenant.name }}</span>
-                  <ArtSvgIcon
-                    v-if="tenant.id === currentTenantId"
-                    icon="ri:check-fill"
-                    class="text-theme"
-                  />
-                </div>
-              </ElDropdownItem>
-            </ElDropdownMenu>
-          </template>
-        </ElDropdown>
 
         <!-- 搜索 -->
         <div
@@ -218,7 +182,7 @@
   import { useSettingStore } from '@/store/modules/setting'
   import { useUserStore } from '@/store/modules/user'
   import { useMenuStore } from '@/store/modules/menu'
-  import { fetchGetUserInfo, fetchSwitchTenant, fetchTenantsByUsername } from '@/api/auth'
+  import { fetchGetUserInfo } from '@/api/auth'
   import AppConfig from '@/config'
   import { languageOptions } from '@/locales'
   import { mittBus } from '@/utils/sys'
@@ -265,33 +229,17 @@
   const showNotice = ref(false)
   const notice = ref(null)
   const noticeUnreadCount = ref(0)
-  const tenantList = ref<Api.Auth.TenantItem[]>([])
-  const currentTenantId = ref<number | null>(null)
-  const switchingTenant = ref(false)
 
   // 菜单类型判断
   const isLeftMenu = computed(() => menuType.value === MenuTypeEnum.LEFT)
   const isDualMenu = computed(() => menuType.value === MenuTypeEnum.DUAL_MENU)
   const isTopMenu = computed(() => menuType.value === MenuTypeEnum.TOP)
   const isTopLeftMenu = computed(() => menuType.value === MenuTypeEnum.TOP_LEFT)
-  const sortedTenantList = computed(() => {
-    if (!tenantList.value.length) return []
-
-    if (!currentTenantId.value) {
-      return [...tenantList.value].sort((a, b) => Number(b.is_default) - Number(a.is_default))
-    }
-
-    const currentTenant = tenantList.value.find((tenant) => tenant.id === currentTenantId.value)
-    const otherTenants = tenantList.value.filter((tenant) => tenant.id !== currentTenantId.value)
-    return currentTenant ? [currentTenant, ...otherTenants] : tenantList.value
-  })
-  const currentTenantName = computed(() => sortedTenantList.value[0]?.name || '租户')
 
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
 
   onMounted(() => {
     initLanguage()
-    loadTenantList()
     document.addEventListener('click', bodyCloseNotice)
   })
 
@@ -368,66 +316,6 @@
    */
   const openSearchDialog = (): void => {
     mittBus.emit('openSearchDialog')
-  }
-
-  /**
-   * 获取当前登录用户可选租户列表
-   */
-  const loadTenantList = async (): Promise<void> => {
-    const username = userStore.info?.username?.trim()
-    if (!username) return
-
-    try {
-      const list = await fetchTenantsByUsername(username)
-      tenantList.value = list || []
-
-      if (!tenantList.value.length) {
-        currentTenantId.value = null
-        return
-      }
-
-      const userTenantId = Number((userStore.info as any)?.tenant?.id || 0)
-      const matchedCurrent = tenantList.value.find((tenant) => tenant.id === userTenantId)
-      const defaultTenant = tenantList.value.find((tenant) => tenant.is_default)
-      currentTenantId.value = matchedCurrent?.id ?? defaultTenant?.id ?? tenantList.value[0].id
-    } catch (error) {
-      tenantList.value = []
-      currentTenantId.value = null
-      console.error('[HeaderBar] 加载租户列表失败:', error)
-    }
-  }
-
-  /**
-   * 切换租户
-   */
-  const handleSwitchTenant = async (tenantId: number | string): Promise<void> => {
-    const nextTenantId = Number(tenantId)
-    if (!nextTenantId || nextTenantId === currentTenantId.value) return
-    const previousTenantId = currentTenantId.value
-
-    try {
-      switchingTenant.value = true
-      const data = await fetchSwitchTenant(nextTenantId)
-
-      userStore.setToken(data.access_token, data.refresh_token)
-      const userInfo = await fetchGetUserInfo()
-      userStore.setUserInfo(userInfo)
-      userStore.setLoginStatus(true)
-      currentTenantId.value = data.tenant_id ?? nextTenantId
-      ElMessage.success('切换成功')
-
-      // 触发完整重载，让路由守卫按新租户重新拉取并渲染菜单
-      setTimeout(() => {
-        window.location.reload()
-      }, 300)
-    } catch (error) {
-      currentTenantId.value = previousTenantId
-      const errMsg = error instanceof Error ? error.message : '切换失败'
-      ElMessage.error(errMsg || '切换失败')
-      console.error('[HeaderBar] 切换租户失败:', error)
-    } finally {
-      switchingTenant.value = false
-    }
   }
 
   /**

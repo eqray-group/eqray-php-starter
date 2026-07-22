@@ -9,8 +9,9 @@ declare(strict_types=1);
 
 namespace Framework\Basic;
 
+use Framework\Core\App;
 use Framework\DI\Injectable;
-use Framework\ORM\Adapter\ORMAdapterFactory;
+use Framework\ORM\Factories\LaravelORMFactory;
 
 /**
  * @method count(array<mixed> $where = [], bool $search = true)
@@ -48,34 +49,21 @@ abstract class BaseDao
     // 引入注入能力
     use Injectable;
 
-    /** @var mixed ORM Adapter，如 LaravelORMFactory 或 ThinkphpORMFactory */
+    /** @var LaravelORMFactory ORM 适配器 */
     protected mixed $instance = null;
 
-    protected ?string $mode = null;
-
-    /** @var string Eloquent/ThinkORM 模型类名 */
+    /** @var string 模型类名 */
     protected string $modelClass = '';
 
-    public function __construct(?string $mode = null, object|string|null $modelClass = null)
+    public function __construct(object|string|null $modelClass = null)
     {
         $this->inject();
 
-        // 1. 获取 ORM 模式
-        if ($mode == null) {
-            $mode = config('database.engine', 'thinkORM') ?? env('ORM_DRIVER');
-        }
-
         $db = app('db');
 
-        $this->mode = $mode;
-
-        // 2. 获取模型类
         $modelClass = $modelClass ?? $this->setModel();
 
-        // 3. 创建适配器
-        $this->instance = ORMAdapterFactory::createAdapter($mode, $modelClass);
-        # dump($this->instance);
-        // dump("created model: " . get_class($this->instance));
+        $this->instance = App::make(LaravelORMFactory::class, ['model' => $modelClass]);
         $this->initialize();
     }
 

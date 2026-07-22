@@ -6,7 +6,6 @@ namespace App\Middlewares;
 
 use Framework\Attributes\Auth;
 use Framework\Basic\BaseJsonResponse;
-use Framework\Tenant\TenantContext;
 use Framework\Utils\JwtFactory;
 use App\Models\SysUser;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -53,13 +52,9 @@ class AuthMiddleware
             $claims = $parsed->claims();
 
             $uid  = (int) $claims->get('uid');
-            $tenantId = (int) ($claims->get('tenant_id') ?? 0);
             $exp  = $claims->get('exp')->getTimestamp();
 
-            // 2.设置租户上下文（多租户隔离）
-            TenantContext::setTenantIdToRequest($request, $tenantId > 0 ? $tenantId : null);
-
-            // 3.加载用户并校验状态（必须在角色门禁之前，授权以数据库为准）
+            // 2.加载用户并校验状态（必须在角色门禁之前，授权以数据库为准）
             // 注意：不再预加载 dept 关系，因为部门信息现在从 sa_system_user_dept 表获取
             $currentUser = SysUser::with(['roles', 'roles.dataScopeDepts', 'roles.menus'])->find($uid);
             if (! $currentUser) {
@@ -75,12 +70,7 @@ class AuthMiddleware
             }
             $request->attributes->set('current_user', $currentUser);
 
-            // 角色以数据库为准，不信任 token 中的 role/roles：
-            // 1) 即便签名密钥泄露，攻击者也无法靠篡改 claim 提升角色；
-            // 2) 角色被吊销/变更后立即生效，避免旧 token 携带过期角色。
-            $userRoles = $tenantId > 0
-                ? $currentUser->getRoleCodesByTenant($tenantId)
-                : $currentUser->getRoleCodes();
+            $userRoles = $currentUser->getRoleCodes();
             $userRoles = array_values(array_unique(array_filter(
                 $userRoles,
                 static fn ($r) => is_string($r) && $r !== ''
@@ -130,13 +120,11 @@ class AuthMiddleware
                 $this->tryRefresh($request, $jwt, $uid, $claims->all());
             }
 
-            // 6. 注入用户上下文（roles 同样以数据库为准）
             $request->attributes->set('user', [
-                'id'        => $uid,
-                'username'  => $claims->get('name') ?? '',
-                'role'      => $role,
-                'roles'     => $userRoles,
-                'tenant_id' => $tenantId,
+                'id'       => $uid,
+                'username' => $claims->get('name') ?? '',
+                'role'     => $role,
+                'roles'    => $userRoles,
             ]);
 
             $request->attributes->set('user_claims', $claims->all());
@@ -181,12 +169,10 @@ class AuthMiddleware
         $request->attributes->set('_refresh_attempted', true);
 
         try {
-            // 1️⃣ rotation refresh token（一次性）
             $newRefresh = $jwt->rotateRefreshToken($refreshToken);
 
-            // 2️⃣ 签发新 access token（保留关键 claims，避免续期后角色/租户丢失）
             $newClaims = ['uid' => $uid];
-            foreach (['name', 'nickname', 'tenant_id', 'role', 'roles'] as $key) {
+            foreach (['name', 'nickname', 'role', 'roles'] as $key) {
                 if (array_key_exists($key, $oldClaims)) {
                     $newClaims[$key] = $oldClaims[$key];
                 }
@@ -276,7 +262,6 @@ class AuthMiddleware
             '/api/core/logout',
             '/api/core/captcha',
             '/api/core/refresh',
-            '/api/core/tenants-by-username',
             #'/api/core/system/statistics',
             #'/api/core/system/loginChart',
             #'/api/core/system/loginBarChart',

@@ -40,15 +40,4 @@ return [
      */
     'tenant_header' => env('JWT_TENANT_HEADER', 'X-Tenant-ID'),
 
-    /**
-     * 租户ID查询参数名称
-     * 用于调试时从 URL 参数获取租户ID
-     */
-    'tenant_query_param' => env('JWT_TENANT_PARAM', 'tenant_id'),
-
-    /**
-     * 调试模式
-     * 开启后允许从 Query 参数获取租户ID（仅用于开发环境）
-     */
-    'tenant_debug' => env('JWT_TENANT_DEBUG', false),
 ];

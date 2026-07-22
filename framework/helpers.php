@@ -7,7 +7,6 @@ declare(strict_types=1);
  * @Email: ck@eqray.com
  */
 
-use Framework\Cache\ThinkCache;
 use Framework\Container\Container;
 use Framework\Core\App;
 use Framework\Event\Dispatcher;
@@ -55,26 +54,6 @@ if (! function_exists('callHello')) {
     function callHello(string $name): string
     {
         return "Hello from a global function, {$name}!";
-    }
-}
-
-if (! function_exists('tpTemplateHello')) {
-    /**
-     * 自定义模板函数：返回欢迎信息.
-     */
-    function tpTemplateHello(string $name): string
-    {
-        return "Hello, {$name}! 这是自定义模板函数的返回值";
-    }
-}
-
-if (! function_exists('tpTemplateFormatDate')) {
-    /**
-     * 自定义模板函数：格式化时间.
-     */
-    function tpTemplateFormatDate(int $timestamp, string $format = 'Y-m-d H:i:s'): string
-    {
-        return date($format, $timestamp);
     }
 }
 
@@ -189,50 +168,6 @@ if (! function_exists('app_path')) {
     function app_path(string $path = ''): string
     {
         return base_path('app') . ($path !== '' ? '/' . $path : '');
-    }
-}
-
-/*
- * 简单缓存助手函数
- */
-if (! function_exists('caches')) {
-    function caches(?string $key = null, mixed $value = '__GET__', ?int $ttl = null): mixed
-    {
-        static $instance = null;
-
-        if ($instance === null) {
-            $config   = require base_path() . '/config/cache.php';
-            $factory  = new ThinkCache($config);
-            $instance = $factory->create($config['default'] ?? 'file');
-        }
-
-        // 无参数：返回实例
-        if ($key === null) {
-            return $instance;
-        }
-
-        // 删除
-        if ($value === null) {
-            return $instance->delete($key);
-        }
-
-        // 读取
-        if ($value === '__GET__') {
-            return $instance->get($key);
-        }
-
-        // 写入
-        return $instance->set($key, $value, $ttl);
-    }
-}
-
-/*
- * 清空缓存助手
- */
-if (! function_exists('caches_clear')) {
-    function caches_clear(): bool
-    {
-        return caches()->clear();
     }
 }
 
@@ -452,45 +387,6 @@ if (! function_exists('ThinkValidate')) {
         }
 
         return true;
-    }
-}
-
-if (! function_exists('ThinkView')) {
-    /**
-     * Think 模板渲染.
-     *
-     * @param array<string, mixed> $data 模板变量
-     */
-    function ThinkView(string $templateName, array $data = []): string
-    {
-        $template = app('thinkTemp');
-        $template->assign($data);
-        return $template->fetch($templateName);
-    }
-}
-
-/*
- * 通用模板渲染（带作用域变量自动分配）.
- */
-if (! function_exists('renders')) {
-    /**
-     * @param array<string, mixed> $data    模板变量
-     * @param null|array<string>   $exclude 排除的变量名
-     */
-    function renders(string $template, array $data = [], ?array $exclude = null): string
-    {
-        $scopeVars = get_defined_vars();
-
-        $defaultExclude = ['scopeVars', 'template', 'data', 'exclude'];
-        $exclude        = array_unique(array_merge($defaultExclude, $exclude ?? []));
-
-        $filtered   = array_diff_key($scopeVars, array_flip($exclude));
-        $assignData = array_merge($filtered, $data);
-
-        $tpl = app('thinkTemp');
-        $tpl->assign($assignData);
-
-        return $tpl->fetch($template);
     }
 }
 

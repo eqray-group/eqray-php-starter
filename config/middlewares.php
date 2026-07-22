@@ -7,9 +7,6 @@ return [
     // 操作日志中间件（记录写操作）
     \App\Middlewares\OperationLogMiddleware::class,
 
-	//租户id解析中间件
-	\App\Middlewares\TenantMiddleware::class,
-
     // 以下中间件按需启用：
    //\App\Middlewares\CasbinRbacMiddleware::class,
 

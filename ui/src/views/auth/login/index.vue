@@ -34,25 +34,6 @@
                 v-model.trim="formData.username"
               />
             </ElFormItem>
-            <ElFormItem prop="tenant_id">
-              <ElSelect
-                class="w-full custom-height"
-                :placeholder="tenantList.length > 0 ? '请选择租户' : '请先输入用户名'"
-                v-model="formData.tenant_id"
-                :loading="loadingTenants"
-                :disabled="tenantList.length === 0"
-              >
-                <ElOption
-                  v-for="tenant in tenantList"
-                  :key="tenant.id"
-                  :label="tenant.name"
-                  :value="tenant.id"
-                >
-                  <span>{{ tenant.name }}</span>
-                  <span v-if="tenant.is_default" style="color: var(--el-color-primary); margin-left: 8px;">(默认)</span>
-                </ElOption>
-              </ElSelect>
-            </ElFormItem>
             <ElFormItem prop="password">
               <ElInput
                 class="custom-height"
@@ -206,7 +187,6 @@
     fetchCaptcha,
     fetchLogin,
     fetchGetUserInfo,
-    fetchTenantsByUsername,
     fetchPublicConfigValue
   } from '@/api/auth'
   import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
@@ -239,18 +219,13 @@
     password: '123456',
     code: '1234',
     uuid: '',
-    tenant_id: undefined as number | undefined,
     rememberPassword: true
   })
-
-  const tenantList = ref<Api.Auth.TenantItem[]>([])
-  const loadingTenants = ref(false)
 
   const rules = computed<FormRules>(() => ({
     username: [{ required: true, message: t('login.placeholder.username'), trigger: 'blur' }],
     password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }],
-    code: [{ required: true, message: t('login.placeholder.code'), trigger: 'blur' }],
-    tenant_id: [{ required: true, message: '请选择租户', trigger: 'change' }]
+    code: [{ required: true, message: t('login.placeholder.code'), trigger: 'blur' }]
   }))
 
   const loading = ref(false)
@@ -259,17 +234,6 @@
   const activeTab = ref('php')
   let welcomeDialogTimer: ReturnType<typeof setTimeout> | undefined
 
-  const loadSystemName = async () => {
-    try {
-      const res = await fetchPublicConfigValue('site_name')
-      const name = res?.value?.trim()
-      if (name) {
-        systemName.value = name
-      }
-    } catch (error) {
-      console.error('[Login] 加载站点名称失败:', error)
-    }
-  }
 
   const loadLoginWindowConfig = async () => {
     try {
@@ -282,13 +246,8 @@
   }
 
   onMounted(() => {
-    loadSystemName()
     loadLoginWindowConfig()
     refreshCaptcha()
-    // 如果有默认用户名，自动加载租户列表
-    if (formData.username) {
-      loadTenantList()
-    }
   })
 
   // 登录弹窗延迟显示
@@ -306,45 +265,6 @@
     }
   })
 
-  // 监听用户名变化，加载租户列表
-  watch(() => formData.username, (newUsername) => {
-    if (newUsername && newUsername.trim()) {
-      loadTenantList()
-    } else {
-      tenantList.value = []
-      formData.tenant_id = undefined
-    }
-  })
-
-  // 加载租户列表
-  const loadTenantList = async () => {
-    if (!formData.username || !formData.username.trim()) {
-      return
-    }
-
-    try {
-      loadingTenants.value = true
-      const list = await fetchTenantsByUsername(formData.username.trim())
-      tenantList.value = list || []
-      
-      // 如果只有一个租户，自动选中
-      if (tenantList.value.length === 1) {
-        formData.tenant_id = tenantList.value[0].id
-      } else if (tenantList.value.length > 0) {
-        // 如果有默认租户，自动选中
-        const defaultTenant = tenantList.value.find(t => t.is_default)
-        if (defaultTenant) {
-          formData.tenant_id = defaultTenant.id
-        }
-      }
-    } catch (error) {
-      console.error('[Login] 加载租户列表失败:', error)
-      tenantList.value = []
-    } finally {
-      loadingTenants.value = false
-    }
-  }
-
   // 登录
   const handleSubmit = async () => {
     if (!formRef.value) return
@@ -361,8 +281,7 @@
         username: formData.username,
         password: formData.password,
         code: formData.code,
-        uuid: formData.uuid,
-        tenant_id: formData.tenant_id
+        uuid: formData.uuid
       })
 
       // 验证token

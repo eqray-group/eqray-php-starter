@@ -158,7 +158,7 @@ class SysConfigService extends BaseService
          */
     public function getByKey(string $key): mixed
     {
-        $cacheKey = "config:{$key}";
+        $cacheKey = "config_{$key}";
         $cached = app('cache')->get($cacheKey);
 
         if ($cached !== null) {
@@ -199,6 +199,6 @@ class SysConfigService extends BaseService
      */
     protected function clearConfigCache(string $key): void
     {
-        app('cache')->delete("config:{$key}");
+        app('cache')->delete("config_{$key}");
     }
 }

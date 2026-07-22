@@ -31,7 +31,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int|null    $leader_id   部门负责人ID
  * @property string      $level       祖级列表，格式: 0,1,5,
  * @property int         $sort        排序
- * @property int         $tenant_id   所属租户ID
  * @property int         $status      状态: 1启用 0禁用
  * @property string|null $remark      备注
  * @property int|null    $created_by  创建人ID
@@ -44,7 +43,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read SysDept[]   $children  子部门
  * @property-read SysUser[]   $users     部门下的用户
  * @property-read SysUser     $leader    部门负责人
- * @property-read SysTenant   $tenant    所属租户
  * @property-read SysRole[]   $roles     关联的角色（通过 role_dept）
  
  * @property mixed $create_time
@@ -89,7 +87,6 @@ class SysDept extends BaseLaORMModel
         'leader_id',
         'level',
         'sort',
-        'tenant_id',
         'status',
         'remark',
         'created_by',
@@ -102,7 +99,6 @@ class SysDept extends BaseLaORMModel
         'parent_id' => 'integer',
         'leader_id' => 'integer',
         'sort' => 'integer',
-        'tenant_id' => 'integer',
         'status' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
@@ -159,16 +155,6 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 所属租户
-     *
-     * @return BelongsTo<SysTenant, $this>
-     */
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(SysTenant::class, 'tenant_id', 'id');
-    }
-
-    /**
      * 关联的角色（数据权限自定义部门）
      *
      * @return BelongsToMany<SysRole, $this>
@@ -202,10 +188,6 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 获取部门树 (递归)
-     *
-     * @param int $parentId 父ID
-     * @param int|null $tenantId 租户ID（可选过滤）
      * @param bool $enabledOnly 是否只返回启用的部门
      * @return array<array-key, mixed>
      */
@@ -219,37 +201,25 @@ class SysDept extends BaseLaORMModel
             $query->where('status', self::STATUS_ENABLED);
         }
 
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
-
         $depts = $query->get()->toArray();
 
         foreach ($depts as &$dept) {
             $leader = $dept['leader'] ?? null;
             $dept['leader_name'] = $leader['realname'] ?? $leader['username'] ?? null;
-            $dept['children'] = self::getDeptTree($dept['id'], $tenantId, $enabledOnly);
+            $dept['children'] = self::getDeptTree($dept['id'], null, $enabledOnly);
         }
 
         return $depts;
     }
 
     /**
-     * 获取部门选择树（带 label/value 字段，适配前端 ElTreeSelect）
-     *
-     * @param int $parentId 父ID
-     * @param int|null $tenantId 租户ID（可选过滤）
      * @return array<array-key, mixed>
      */
-    public static function getSelectTree(int $parentId = 0, ?int $tenantId = null): array
+    public static function getSelectTree(int $parentId = 0): array
     {
         $query = self::where('parent_id', $parentId)
             ->where('status', self::STATUS_ENABLED)
             ->orderBy('sort');
-
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
 
         $depts = $query->get();
 
@@ -262,7 +232,7 @@ class SysDept extends BaseLaORMModel
                 'name' => $dept->name,
                 'code' => $dept->code,
                 'parent_id' => $dept->parent_id,
-                'children' => self::getSelectTree($dept->id, $tenantId),
+                'children' => self::getSelectTree($dept->id),
             ];
             $tree[] = $node;
         }

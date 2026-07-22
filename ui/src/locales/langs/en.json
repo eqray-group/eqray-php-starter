@@ -262,7 +262,6 @@
       "title": "System Settings",
       "user": "User Manage",
       "role": "Role Manage",
-      "tenant": "Tenant Manage",
       "userCenter": "User Center",
       "menu": "Menu Manage"
     }

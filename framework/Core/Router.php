@@ -37,7 +37,7 @@ class Router
 
     private const DEFAULT_CONTROLLER_NAMESPACE = 'App\Controllers';
 
-    private const CACHE_KEY_PREFIX = ':route_match_v1_'; // redis 分组
+    private const CACHE_KEY_PREFIX = 'route_match_v1_';
 
     private const CACHE_TTL = 3600; // 缓存 1 小时
 

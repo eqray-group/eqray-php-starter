@@ -28,14 +28,13 @@ use Framework\Basic\BaseLaORMModel;
  * @property \DateTime   $created_at 创建时间
  * @property \DateTime   $updated_at 更新时间
  
- * @property int $tenant_id
  * @property int $status
  * @property string $create_time
  * @property string $update_time
  * @property string $delete_time
  * @property mixed $remark
  * @property mixed $deleted_at
-*/
+ */
 class SysUserMenu extends BaseLaORMModel
 {
     /**
@@ -66,7 +65,6 @@ class SysUserMenu extends BaseLaORMModel
     protected $fillable = [
         'user_id',
         'menu_id',
-        'tenant_id',
         'created_by',
         'updated_by',
         'status',
@@ -81,7 +79,6 @@ class SysUserMenu extends BaseLaORMModel
         'id' => 'integer',
         'user_id' => 'integer',
         'menu_id' => 'integer',
-        'tenant_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'status' => 'integer',
@@ -104,11 +101,10 @@ class SysUserMenu extends BaseLaORMModel
      *
      * @param int   $userId    用户ID
      * @param array<array-key, mixed> $menuIds   菜单ID数组
-     * @param int   $tenantId  租户ID
      * @param int   $createdBy 创建人ID
      * @return bool
      */
-    public static function batchInsert(int $userId, array $menuIds, int $tenantId = 0, int $createdBy = 0): bool
+    public static function batchInsert(int $userId, array $menuIds, int $createdBy = 0): bool
     {
         if (empty($menuIds)) {
             return false;
@@ -121,7 +117,6 @@ class SysUserMenu extends BaseLaORMModel
             $data[] = [
                 'user_id' => $userId,
                 'menu_id' => $menuId,
-                'tenant_id' => $tenantId,
                 'created_by' => $createdBy,
                 'updated_by' => $createdBy,
                 'create_time' => $now,
@@ -135,19 +130,12 @@ class SysUserMenu extends BaseLaORMModel
     /**
      * 删除用户的所有菜单关联
      *
-     * @param int      $userId   用户ID
-     * @param int|null $tenantId 租户ID（可选，不传则删除所有租户）
+     * @param int $userId 用户ID
      * @return bool
      */
-    public static function deleteByUserId(int $userId, ?int $tenantId = null): bool
+    public static function deleteByUserId(int $userId): bool
     {
-        $query = self::where('user_id', $userId);
-        
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
-        
-        return $query->forceDelete() !== false;
+        return self::where('user_id', $userId)->forceDelete() !== false;
     }
 
     /**
@@ -168,36 +156,28 @@ class SysUserMenu extends BaseLaORMModel
      *
      * @param int   $userId    用户ID
      * @param array<array-key, mixed> $menuIds   菜单ID数组
-     * @param int   $tenantId  租户ID
      * @param int   $createdBy 创建人ID
      * @return void
      */
-    public static function syncUserMenus(int $userId, array $menuIds, int $tenantId = 0, int $createdBy = 0): void
+    public static function syncUserMenus(int $userId, array $menuIds, int $createdBy = 0): void
     {
-        // 先删除该租户下的旧关联
-        self::deleteByUserId($userId, $tenantId);
+        // 先删除旧关联
+        self::deleteByUserId($userId);
 
         // 再插入新的关联
         if (!empty($menuIds)) {
-            self::batchInsert($userId, $menuIds, $tenantId, $createdBy);
+            self::batchInsert($userId, $menuIds, $createdBy);
         }
     }
 
     /**
      * 获取用户菜单ID列表
      *
-     * @param int      $userId   用户ID
-     * @param int|null $tenantId 租户ID（可选）
+     * @param int $userId 用户ID
      * @return array<array-key, mixed>
      */
-    public static function getMenuIdsByUserId(int $userId, ?int $tenantId = null): array
+    public static function getMenuIdsByUserId(int $userId): array
     {
-        $query = self::where('user_id', $userId);
-        
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
-        
-        return $query->pluck('menu_id')->toArray();
+        return self::where('user_id', $userId)->pluck('menu_id')->toArray();
     }
 }

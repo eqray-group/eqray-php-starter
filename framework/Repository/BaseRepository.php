@@ -15,8 +15,6 @@ use Framework\Repository\Builders\QueryConditionBuilder;
 use Framework\Repository\Exceptions\DatabaseException;
 use Framework\Repository\Strategies\EloquentStrategy;
 use Framework\Repository\Strategies\OrmStrategyInterface;
-use Framework\Repository\Strategies\ThinkStrategy;
-use Framework\Tenant\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Psr\SimpleCache\CacheInterface;
 
@@ -491,10 +489,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     protected function initializeOrmStrategy(): void
     {
-        # dump($this->factory->isEloquent());
-        $this->ormStrategy = $this->factory->isEloquent()
-            ? new EloquentStrategy()
-            : new ThinkStrategy();
+        $this->ormStrategy = new EloquentStrategy();
     }
 
     /**
@@ -582,15 +577,9 @@ abstract class BaseRepository implements RepositoryInterface
             // 动态维度1：方法的所有入参（查询条件、排序、分页、关联等）
             'params' => $this->normalizeParams($params),
 
-            // 动态维度2：业务上下文（租户ID、用户ID等）
-            'context' => [
-                'tenant_id' => TenantContext::getTenantId(), // method_exists('TenantContext', 'getTenantId') ? TenantContext::getTenantId() : 0,
-                // 可扩展：其他上下文（如用户ID、语言、环境等）
-                // 'user_id' => UserContext::getUserId() ?? 0,
-            ],
+            'context' => [],
 
-            // 动态维度3：ORM类型（避免不同ORM的缓存冲突）
-            'orm_type' => $this->factory->isEloquent() ? 'eloquent' : 'think',
+            'orm_type' => 'eloquent',
         ];
 
         # dump($cacheFactors);

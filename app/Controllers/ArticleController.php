@@ -15,7 +15,6 @@ namespace App\Controllers;
 use App\Services\SysArticleService;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
-use Framework\Tenant\TenantContext;
 use Framework\Attributes\Route;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Permission;
@@ -109,12 +108,11 @@ class ArticleController extends BaseController
     {
         $userId = $this->getOperatorId($request);
         $deptId = $this->getCurrentUserDeptId($request);
-        $tenantId = TenantContext::getTenantId();
 
         $data = $this->getRequestData($request);
 
         try {
-            $article = $this->articleService->create($data, $userId, $deptId, $tenantId);
+            $article = $this->articleService->create($data, $userId, $deptId);
             return $this->success(['id' => $article->id], '创建成功', 201);
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());

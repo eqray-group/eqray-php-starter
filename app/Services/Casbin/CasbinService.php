@@ -343,10 +343,7 @@ EOT;
                 $this->getEnforcer()->deletePermissionsForUser($role->code);
             }
 
-            // 获取角色菜单（按当前租户过滤）
-            $tenantId = \Framework\Tenant\TenantContext::getTenantId() ?? 0;
             $menuIds = SysRoleMenu::where('role_id', $roleId)
-                ->where('tenant_id', $tenantId)
                 ->pluck('menu_id')
                 ->toArray();
 
@@ -381,7 +378,7 @@ EOT;
             // 重新从数据库加载策略，同步内存状态
             $this->getEnforcer()->loadPolicy();
 
-            app('log')->info("Casbin syncRoleMenuPermissions: roleId={$roleId}, roleCode={$role->code}, tenantId={$tenantId}, addedPolicies={$addedCount}");
+            app('log')->info("Casbin syncRoleMenuPermissions: roleId={$roleId}, roleCode={$role->code}, addedPolicies={$addedCount}");
 
             // 重建该角色下所有用户的 g 策略（ptype='g'，v0=userId, v1=roleCode）
             $userIds = SysUserRole::where('role_id', $roleId)->pluck('user_id')->toArray();
@@ -417,10 +414,7 @@ EOT;
                 $this->getEnforcer()->deletePermissionsForUser((string)$userId);
             }
 
-            // 获取用户菜单（按当前租户过滤）
-            $tenantId = \Framework\Tenant\TenantContext::getTenantId() ?? 0;
             $menuIds = SysUserMenu::where('user_id', $userId)
-                ->where('tenant_id', $tenantId)
                 ->pluck('menu_id')
                 ->toArray();
 
@@ -454,7 +448,7 @@ EOT;
             // 重新从数据库加载策略，同步内存状态
             $this->getEnforcer()->loadPolicy();
 
-            app('log')->info("Casbin syncUserMenuPermissions: userId={$userId}, tenantId={$tenantId}, addedPolicies={$addedCount}");
+            app('log')->info("Casbin syncUserMenuPermissions: userId={$userId}, addedPolicies={$addedCount}");
 
         } catch (\Throwable $e) {
             app('log')->error("Casbin syncUserMenuPermissions failed: userId={$userId}, error={$e->getMessage()}", ['trace' => $e->getTraceAsString()]);

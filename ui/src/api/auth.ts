@@ -63,30 +63,6 @@ export function fetchGetUserInfo() {
 }
 
 /**
- * 根据用户名获取租户列表（登录前）
- * @param username 用户名
- * @returns 租户列表
- */
-export function fetchTenantsByUsername(username: string) {
-  return request.get<Api.Auth.TenantItem[]>({
-    url: '/api/core/tenants-by-username',
-    params: { username }
-  })
-}
-
-/**
- * 切换租户（登录后）
- * @param tenantId 目标租户ID
- * @returns 切换结果（包含新token）
- */
-export function fetchSwitchTenant(tenantId: number) {
-  return request.post<Api.Auth.SwitchTenantResponse>({
-    url: '/api/core/switch-tenant',
-    params: { tenant_id: tenantId }
-  })
-}
-
-/**
  * 修改资料
  * @param params 修改资料参数
  * @returns 响应

@@ -32,10 +32,10 @@ class MiddlewareDispatcher
     /** @var array<mixed> */
     private array $globalMiddleware = [
         ContextInitMiddleware::class,
-        SecurityHeadersMiddleware::class,   // 统一注入安全响应头（对所有响应生效）
-        IpBlockMiddleware::class,           // 尽早拒绝黑名单 IP，节省后续开销
+        CorsMiddleware::class,              // 跨域必须最早处理，确保 OPTIONS 预检请求直达
+        SecurityHeadersMiddleware::class,
+        IpBlockMiddleware::class,
         MethodOverrideMiddleware::class,
-        CorsMiddleware::class,
         CsrfTokenGenerateMiddleware::class,
         LoginRateLimitMiddleware::class,    // 敏感认证接口限流（登录/刷新/验证码）
         RateLimitMiddleware::class,

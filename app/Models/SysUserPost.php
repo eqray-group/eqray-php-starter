@@ -23,7 +23,6 @@ use Framework\Basic\BaseLaORMModel;
  * @property int $user_id 用户ID
  * @property int $post_id 岗位ID
  
- * @property int $tenant_id
  * @property int $status
  * @property int $created_by
  * @property int $updated_by
@@ -77,7 +76,6 @@ class SysUserPost extends BaseLaORMModel
     protected $fillable = [
         'user_id',
         'post_id',
-        'tenant_id',
         'status',
         'created_by',
         'updated_by',
@@ -91,7 +89,6 @@ class SysUserPost extends BaseLaORMModel
     protected $casts = [
         'user_id' => 'integer',
         'post_id' => 'integer',
-        'tenant_id' => 'integer',
         'status' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
@@ -129,20 +126,20 @@ class SysUserPost extends BaseLaORMModel
      *
      * @param int   $userId  用户ID
      * @param array<array-key, mixed> $postIds 岗位ID列表
+     * @param int   $operator 操作人ID
      * @return void
      */
-    public static function saveUserPosts(int $userId, array $postIds, int $tenantId, int $operator = 0): void
+    public static function saveUserPosts(int $userId, array $postIds, int $operator = 0): void
     {
         // 先删除原有关联
         self::where('user_id', $userId)->delete();
 
         // 批量插入新关联
         if (!empty($postIds)) {
-            $data = array_map(function ($postId) use ($userId, $tenantId, $operator) {
+            $data = array_map(function ($postId) use ($userId, $operator) {
                 return [
                     'user_id' => $userId,
                     'post_id' => $postId,
-                    'tenant_id' => $tenantId,
                     'created_by' => $operator,
                     'updated_by' => $operator,
                 ];
@@ -157,20 +154,20 @@ class SysUserPost extends BaseLaORMModel
      *
      * @param int   $postId  岗位ID
      * @param array<array-key, mixed> $userIds 用户ID列表
+     * @param int   $operator 操作人ID
      * @return void
      */
-    public static function savePostUsers(int $postId, array $userIds, int $tenantId, int $operator = 0): void
+    public static function savePostUsers(int $postId, array $userIds, int $operator = 0): void
     {
         // 先删除原有关联
         self::where('post_id', $postId)->delete();
 
         // 批量插入新关联
         if (!empty($userIds)) {
-            $data = array_map(function ($userId) use ($postId, $tenantId, $operator) {
+            $data = array_map(function ($userId) use ($postId, $operator) {
                 return [
                     'user_id' => $userId,
                     'post_id' => $postId,
-                    'tenant_id' => $tenantId,
                     'created_by' => $operator,
                     'updated_by' => $operator,
                 ];
@@ -187,11 +184,10 @@ class SysUserPost extends BaseLaORMModel
      * @param int $postId 岗位ID
      * @return bool
      */
-    public static function hasPost(int $userId, int $postId, int $tenantId): bool
+    public static function hasPost(int $userId, int $postId): bool
     {
         return self::where('user_id', $userId)
             ->where('post_id', $postId)
-            ->where('tenant_id', $tenantId)
             ->exists();
     }
 }

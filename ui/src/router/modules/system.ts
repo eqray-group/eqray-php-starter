@@ -31,16 +31,6 @@ export const systemRoutes: AppRouteRecord = {
       }
     },
     {
-      path: 'tenant',
-      name: 'Tenant',
-      component: '/system/tenant',
-      meta: {
-        title: 'menus.system.tenant',
-        keepAlive: true,
-        roles: ['R_SUPER']
-      }
-    },
-    {
       path: 'user-center',
       name: 'SystemUserCenter',
       component: '/dashboard/user-center/index.vue',

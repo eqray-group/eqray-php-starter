@@ -16,7 +16,6 @@ use App\Models\SysDept;
 use App\Models\SysUser;
 use App\Dao\SysDeptDao;
 use Framework\Basic\BaseService;
-use Framework\Tenant\TenantContext;
 use Symfony\Component\HttpFoundation\Request;
 /**
  * SysDeptService 部门服务
@@ -66,16 +65,6 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 获取当前租户ID
-     *
-     * @return int|null
-     */
-    protected function getCurrentTenantId(): ?int
-    {
-        return TenantContext::getTenantId();
-    }
-
-    /**
      * 检查当前用户是否为超级管理员
      *
      * @return bool
@@ -98,14 +87,6 @@ class SysDeptService extends BaseService
             ->whereNull('delete_time')
             ->orderBy('sort');
 
-        // 如果不是超级管理员，只查询当前租户的部门
-        if (!$this->isSuperAdmin()) {
-            $tenantId = $this->getCurrentTenantId();
-            if ($tenantId) {
-                $query->where('tenant_id', $tenantId);
-            }
-        }
-
         return $query->get(['id', 'name', 'parent_id', 'code'])->toArray();
     }
 
@@ -126,19 +107,11 @@ class SysDeptService extends BaseService
             return $this->getDeptTree();
         }
 
-        // 有搜索条件：获取全量数据构建树，再从树中递归过滤
-        $query = SysDept::query()
-            ->with('leader');
-
-        // 如果不是超级管理员，只查询当前租户的部门
-        if (!$this->isSuperAdmin()) {
-            $tenantId = $this->getCurrentTenantId();
-            if ($tenantId) {
-                $query->where('tenant_id', $tenantId);
-            }
-        }
-
-        $list = $query->orderBy('sort')->get()->toArray();
+        $list = SysDept::query()
+            ->with('leader')
+            ->orderBy('sort')
+            ->get()
+            ->toArray();
         $tree = $this->buildTree($list);
 
         // 从树中递归搜索，保留匹配节点及其祖先链
@@ -245,14 +218,7 @@ class SysDeptService extends BaseService
      */
     public function getDeptTree(): array
     {
-        // 如果是超级管理员，查询所有部门（不过滤租户）
-        if ($this->isSuperAdmin()) {
-            return SysDept::getDeptTree(0, null, false);
-        }
-        
-        // 普通用户只能查询当前租户的部门
-        $tenantId = $this->getCurrentTenantId();
-        return SysDept::getDeptTree(0, $tenantId, false);
+        return SysDept::getDeptTree(0, null, false);
     }
 
 
@@ -266,18 +232,10 @@ class SysDeptService extends BaseService
      */
     public function getSelectTree(): array
     {
-        $query = SysDept::where('status', SysDept::STATUS_ENABLED)
-            ->orderBy('sort');
-
-        // 如果不是超级管理员，只查询当前租户的部门
-        if (!$this->isSuperAdmin()) {
-            $tenantId = $this->getCurrentTenantId();
-            if ($tenantId) {
-                $query->where('tenant_id', $tenantId);
-            }
-        }
-
-        $depts = $query->get()->toArray();
+        $depts = SysDept::where('status', SysDept::STATUS_ENABLED)
+            ->orderBy('sort')
+            ->get()
+            ->toArray();
 
         return $this->buildSelectTree($depts, 0);
     }
@@ -326,19 +284,10 @@ class SysDeptService extends BaseService
              */
     public function getAccessDeptTree(int $parentId = 0): array
     {
-        $query = SysDept::where('parent_id', $parentId)
+        $depts = SysDept::where('parent_id', $parentId)
             ->where('status', SysDept::STATUS_ENABLED)
-            ->orderBy('sort');
-
-        // 如果不是超级管理员，只查询当前租户的部门
-        if (!$this->isSuperAdmin()) {
-            $tenantId = $this->getCurrentTenantId();
-            if ($tenantId) {
-                $query->where('tenant_id', $tenantId);
-            }
-        }
-
-        $depts = $query->get();
+            ->orderBy('sort')
+            ->get();
 
         $tree = [];
         foreach ($depts as $dept) {

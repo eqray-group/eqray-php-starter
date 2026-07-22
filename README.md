@@ -31,7 +31,7 @@
 
 ## 📖 项目简介
 
-**eqrayadmin** 是一个基于eqrayphp 的现代化全栈框架，采用 **Workerman** 常驻内存引擎驱动，支持 **多租户 SaaS 架构**。项目包含：
+**eqrayadmin** 是一个基于eqrayphp 的现代化全栈框架，采用 **Workerman** 常驻内存引擎驱动。项目包含：
 
 - **后端框架**: 自研轻量级 PHP 框架 (framework/)
 - **前端应用**: 基于 Vue 3 + Element Plus 的管理后台 (web/)
@@ -42,8 +42,7 @@
 | 特性 | 说明 |
 |------|------|
 | 🚀 **高性能** | Workerman 常驻内存，比传统 PHP-FPM 性能提升 10 倍+ |
-| 🏢 **多租户 SaaS** | 完整的租户隔离方案（数据行级隔离 + 菜单权限隔离） |
-| 🔐 **RBAC 权限** | 基于 多租户的 RBAC 权限控制模型 |
+| 🔐 **RBAC 权限** | 基于 RBAC 权限控制模型 |
 | 🔌 **双 ORM 支持** | 同时支持 ThinkORM / Laravel ORM，(实验性阶段代码) |
 | 🎨 **Attribute 路由** | PHP 8 原生注解路由，自动扫描与缓存 |
 | 🧩 **插件系统** | 完整的插件生命周期管理（安装/卸载/启用/禁用） |
@@ -72,7 +71,6 @@
 ## ✨ 功能特性
 
 ### 用户与权限系统
-- ✅ 多租户登录与切换
 - ✅ JWT + Session 双认证模式
 - ✅ 角色权限分配 (RBAC)
 - ✅ 菜单动态路由
@@ -321,7 +319,6 @@ app/
 │   ├── RoleController.php         # 角色管理
 │   ├── MenuController.php         # 菜单管理
 │   ├── DeptController.php         # 部门管理
-│   ├── TenantController.php       # 租户管理
 │   ├── ConfigController.php       # 配置管理
 │   ├── DictController.php         # 字典管理
 │   ├── AttachmentController.php   # 附件管理
@@ -338,7 +335,6 @@ app/
 │   ├── AuthMiddleware.php          # 认证中间件
 │   ├── PermissionMiddleware.php    # 权限中间件
 │   ├── CasbinRbacMiddleware.php    # Casbin RBAC 中间件
-│   ├── TenantMiddleware.php        # 租户中间件
 │   └── ...
 └── Traits/               # 特征类
     ├── CrudActionTrait.php         # CRUD 操作
@@ -364,10 +360,6 @@ framework/
 │   ├── BaseService.php           # 基础服务
 │   ├── BaseJsonResponse.php      # 统一响应
 │   └── Traits/                   # CRUD 特征
-├── Tenant/               # 多租户
-│   ├── TenantContext.php          # 租户上下文
-│   ├── JwtTenantContext.php       # JWT 租户解析
-│   └── SessionTenantContext.php   # Session 租户解析
 ├── Security/             # 安全组件
 │   └── CasbinRbac.php            # Casbin RBAC 封装
 ├── Middleware/           # 框架中间件
@@ -406,7 +398,6 @@ web/src/
 │   ├── system/role.ts            # 角色接口
 │   ├── system/menu.ts            # 菜单接口
 │   ├── system/dept.ts            # 部门接口
-│   ├── system/tenant.ts          # 租户接口
 │   ├── system/config.ts          # 配置接口
 │   ├── safeguard/attachment.ts   # 附件接口
 │   ├── safeguard/dict.ts          # 字典接口
@@ -415,7 +406,7 @@ web/src/
 │   └── article.ts                # 文章接口
 ├── views/                # 页面视图 (60+ 页面)
 │   ├── dashboard/                # 仪表盘 (控制台/分析/电商)
-│   ├── system/                   # 系统管理 (用户/角色/菜单/部门/岗位/租户/配置)
+│   ├── system/                   # 系统管理 (用户/角色/菜单/部门/岗位/配置)
 │   ├── safeguard/                # 安全中心 (附件/字典/数据库/缓存/日志/服务器/Redis)
 │   ├── tool/                     # 开发工具 (代码生成/定时任务)
 │   ├── auth/                     # 认证页面 (登录/注册/忘记密码)
@@ -463,9 +454,6 @@ web/src/
 | GET | `/api/core/system/permissions` | 获取用户权限 | 是 |
 | POST | `/api/core/user/modifyPassword` | 修改密码 | 是 |
 | POST | `/api/core/user/updateInfo` | 修改个人资料 | 是 |
-| GET | `/api/core/tenants-by-username` | 获取用户名对应租户列表 | 否 |
-| GET | `/api/core/user-tenants` | 获取当前用户租户列表 | 是 |
-| POST | `/api/core/switch-tenant` | 切换租户 | 是 |
 | GET | `/api/core/captcha` | 获取验证码 | 否 |
 
 ### 用户管理 (`/api/core/system` 或 `/api/core/user`)
@@ -507,18 +495,6 @@ web/src/
 | POST | `/api/core/dept` | 新增部门 | 是 |
 | PUT | `/api/core/dept/{id}` | 编辑部门 | 是 |
 | DELETE | `/api/core/dept/{id}` | 删除部门 | 是 |
-
-### 租户管理 (`/api/core/tenant`)
-
-| 方法 | 路径 | 说明 | 认证 |
-|------|------|------|------|
-| GET | `/api/core/tenant` | 租户列表 | 是 |
-| POST | `/api/core/tenant` | 新增租户 | 是 |
-| PUT | `/api/core/tenant/{id}` | 编辑租户 | 是 |
-| DELETE | `/api/core/tenant/{id}` | 删除租户 | 是 |
-| GET | `/api/core/tenant/{id}/users` | 租户用户列表 | 是 |
-| POST | `/api/core/tenant/{id}/users` | 添加租户用户 | 是 |
-| DELETE | `/api/core/tenant/{id}/users/{userId}` | 移除租户用户 | is |
 
 ### 字典管理 (`/api/core/dict`)
 
@@ -652,8 +628,6 @@ web/src/
 | `sa_system_user_dept` | 用户部门关联表 |
 | `sa_system_post` | 岗位表 |
 | `sa_system_user_post` | 用户岗位关联表 |
-| `sa_system_tenant` | 租户表 |
-| `sa_system_user_tenant` | 用户租户关联表 |
 | `sa_system_config` | 系统配置表 |
 | `sa_system_config_group` | 配置分组表 |
 | `sa_system_dict_type` | 字典类型表 |
@@ -694,7 +668,7 @@ web/src/
 - Event (事件分发/监听器)
 - Middleware (13种中间件)
 - Security (Casbin/RBAC/CSRF/XSS)
-- Tenant (多租户/JWT/Session)
+- Tenant (JWT/Session)
 - ORM (Laravel/ThinkPHP 双适配)
 - Cache (PSR-16 缓存)
 - Validation (验证器)
@@ -719,7 +693,6 @@ NovaPHP0.0.9/
 │   ├── Core/                 # 框架核心
 │   ├── Container/            # DI 容器
 │   ├── Basic/                # 基础类
-│   ├── Tenant/               # 多租户组件
 │   ├── Security/             # 安全组件
 │   ├── Middleware/           # 框架中间件
 │   ├── Plugin/               # 插件系统

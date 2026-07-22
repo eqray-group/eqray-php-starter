@@ -27,32 +27,20 @@ use InvalidArgumentException;
  */
 final class DatabaseFactory implements DatabaseInterface
 {
-    private DatabaseInterface $driver;
+    private EloquentFactory $driver;
 	
     /** @var array<string, mixed> 模型实例缓存池 */
     private array $modelCache = [];
 	
-    /**
-     * @param array                $config  数据库配置
-     * @param string               $ormType ORM类型 ('laravelORM', 'thinkORM')
-     * @param LoggerInterface|null $logger  自定义log类，PSR-3 日志记录器
-     */
     public function __construct(
         array $config, 
-        string $ormType = 'thinkORM', 
 		protected ?object $logger = null
-        //?LoggerInterface $logger = null
     ) {
-
-        $this->driver = match ($ormType) {
-            'laravelORM', 'laravel' 	=> new EloquentFactory($config, $logger),
-            'thinkORM'               	=> new ThinkORMFactory($config, $logger),
-            default               		=> throw new InvalidArgumentException("Unsupported ORM type: {$ormType}"),
-        };
+        $this->driver = new EloquentFactory($config, $logger);
     }
 	
-    // ========== 新增：获取内部 driver 的公共方法 ==========
-    public function getDriver(): DatabaseInterface
+    // ========== 获取内部 driver ==========
+    public function getDriver(): EloquentFactory
     {
         return $this->driver;
     }
@@ -80,31 +68,23 @@ final class DatabaseFactory implements DatabaseInterface
         return $this->make($modelClass);
     }
 
-    /**
-     * 驱动判定，Repository 使用此 API 而不是 instanceof
-     */
     public function isEloquent(): bool
     {
-        return $this->driver instanceof EloquentFactory;
+        return true;
     }
 
     public function isThink(): bool
     {
-        return $this->driver instanceof ThinkORMFactory;
+        return false;
     }
 
-    /**
-     * 判断给定 modelClass 是否为 ORM 模型（由 driver 识别）
-     */
     public function isModel(string $modelClass): bool
     {
         if (method_exists($this->driver, 'isModel')) {
             return $this->driver->isModel($modelClass);
         }
-        // 兜底：检查类是否为常见 ORM 基类子类
         if (class_exists($modelClass)) {
-            return is_subclass_of($modelClass, '\Illuminate\Database\Eloquent\Model')
-                || is_subclass_of($modelClass, '\think\Model');
+            return is_subclass_of($modelClass, '\Illuminate\Database\Eloquent\Model');
         }
         return false;
     }

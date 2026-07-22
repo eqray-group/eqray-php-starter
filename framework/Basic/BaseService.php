@@ -12,7 +12,6 @@ namespace Framework\Basic;
 use Framework\DI\Injectable;
 use Framework\ORM\Trait\ServicesTrait;
 use Illuminate\Database\Capsule\Manager;
-use think\facade\Db as ThinkDb;
 
 /**
  * BaseService - 泛型服务基类.
@@ -103,64 +102,28 @@ abstract class BaseService
     /**
      * 执行事务
      *
-     * 支持多种 ORM 框架的事务处理，自动检测当前使用的框架。
-     * 支持事务嵌套，使用 savepoint 机制。
-     *
-     * @param  \Closure    $closure   事务内执行的闭包
-     * @param  bool        $isTran    是否启用事务（默认 true）
-     * @param  null|string $framework 指定框架：'thinkORM' 或 'laravelORM'，null 则自动检测
-     * @return mixed       闭包返回值
-     * @throws \Exception  事务失败时抛出异常
-     *
-     * @example
-     * // 基本用法
-     * $result = $this->transaction(function() {
-     *     $this->create($data1);
-     *     $this->create($data2);
-     *     return true;
-     * });
-     *
-     * // 不使用事务
-     * $result = $this->transaction($closure, false);
-     *
-     * // 指定框架
-     * $result = $this->transaction($closure, true, 'laravelORM');
+     * @param  \Closure $closure  事务内执行的闭包
+     * @param  bool     $isTran   是否启用事务（默认 true）
+     * @return mixed   闭包返回值
      */
-    public function transaction(\Closure $closure, bool $isTran = true, ?string $framework = null): mixed
+    public function transaction(\Closure $closure, bool $isTran = true): mixed
     {
-        // 不启用事务，直接执行闭包
         if (! $isTran) {
             return $closure();
         }
 
-        // 确定使用的框架
-        $framework = $framework ?? config('database.engine', 'thinkORM');
-
-        return match ($framework) {
-            'thinkORM'   => $this->executeThinkOrmTransaction($closure),
-            'laravelORM' => $this->executeLaravelOrmTransaction($closure),
-            default      => throw new \InvalidArgumentException("Unsupported framework: {$framework}"),
-        };
+        return Manager::connection()->transaction(function () use ($closure) {
+            return $closure();
+        });
     }
 
     /**
      * 手动开始事务
-     *
-     * 用于需要手动控制事务边界的场景。
-     * 支持嵌套事务。
-     *
-     * @param null|string $framework 指定框架
      */
-    public function beginTransaction(?string $framework = null): void
+    public function beginTransaction(): void
     {
-        $framework = $framework ?? config('database.engine', 'thinkORM');
-
         if ($this->transactionLevel === 0) {
-            match ($framework) {
-                'thinkORM'   => ThinkDb::startTrans(),
-                'laravelORM' => Manager::connection()->beginTransaction(),
-                default      => throw new \InvalidArgumentException("Unsupported framework: {$framework}"),
-            };
+            Manager::connection()->beginTransaction();
         }
 
         ++$this->transactionLevel;
@@ -168,70 +131,41 @@ abstract class BaseService
 
     /**
      * 提交事务
-     *
-     * 与 beginTransaction 配对使用。
-     *
-     * @param null|string $framework 指定框架
      */
-    public function commit(?string $framework = null): void
+    public function commit(): void
     {
-        $framework = $framework ?? config('database.engine', 'thinkORM');
-
         $this->transactionLevel = max(0, $this->transactionLevel - 1);
 
         if ($this->transactionLevel === 0) {
-            match ($framework) {
-                'thinkORM'   => ThinkDb::commit(),
-                'laravelORM' => Manager::connection()->commit(),
-                default      => throw new \InvalidArgumentException("Unsupported framework: {$framework}"),
-            };
+            Manager::connection()->commit();
         }
     }
 
     /**
      * 回滚事务
-     *
-     * 与 beginTransaction 配对使用。
-     *
-     * @param null|string $framework 指定框架
      */
-    public function rollback(?string $framework = null): void
+    public function rollback(): void
     {
-        $framework = $framework ?? config('database.engine', 'thinkORM');
-
         $this->transactionLevel = max(0, $this->transactionLevel - 1);
 
         if ($this->transactionLevel === 0) {
-            match ($framework) {
-                'thinkORM'   => ThinkDb::rollback(),
-                'laravelORM' => Manager::connection()->rollBack(),
-                default      => throw new \InvalidArgumentException("Unsupported framework: {$framework}"),
-            };
+            Manager::connection()->rollBack();
         }
     }
 
     /**
      * 使用 try-catch-finally 模式执行事务
-     *
-     * 更明确的事务控制方式，适合复杂业务场景。
-     *
-     * @param  \Closure    $closure   事务内执行的闭包
-     * @param  null|string $framework 指定框架
-     * @return mixed       闭包返回值
-     * @throws \Throwable
      */
-    public function transactionWithTry(\Closure $closure, ?string $framework = null): mixed
+    public function transactionWithTry(\Closure $closure): mixed
     {
-        $framework = $framework ?? config('database.engine', 'thinkORM');
-
-        $this->beginTransaction($framework);
+        $this->beginTransaction();
 
         try {
             $result = $closure();
-            $this->commit($framework);
+            $this->commit();
             return $result;
         } catch (\Throwable $e) {
-            $this->rollback($framework);
+            $this->rollback();
             throw $e;
         }
     }
@@ -268,29 +202,7 @@ abstract class BaseService
     protected function initialize(): void {}
 
     /**
-     * 执行 ThinkORM 事务
-     *
-     * 使用 ThinkPHP 的闭包事务方式，自动处理提交和回滚。
-     *
-     * @param  \Closure   $closure 事务内执行的闭包
-     * @return mixed      闭包返回值
-     * @throws \Throwable
-     */
-    protected function executeThinkOrmTransaction(\Closure $closure): mixed
-    {
-        return ThinkDb::transaction(function () use ($closure) {
-            return $closure();
-        });
-    }
-
-    /**
      * 执行 Laravel ORM 事务
-     *
-     * 使用 Laravel 的闭包事务方式，自动处理提交和回滚。
-     *
-     * @param  \Closure   $closure 事务内执行的闭包
-     * @return mixed      闭包返回值
-     * @throws \Throwable
      */
     protected function executeLaravelOrmTransaction(\Closure $closure): mixed
     {

@@ -28,7 +28,6 @@ use Framework\Basic\BaseLaORMModel;
  * @property \DateTime   $created_at 创建时间
  * @property \DateTime   $updated_at 更新时间
  
- * @property int $tenant_id
  * @property string $create_time
  * @property string $update_time
  * @property string $delete_time
@@ -66,7 +65,6 @@ class SysRoleMenu extends BaseLaORMModel
     protected $fillable = [
         'role_id',
         'menu_id',
-        'tenant_id',
         'created_by',
         'updated_by',
     ];
@@ -80,7 +78,6 @@ class SysRoleMenu extends BaseLaORMModel
         'id' => 'integer',
         'role_id' => 'integer',
         'menu_id' => 'integer',
-        'tenant_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'create_time' => 'datetime',
@@ -102,11 +99,10 @@ class SysRoleMenu extends BaseLaORMModel
      *
      * @param int   $roleId    角色ID
      * @param array<array-key, mixed> $menuIds   菜单ID数组
-     * @param int   $tenantId  租户ID
      * @param int   $createdBy 创建人ID
      * @return bool
      */
-    public static function batchInsert(int $roleId, array $menuIds, int $tenantId = 0, int $createdBy = 0): bool
+    public static function batchInsert(int $roleId, array $menuIds, int $createdBy = 0): bool
     {
         if (empty($menuIds)) {
             return false;
@@ -119,7 +115,6 @@ class SysRoleMenu extends BaseLaORMModel
             $data[] = [
                 'role_id' => $roleId,
                 'menu_id' => $menuId,
-                'tenant_id' => $tenantId,
                 'created_by' => $createdBy,
                 'updated_by' => $createdBy,
                 'create_time' => $now,
@@ -133,19 +128,12 @@ class SysRoleMenu extends BaseLaORMModel
     /**
      * 删除角色的所有菜单关联
      *
-     * @param int      $roleId   角色ID
-     * @param int|null $tenantId 租户ID（可选，不传则删除所有租户）
+     * @param int $roleId 角色ID
      * @return bool
      */
-    public static function deleteByRoleId(int $roleId, ?int $tenantId = null): bool
+    public static function deleteByRoleId(int $roleId): bool
     {
-        $query = self::where('role_id', $roleId);
-        
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
-        
-        return $query->forceDelete() !== false;
+        return self::where('role_id', $roleId)->forceDelete() !== false;
     }
 
     /**
@@ -166,58 +154,43 @@ class SysRoleMenu extends BaseLaORMModel
      *
      * @param int   $roleId    角色ID
      * @param array<array-key, mixed> $menuIds   菜单ID数组
-     * @param int   $tenantId  租户ID
      * @param int   $createdBy 创建人ID
      * @return void
      */
-    public static function syncRoleMenus(int $roleId, array $menuIds, int $tenantId = 0, int $createdBy = 0): void
+    public static function syncRoleMenus(int $roleId, array $menuIds, int $createdBy = 0): void
     {
-        // 先删除该租户下的旧关联
-        self::deleteByRoleId($roleId, $tenantId);
+        // 先删除旧关联
+        self::deleteByRoleId($roleId);
 
         // 再插入新的关联
         if (!empty($menuIds)) {
-            self::batchInsert($roleId, $menuIds, $tenantId, $createdBy);
+            self::batchInsert($roleId, $menuIds, $createdBy);
         }
     }
 
     /**
      * 获取角色菜单ID列表
      *
-     * @param int      $roleId   角色ID
-     * @param int|null $tenantId 租户ID（可选）
+     * @param int $roleId 角色ID
      * @return array<array-key, mixed>
      */
-    public static function getMenuIdsByRoleId(int $roleId, ?int $tenantId = null): array
+    public static function getMenuIdsByRoleId(int $roleId): array
     {
-        $query = self::where('role_id', $roleId);
-        
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
-        
-        return $query->pluck('menu_id')->toArray();
+        return self::where('role_id', $roleId)->pluck('menu_id')->toArray();
     }
 
     /**
      * 批量获取角色菜单ID列表
      *
-     * @param array<array-key, mixed>    $roleIds  角色ID数组
-     * @param int|null $tenantId 租户ID（可选）
+     * @param array<array-key, mixed> $roleIds 角色ID数组
      * @return array<array-key, mixed>
      */
-    public static function getMenuIdsByRoleIds(array $roleIds, ?int $tenantId = null): array
+    public static function getMenuIdsByRoleIds(array $roleIds): array
     {
         if (empty($roleIds)) {
             return [];
         }
 
-        $query = self::whereIn('role_id', $roleIds);
-        
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
-
-        return $query->pluck('menu_id')->toArray();
+        return self::whereIn('role_id', $roleIds)->pluck('menu_id')->toArray();
     }
 }

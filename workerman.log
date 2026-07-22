@@ -88,3 +88,108 @@ Stack trace:
 #25 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(603): Workerman\Worker::forkWorkers()
 #26 E:\eqray\eqray-php-starter\server3.php(572): Workerman\Worker::runAll()
 #27 {main}
+2026-07-22 14:21:48 pid:1 [2026-07-22 14:21:48] 文件变化 -> E:\eqray\eqray-php-starter\framework\Basic\BaseTpORMModel.php
+2026-07-22 14:21:48 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 14:21:50 pid:1 Error: Call to a member function getConstructor() on false in E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php:1202
+Stack trace:
+#0 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(637): Symfony\Component\DependencyInjection\ContainerBuilder->createService(Object(Symfony\Component\DependencyInjection\Definition), Array, true, 'Framework\\Cache...')
+#1 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(1320): Symfony\Component\DependencyInjection\ContainerBuilder->doGet('Framework\\Cache...', 1, Array, true)
+#2 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(1163): Symfony\Component\DependencyInjection\ContainerBuilder->doResolveServices(Object(Symfony\Component\DependencyInjection\Reference), Array, true)
+#3 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(637): Symfony\Component\DependencyInjection\ContainerBuilder->createService(Object(Symfony\Component\DependencyInjection\Definition), Array, true, 'cache')
+#4 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(582): Symfony\Component\DependencyInjection\ContainerBuilder->doGet('cache', 1)
+#5 E:\eqray\eqray-php-starter\framework\Container\Container.php(335): Symfony\Component\DependencyInjection\ContainerBuilder->get('cache', 1)
+#6 E:\eqray\eqray-php-starter\framework\Core\App.php(103): Framework\Container\Container->get('cache')
+#7 E:\eqray\eqray-php-starter\framework\helpers.php(141): Framework\Core\App::make('cache', Array)
+#8 E:\eqray\eqray-php-starter\framework\Core\Framework.php(279): app('cache')
+#9 E:\eqray\eqray-php-starter\framework\Core\Framework.php(66): Framework\Core\Framework->initializeDependencies()
+#10 E:\eqray\eqray-php-starter\framework\Core\Framework.php(91): Framework\Core\Framework->__construct()
+#11 E:\eqray\eqray-php-starter\server3.php(396): Framework\Core\Framework::getInstance()
+#12 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2641): {closure:E:\eqray\eqray-php-starter\server3.php:393}(Object(Workerman\Worker))
+#13 [internal function]: Workerman\Worker->{closure:Workerman\Worker::run():2639}()
+#14 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2659): Fiber->start()
+#15 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1619): Workerman\Worker->run()
+#16 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1536): Workerman\Worker::forkWorkersForWindows()
+#17 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(603): Workerman\Worker::forkWorkers()
+#18 E:\eqray\eqray-php-starter\server3.php(572): Workerman\Worker::runAll()
+#19 {main}
+2026-07-22 14:21:53 pid:1 Error: Call to a member function getConstructor() on false in E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php:1202
+Stack trace:
+#0 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(637): Symfony\Component\DependencyInjection\ContainerBuilder->createService(Object(Symfony\Component\DependencyInjection\Definition), Array, true, 'Framework\\Cache...')
+#1 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(1320): Symfony\Component\DependencyInjection\ContainerBuilder->doGet('Framework\\Cache...', 1, Array, true)
+#2 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(1163): Symfony\Component\DependencyInjection\ContainerBuilder->doResolveServices(Object(Symfony\Component\DependencyInjection\Reference), Array, true)
+#3 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(637): Symfony\Component\DependencyInjection\ContainerBuilder->createService(Object(Symfony\Component\DependencyInjection\Definition), Array, true, 'cache')
+#4 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(582): Symfony\Component\DependencyInjection\ContainerBuilder->doGet('cache', 1)
+#5 E:\eqray\eqray-php-starter\framework\Container\Container.php(335): Symfony\Component\DependencyInjection\ContainerBuilder->get('cache', 1)
+#6 E:\eqray\eqray-php-starter\framework\Core\App.php(103): Framework\Container\Container->get('cache')
+#7 E:\eqray\eqray-php-starter\framework\helpers.php(141): Framework\Core\App::make('cache', Array)
+#8 E:\eqray\eqray-php-starter\framework\Core\Framework.php(279): app('cache')
+#9 E:\eqray\eqray-php-starter\framework\Core\Framework.php(66): Framework\Core\Framework->initializeDependencies()
+#10 E:\eqray\eqray-php-starter\framework\Core\Framework.php(91): Framework\Core\Framework->__construct()
+#11 E:\eqray\eqray-php-starter\server3.php(396): Framework\Core\Framework::getInstance()
+#12 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2641): {closure:E:\eqray\eqray-php-starter\server3.php:393}(Object(Workerman\Worker))
+#13 [internal function]: Workerman\Worker->{closure:Workerman\Worker::run():2639}()
+#14 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2659): Fiber->start()
+#15 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1619): Workerman\Worker->run()
+#16 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1536): Workerman\Worker::forkWorkersForWindows()
+#17 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(603): Workerman\Worker::forkWorkers()
+#18 E:\eqray\eqray-php-starter\server3.php(572): Workerman\Worker::runAll()
+#19 {main}
+2026-07-22 14:50:04 pid:1 [2026-07-22 14:50:04] 内存占用 -> 进程ID: 0, 占用: 18MB, 阈值: 512MB
+2026-07-22 14:50:24 pid:1 [2026-07-22 14:50:24] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:50:44 pid:1 [2026-07-22 14:50:44] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:51:04 pid:1 [2026-07-22 14:51:04] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:51:24 pid:1 [2026-07-22 14:51:24] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:51:44 pid:1 [2026-07-22 14:51:44] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:52:04 pid:1 [2026-07-22 14:52:04] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:52:24 pid:1 [2026-07-22 14:52:24] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:52:44 pid:1 [2026-07-22 14:52:44] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:53:04 pid:1 [2026-07-22 14:53:04] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:53:32 pid:1 [2026-07-22 14:53:32] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:53:52 pid:1 [2026-07-22 14:53:52] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:54:12 pid:1 [2026-07-22 14:54:12] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:54:26 pid:1 [2026-07-22 14:54:26] 文件变化 -> E:\eqray\eqray-php-starter\framework\Core\Router.php
+2026-07-22 14:54:26 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 14:54:48 pid:1 [2026-07-22 14:54:48] 内存占用 -> 进程ID: 0, 占用: 22MB, 阈值: 512MB
+2026-07-22 14:55:08 pid:1 [2026-07-22 14:55:08] 内存占用 -> 进程ID: 0, 占用: 22MB, 阈值: 512MB
+2026-07-22 14:55:20 pid:1 [2026-07-22 14:55:20] 文件变化 -> E:\eqray\eqray-php-starter\config\middleware.php
+2026-07-22 14:55:20 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 14:55:32 pid:1 [2026-07-22 14:55:32] 文件变化 -> E:\eqray\eqray-php-starter\framework\Middleware\CorsMiddleware.php
+2026-07-22 14:55:32 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 14:55:54 pid:1 [2026-07-22 14:55:54] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:56:14 pid:1 [2026-07-22 14:56:14] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:56:34 pid:1 [2026-07-22 14:56:34] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:56:52 pid:1 [2026-07-22 14:56:52] 文件变化 -> E:\eqray\eqray-php-starter\app\Services\SysConfigService.php
+2026-07-22 14:56:52 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 14:57:14 pid:1 [2026-07-22 14:57:14] 内存占用 -> 进程ID: 0, 占用: 24MB, 阈值: 512MB
+2026-07-22 14:57:34 pid:1 [2026-07-22 14:57:34] 内存占用 -> 进程ID: 0, 占用: 24MB, 阈值: 512MB
+2026-07-22 14:57:54 pid:1 [2026-07-22 14:57:54] 内存占用 -> 进程ID: 0, 占用: 24MB, 阈值: 512MB
+2026-07-22 14:58:14 pid:1 [2026-07-22 14:58:14] 内存占用 -> 进程ID: 0, 占用: 24MB, 阈值: 512MB
+2026-07-22 14:58:34 pid:1 [2026-07-22 14:58:34] 内存占用 -> 进程ID: 0, 占用: 24MB, 阈值: 512MB
+2026-07-22 14:58:40 pid:1 [2026-07-22 14:58:40] 文件变化 -> E:\eqray\eqray-php-starter\framework\Middleware\MiddlewareDispatcher.php
+2026-07-22 14:58:40 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 14:59:22 pid:1 [2026-07-22 14:59:22] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:59:42 pid:1 [2026-07-22 14:59:42] 内存占用 -> 进程ID: 0, 占用: 20MB, 阈值: 512MB
+2026-07-22 14:59:52 pid:1 [2026-07-22 14:59:52] 文件变化 -> E:\eqray\eqray-php-starter\framework\Core\Framework.php
+2026-07-22 14:59:52 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 15:00:08 pid:1 [2026-07-22 15:00:08] 文件变化 -> E:\eqray\eqray-php-starter\framework\Core\Framework.php
+2026-07-22 15:00:08 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 15:00:30 pid:1 [2026-07-22 15:00:30] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-22 15:00:50 pid:1 [2026-07-22 15:00:50] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-22 15:01:10 pid:1 [2026-07-22 15:01:10] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-22 15:01:30 pid:1 [2026-07-22 15:01:30] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-22 15:01:59 pid:1 [2026-07-22 15:01:59] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-22 15:02:19 pid:1 [2026-07-22 15:02:19] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-22 15:02:39 pid:1 [2026-07-22 15:02:39] 内存占用 -> 进程ID: 0, 占用: 32MB, 阈值: 512MB
+2026-07-22 15:02:59 pid:1 [2026-07-22 15:02:59] 内存占用 -> 进程ID: 0, 占用: 32MB, 阈值: 512MB
+2026-07-22 15:03:19 pid:1 [2026-07-22 15:03:19] 内存占用 -> 进程ID: 0, 占用: 32MB, 阈值: 512MB
+2026-07-22 15:03:39 pid:1 [2026-07-22 15:03:39] 内存占用 -> 进程ID: 0, 占用: 32MB, 阈值: 512MB
+2026-07-22 15:03:59 pid:1 [2026-07-22 15:03:59] 内存占用 -> 进程ID: 0, 占用: 32MB, 阈值: 512MB
+2026-07-22 15:04:19 pid:1 [2026-07-22 15:04:19] 内存占用 -> 进程ID: 0, 占用: 32MB, 阈值: 512MB
+2026-07-22 15:04:31 pid:1 [2026-07-22 15:04:31] 文件变化 -> E:\eqray\eqray-php-starter\app\Traits\DataScopeTrait.php
+2026-07-22 15:04:31 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-22 15:04:53 pid:1 [2026-07-22 15:04:53] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-22 15:05:13 pid:1 [2026-07-22 15:05:13] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-22 15:05:33 pid:1 [2026-07-22 15:05:33] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-22 15:05:53 pid:1 [2026-07-22 15:05:53] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-22 15:06:13 pid:1 [2026-07-22 15:06:13] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-22 15:06:33 pid:1 [2026-07-22 15:06:33] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB

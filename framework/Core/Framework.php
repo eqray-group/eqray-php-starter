@@ -306,6 +306,13 @@ final class Framework
         $start         = microtime(true);
         $this->request = $request;
 
+        // OPTIONS 预检请求：在路由匹配之前全局处理，返回 204 + CORS 头
+        if ($request->isMethod('OPTIONS')) {
+            $response = $this->handleCorsPreflight($request);
+            $this->logRequestAndResponse($request, $response, $start);
+            return $response;
+        }
+
         // 域名绑定解析：匹配 config/apps.php 中的 domain 字段
         // 命中后自动激活对应应用，URL 无需 prefix 前缀
         $this->resolveDomainApp($request);
@@ -774,6 +781,28 @@ final class Framework
         }
 
         return EasterEgg::getTeamResponse();
+    }
+
+    /**
+     * 处理 CORS 预检请求（OPTIONS）.
+     */
+    private function handleCorsPreflight(Request $request): Response
+    {
+        $response = new Response();
+        $response->setStatusCode(204);
+
+        $origin = $request->headers->get('Origin', '*');
+        $response->headers->set('Access-Control-Allow-Origin', $origin);
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, X-Tenant-Id, X-XSRF-TOKEN, X-CSRF-TOKEN');
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        $response->headers->set('Access-Control-Max-Age', '86400');
+
+        if ($origin !== '*') {
+            $response->headers->set('Vary', 'Origin');
+        }
+
+        return $response;
     }
 
     /**

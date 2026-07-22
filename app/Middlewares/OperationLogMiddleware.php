@@ -13,7 +13,6 @@ namespace App\Middlewares;
 
 use App\Models\SysOperationLog;
 use App\Services\IpLocationService;
-use Framework\Tenant\JwtTenantContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 

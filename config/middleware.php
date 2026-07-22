@@ -13,10 +13,10 @@ return [
     'cors' => [
         // 允许的来源域名白名单（逗号分隔），通过 .env 的 CORS_ALLOWED_ORIGINS 配置。
         // 例：CORS_ALLOWED_ORIGINS=https://admin.example.com,https://app.example.com
-        // 留空表示不下发跨域许可（同源部署无需配置，跨域必须显式列出，禁止使用 '*'）。
+        // 留空则允许所有来源（'*'），生产环境建议显式列出具体域名。
         'allowed_origins' => array_values(array_filter(array_map(
             'trim',
-            explode(',', (string) env('CORS_ALLOWED_ORIGINS', ''))
+            explode(',', (string) env('CORS_ALLOWED_ORIGINS', '*'))
         ))),
         // 是否允许携带凭证（Cookie）。注意：开启凭证时禁止使用 '*'，必须回显具体 Origin。
         'allow_credentials' => true,
@@ -35,7 +35,6 @@ return [
             '/api/core/login',
             '/api/core/logout',
             '/api/core/refresh',
-            '/api/core/switch-tenant',
             '/api/core/captcha*',
             '/webhook/*',
             '/payment/notify',
@@ -119,7 +118,6 @@ return [
             '/api/core/logout',
             '/api/core/refresh',
             '/api/core/captcha*',
-			'/api/core/switch-tenant',
             '/api/flow/*',
         ],
     ],

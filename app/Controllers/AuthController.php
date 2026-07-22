@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\SysUser;
-use App\Models\SysTenant;
-use App\Models\SysUserTenant;
 use App\Models\SysUserRole;
 use App\Models\SysLoginLog;
 use App\Services\SysUserService;
@@ -15,9 +13,7 @@ use App\Services\LoginLogService;
 use App\Services\IpLocationService;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
-use Framework\Tenant\TenantContext;
-use Framework\Tenant\JwtTenantContext;
-use Framework\Tenant\SessionTenantContext;
+use Framework\Utils\JwtFactory;
 use Framework\Attributes\Route;
 use Framework\Attributes\Auth;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,32 +23,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class AuthController extends BaseController
 {
-    /**
-     * @return mixed
-     */
     protected SysUserService $userService;
-    /**
-     */
-    /**
-     * @return mixed
-     * @var array<array-key, mixed>
-     */
     protected array $jwtConfig;
-    /**
-     * @return mixed
-     */
     protected CasbinService $casbinService;
-    /**
-     * @return mixed
-     */
     protected LoginLogService $loginLogService;
-    
-    /**
-     * IP地理位置服务
-     * @var IpLocationService
-     * @return mixed
-     */
     protected IpLocationService $ipLocationService;
+    protected JwtFactory $jwt;
 
     protected function initialize(): void
     {
@@ -61,10 +37,10 @@ class AuthController extends BaseController
         $this->casbinService   = new CasbinService();
         $this->loginLogService = new LoginLogService();
         $this->ipLocationService = new IpLocationService();
+        $this->jwt             = app('jwt');
     }
 
     #[Route(path: '/api/core/login', methods: ['POST'], name: 'auth.login')]
-            /** @var \App\Models\SysTenant|null $tenant */
     public function login(Request $request): BaseJsonResponse|JsonResponse
     {
         $username = '';
@@ -84,29 +60,16 @@ class AuthController extends BaseController
             $code     = $all['code'] ?? '';
             $uuid     = $all['uuid'] ?? '';
             $remember = $all['rememberPassword'] ?? false;
-            $tenantId = $all['tenant_id'] ?? null;
 
             if (empty($username) || empty($password)) {
                 $this->recordLoginLog($request, (string) $username, false, '用户名和密码不能为空');
                 return $this->fail('用户名和密码不能为空');
             }
 
-            if (empty($tenantId)) {
-                $this->recordLoginLog($request, (string) $username, false, '租户ID不能为空');
-                return $this->fail('租户ID不能为空');
-            }
-
             if (empty($code) || empty($uuid)) {
                 $this->recordLoginLog($request, (string) $username, false, '验证码不能为空');
                 return $this->fail('验证码不能为空');
             }
-
-            // TODO: enable captcha check after cache/session service is ready
-            // $cachedCode = $this->getCaptchaCode($uuid);
-            // if (strtolower($cachedCode) !== strtolower($code)) {
-            //     $this->recordLoginLog($request, $username, false, 'captcha error');
-            //     return $this->fail('captcha error');
-            // }
 
             $user = SysUser::where('username', $username)->first();
             if (!$user || !$user->verifyPassword($password)) {
@@ -119,47 +82,22 @@ class AuthController extends BaseController
                 return $this->fail('账号已被禁用', 403);
             }
 
-            $hasTenant = SysUserTenant::isUserInTenant($user->id, (int)$tenantId);
-            if (!$hasTenant && !$user->isSuperAdmin()) {
-                $this->recordLoginLog($request, $username, false, '您不属于该租户');
-                return $this->fail('您不属于该租户', 403);
-            }
-            /** @var SysTenant|null $tenant */
-            $tenant = SysTenant::withoutTenancy()->find($tenantId);
-            if (!$tenant || !$tenant->isValid()) {
-                $this->recordLoginLog($request, $username, false, '租户无效或已过期');
-                return $this->fail('租户无效或已过期', 403);
-            }
-
             $ttl = $remember ? 604800 : ($this->jwtConfig['ttl'] ?? 3600);
-            $tokenRole = $this->resolveTokenRoleClaim($user, (int) $tenantId);
-            $tokens = JwtTenantContext::generateLoginTokens([
-                'uid'       => $user->id,
-                'name'      => $user->username,
-                'nickname'  => $user->realname,
-                'tenant_id' => (int)$tenantId,
-                'role'      => $tokenRole,
-                'roles'     => is_array($tokenRole) ? $tokenRole : [$tokenRole],
+            $tokenResult = $this->jwt->issue([
+                'uid'      => $user->id,
+                'name'     => $user->username,
+                'nickname' => $user->realname,
+                'role'     => $user->isSuperAdmin() ? ['super_admin', 'admin'] : 'user',
+                'roles'    => $user->isSuperAdmin() ? ['super_admin', 'admin'] : ['user'],
             ], $ttl);
 
-
-            
-            $tenants = SysUserTenant::getTenantsByUser($user->id);
-            
-            SessionTenantContext::setTenantSession((int)$tenantId, $user->id, $tenants);
+            $refreshToken = $this->jwt->issueRefreshToken($user->id, 604800);
 
             $this->casbinService->syncUserRolesFromDatabase($user->id);
 
-            // 更新登录信息
             $user->updateLoginInfo($this->resolveClientIp($request));
 
-            // 写入日志
             $this->recordLoginLog($request, $user->username, true, '登录成功');
-
-            TenantContext::setTenantIdToRequest($request, (int)$tenantId > 0 ? (int)$tenantId : null);
-            TenantContext::setTenantId((int)$tenantId > 0 ? (int)$tenantId : null);
-
-            
 
             $menus       = $user->getMenuTree();
             $permissions = $user->isSuperAdmin() ? ['*'] : $user->getPermissions();
@@ -172,135 +110,20 @@ class AuthController extends BaseController
                     'avatar'   => $user->avatar,
                     'is_admin' => $user->isSuperAdmin(),
                 ],
-                'access_token'  => $tokens['token'],
-                'refresh_token' => $tokens['refresh_token'],
-                'expires_in'    => $tokens['ttl'],
-                'tenant_id'     => (int)$tenantId,
+                'access_token'  => $tokenResult['token'],
+                'refresh_token' => $refreshToken,
+                'expires_in'    => $tokenResult['ttl'],
                 'menus'         => $menus,
                 'permissions'   => $permissions,
             ], '登录成功');
 
-            $this->setAuthCookies($response, $tokens['token'], $tokens['refresh_token'], $request->isSecure());
+            $this->setAuthCookies($response, $tokenResult['token'], $refreshToken, $request->isSecure());
 
             return $response;
         } catch (\Exception $e) {
             $this->recordLoginLog($request, (string) $username, false, '登录异常：' . $e->getMessage());
             return $this->fail('error:' . $e->getMessage());
-        }             
-    }
-
-    #[Route(path: '/api/core/tenants-by-username', methods: ['GET'], name: 'auth.tenantsByUsername')]
-    public function getTenantsByUsername(Request $request): BaseJsonResponse
-    {
-        $username = $request->query->get('username', '');
-
-        if (empty($username)) {
-            return $this->fail('用户名不能为空');
         }
-
-        $user = SysUser::where('username', $username)->first();
-        if (!$user) {
-            return $this->success([]);
-        }
-
-        $tenants = SysUserTenant::getTenantsByUser($user->id);
-
-        $validTenants = array_filter($tenants, function ($tenant) {
-            /** @var SysTenant|null $tenantModel */
-            $tenantModel = SysTenant::withoutTenancy()->find($tenant['id']);
-            return $tenantModel && $tenantModel->isValid();
-        });
-
-        return $this->success(array_values($validTenants));
-    }
-
-    #[Route(path: '/api/core/user-tenants', methods: ['GET'], name: 'auth.userTenants')]
-    public function getUserTenants(Request $request): BaseJsonResponse
-    {
-        $userId = $this->getCurrentUserId($request);
-        if (!$userId) {
-            return $this->fail('未登录', 401);
-        }
-        $tenants = SysUserTenant::getTenantsByUser($userId);
-        return $this->success($tenants);
-    }
-
-    #[Route(path: '/api/core/switch-tenant', methods: ['POST'], name: 'auth.switchTenant')]
-    public function switchTenant(Request $request): BaseJsonResponse
-    {
-        try{
-            $jsonBody = [];
-            $content  = $request->getContent();
-            if (!empty($content)) {
-                $decoded = json_decode($content, true);
-                if (is_array($decoded)) {
-                    $jsonBody = $decoded;
-                }
-            }
-            $all = array_merge($request->query->all(), $request->request->all(), $jsonBody);
-
-            $userId      = $this->getCurrentUserId($request);
-            $newTenantId = (int)($all['tenant_id'] ?? 0);
-
-            if (!$userId) {
-                return $this->fail('未登录', 401);
-            }
-            if ($newTenantId <= 0) {
-                return $this->fail('租户ID不能为空', 400);
-            }
-
-            // 需先加载用户，后续的租户归属/超管判断都依赖它
-            $user = SysUser::find($userId);
-            if (!$user) {
-                return $this->fail('用户不存在', 404);
-            }
-
-            if (!SysUserTenant::isUserInTenant($userId, $newTenantId) && !$user->isSuperAdmin()) {
-                return $this->fail('您不属于该租户', 403);
-            }
-
-            /** @var SysTenant|null $tenant */
-            $tenant = SysTenant::withoutTenancy()->find($newTenantId);
-            if (!$tenant || !$tenant->isValid()) {
-                return $this->fail('租户无效或已过期', 403);
-            }
-
-            SysUserTenant::setDefaultTenant($userId, $newTenantId);
-
-            $tokenRole = $this->resolveTokenRoleClaim($user, $newTenantId);
-            $tokens = JwtTenantContext::generateLoginTokens([
-                'uid'       => $user->id,
-                'name'      => $user->username,
-                'nickname'  => $user->realname,
-                'tenant_id' => $newTenantId,
-                'role'      => $tokenRole,
-                'roles'     => is_array($tokenRole) ? $tokenRole : [$tokenRole],
-            ]);
-
-            if ($request->hasSession()) {
-                SessionTenantContext::switchTenant($newTenantId);
-            }
-
-            TenantContext::setTenantId($newTenantId);
-            $menus       = $user->getMenuTree();
-            $permissions = $user->isSuperAdmin() ? ['*'] : $user->getPermissions();
-
-            $response = $this->success([
-                'access_token'  => $tokens['token'],
-                'refresh_token' => $tokens['refresh_token'],
-                'expires_in'    => $tokens['ttl'],
-                'tenant_id'     => $newTenantId,
-                'tenant_name'   => $tenant->tenant_name,
-                'menus'         => $menus,
-                'permissions'   => $permissions,
-            ], '切换成功');
-
-            $this->setAuthCookies($response, $tokens['token'], $tokens['refresh_token'], $request->isSecure());
-
-            return $response;
-        } catch (\Exception $e) {
-            return $this->fail($e->getMessage());
-        }     
     }
 
     #[Route(path: '/api/core/refresh', methods: ['POST'], name: 'auth.refresh')]
@@ -308,41 +131,34 @@ class AuthController extends BaseController
     {
         $refreshToken = $request->cookies->get('refresh_token');
 
-        // 检查 refresh_token 是否存在
         if (!$refreshToken) {
             return $this->fail('Refresh token 不存在，请重新登录', 401);
         }
 
         try {
-            $newRefreshToken = JwtTenantContext::rotateRefreshToken($refreshToken);
-            $userId          = JwtTenantContext::validateRefreshToken($newRefreshToken);
+            $newRefreshToken = $this->jwt->rotateRefreshToken($refreshToken);
+            $userId          = $this->jwt->validateRefreshToken($newRefreshToken);
 
             $user = SysUser::find($userId);
             if (!$user) {
                 return $this->fail('用户不存在', 404);
             }
 
-            $tenantId = SessionTenantContext::getTenantId()
-                ?? SysUserTenant::getDefaultTenantId($userId)
-                ?? 0;
-
-            $tokenRole = $this->resolveTokenRoleClaim($user, (int) $tenantId);
-            $tokens = JwtTenantContext::generateLoginTokens([
-                'uid'       => $user->id,
-                'name'      => $user->username,
-                'nickname'  => $user->realname,
-                'tenant_id' => $tenantId,
-                'role'      => $tokenRole,
-                'roles'     => is_array($tokenRole) ? $tokenRole : [$tokenRole],
-            ]); 
-
-            $response = $this->success([
-                'access_token'  => $tokens['token'],
-                'refresh_token' => $newRefreshToken,
-                'expires_in'    => $tokens['ttl'],
+            $tokenResult = $this->jwt->issue([
+                'uid'      => $user->id,
+                'name'     => $user->username,
+                'nickname' => $user->realname,
+                'role'     => $user->isSuperAdmin() ? ['super_admin', 'admin'] : 'user',
+                'roles'    => $user->isSuperAdmin() ? ['super_admin', 'admin'] : ['user'],
             ]);
 
-            $this->setAuthCookies($response, $tokens['token'], $newRefreshToken, $request->isSecure());
+            $response = $this->success([
+                'access_token'  => $tokenResult['token'],
+                'refresh_token' => $newRefreshToken,
+                'expires_in'    => $tokenResult['ttl'],
+            ]);
+
+            $this->setAuthCookies($response, $tokenResult['token'], $newRefreshToken, $request->isSecure());
 
             return $response;
         } catch (\Throwable $e) {
@@ -358,14 +174,10 @@ class AuthController extends BaseController
 
         if ($token) {
             try {
-                JwtTenantContext::revokeToken($token);
+                $this->jwt->revoke($token);
             } catch (\Throwable $e) {
                 // ignore
             }
-        }
-
-        if ($request->hasSession()) {
-            SessionTenantContext::clearTenantSession();
         }
 
         $response = $this->success([], '登出成功');
@@ -378,7 +190,6 @@ class AuthController extends BaseController
     public function me(Request $request): BaseJsonResponse
     {
         $userId   = $this->getCurrentUserId($request);
-        $tenantId = TenantContext::getTenantId();
 
         if (!$userId) {
             return $this->fail('登录信息已过期，请重新登录!', 401);
@@ -389,35 +200,9 @@ class AuthController extends BaseController
             return $this->fail('用户不存在', 404);
         }
 
-        if (!$tenantId) {
-            $tenantId = SysUserTenant::getDefaultTenantId($userId);
-        }
+        $roles = SysUserRole::getRoleCodes($userId);
 
-        $tenant = $tenantId ? SysTenant::find($tenantId) : null;
-
-
-        $roles = [];
-        if ($tenantId) {
-            $roles = SysUserRole::getRoleCodesByTenant($userId, $tenantId);
-        }
-
-        $user->load(['posts', 'tenants','roles','menus']);
-
-        
-        // 获取当前租户下的部门信息
-        $department = null;
-        if ($tenantId) {
-            $tenantDeptId = \App\Models\SysUserDept::getDeptIdByUserAndTenant($userId, $tenantId);
-            if ($tenantDeptId) {
-                $dept = \App\Models\SysDept::find($tenantDeptId);
-                if ($dept) {
-                    $department = [
-                        'id'   => $dept->id,
-                        'name' => $dept->name,
-                    ];
-                }
-            }
-        }
+        $user->load(['posts', 'roles', 'menus']);
 
         return $this->success([
             'id'         => $user->id,
@@ -435,16 +220,10 @@ class AuthController extends BaseController
             'is_admin'   => $user->isSuperAdmin(),
             'buttons'    => $user->isSuperAdmin() ? ['*'] : $user->getPermissions(),
             'roles'      => $roles,
-            'department' => $department,
             'posts'      => collect($user->posts)->map(fn($p) => [
                 'id'   => $p->id,
                 'name' => $p->name,
             ])->values()->all(),
-            'tenant'     => $tenant ? [
-                'id'   => $tenant->id,
-                'name' => $tenant->tenant_name,
-                'code' => $tenant->tenant_code,
-            ] : null,
         ]);
     }
 
@@ -524,8 +303,6 @@ class AuthController extends BaseController
             'avatar'   => $body['avatar'] ?? null,
         ], fn($v) => $v !== null);
 
-
-
         try {
             $this->userService->update($userId, $data, $userId);
             $user = SysUser::find($userId);
@@ -556,21 +333,35 @@ class AuthController extends BaseController
 
         $authHeader = $request->headers->get('Authorization');
         if ($authHeader) {
-            $token = JwtTenantContext::extractTokenFromHeader($authHeader);
+            $token = $this->extractTokenFromHeader($authHeader);
             if ($token) {
-                return JwtTenantContext::getUserIdFromToken($token);
+                try {
+                    $parsed = $this->jwt->parseForAccess($token);
+                    return (int) $parsed->claims()->get('uid');
+                } catch (\Throwable $e) {
+                    return null;
+                }
             }
         }
 
         $token = $request->cookies->get('access_token');
         if ($token) {
-            return JwtTenantContext::getUserIdFromToken($token);
+            try {
+                $parsed = $this->jwt->parseForAccess($token);
+                return (int) $parsed->claims()->get('uid');
+            } catch (\Throwable $e) {
+                return null;
+            }
         }
 
-        if ($request->hasSession()) {
-            return SessionTenantContext::getUserId();
-        }
+        return null;
+    }
 
+    protected function extractTokenFromHeader(string $authHeader): ?string
+    {
+        if (preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+            return $matches[1];
+        }
         return null;
     }
 
@@ -580,15 +371,11 @@ class AuthController extends BaseController
         string $refreshToken,
         bool $isSecure
     ): void {
-        // 统一使用 SameSite=lax：跨站 POST/PUT/DELETE 不会自动携带该 Cookie（具备 CSRF 防护），
-        // 同时不影响同站导航与正常使用体验。
         $sameSite = 'lax';
         $response->headers->setCookie(new Cookie('access_token', $accessToken, time() + 3600, '/', null, $isSecure, true, false, $sameSite));
         $response->headers->setCookie(new Cookie('refresh_token', $refreshToken, time() + 86400 * 7, '/', null, $isSecure, true, false, $sameSite));
     }
 
-    /**
-     */
     protected function clearAuthCookies(BaseJsonResponse $response, bool $isSecure): void
     {
         $sameSite = 'lax';
@@ -596,36 +383,12 @@ class AuthController extends BaseController
         $response->headers->setCookie(new Cookie('refresh_token', '', time() - 3600, '/', null, $isSecure, true, false, $sameSite));
     }
 
-    /**
-     * 生成写入 token 的角色 claim（按当前租户取角色，空则回退 user）
-     *
-     * @return array<int, string>|string
-     */
-    protected function resolveTokenRoleClaim(SysUser $user, int $tenantId): array|string
-    {
-        if ($user->isSuperAdmin()) {
-            return ['super_admin', 'admin'];
-        }
-
-        if ($tenantId <= 0) {
-            return 'user';
-        }
-
-        $roles = SysUserRole::getRoleCodesByTenant((int) $user->id, $tenantId);
-        $roles = array_values(array_unique(array_filter($roles, fn($role) => is_string($role) && $role !== '')));
-
-        return $roles !== [] ? $roles : 'user';
-    }
-
-    /**
-     * 记录登录日志（成功或失败）
-     */
     protected function recordLoginLog(Request $request, string $username, bool $success, string $message = ''): void
     {
         try {
             $userAgent = $request->headers->get('User-Agent', '');
             $ip        = $this->resolveClientIp($request);
-            
+
             $location = $this->ipLocationService->getLocation($ip);
 
             $browser = 'Other';
@@ -659,7 +422,6 @@ class AuthController extends BaseController
                 'message'     => $message,
             ]);
         } catch (\Throwable $e) {
-            // log write failure must not affect main flow
             app('log')->error('AuthController recordLoginLog failed', [
                 'username' => $username,
                 'success' => $success,
@@ -669,9 +431,6 @@ class AuthController extends BaseController
         }
     }
 
-    /**
-     * 统一解析客户端IP，优先代理头并兜底框架识别结果
-     */
     protected function resolveClientIp(Request $request): string
     {
         $candidateIps = [];

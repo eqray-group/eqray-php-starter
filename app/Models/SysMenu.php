@@ -18,8 +18,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Framework\Basic\Scopes\LaTenantScope;
-
 /**
  * SysMenu 系统菜单模型
  *
@@ -68,19 +66,7 @@ class SysMenu extends BaseLaORMModel
 {
     use SoftDeletes;
 
-    /**
-     * 禁用租户隔离
-     * 菜单为系统级全局共享资源，不应用租户隔离
-     *
-     * @return void
-     */
-    public static function bootLaBelongsToTenant()
-    {
-        // 覆盖父类的 bootLaBelongsToTenant 方法，不添加租户作用域
-        // 菜单表已移除 tenant_id 字段，为全局共享资源
-    }
-
-    /**
+/**
      * 表名
      * @var string
      * @return mixed

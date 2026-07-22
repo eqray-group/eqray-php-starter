@@ -16,14 +16,12 @@ use App\Models\SysUser;
 use App\Models\SysUserRole;
 use App\Models\SysUserMenu;
 use App\Models\SysUserPost;
-use App\Models\SysUserTenant;
 use App\Models\SysRole;
 use App\Models\SysMenu;
 use App\Models\SysPost;
 use App\Dao\SysUserDao;
 use App\Services\Casbin\CasbinService;
 use Framework\Basic\BaseService;
-use Framework\Tenant\TenantContext;
 
 /**
  * SysUserService 用户服务
@@ -69,7 +67,7 @@ class SysUserService extends BaseService
      * @param string $ip       登录 IP
      * @return array<array-key, mixed>|null 成功返回用户信息和 token，失败返回 null
      */
-    public function login(string $username, string $password, string $ip = '', int $tenantId = 0): ?array
+    public function login(string $username, string $password, string $ip = ''): ?array
     {
         // 查找用户
         $user = $this->userDao->findByUsername($username);
@@ -94,8 +92,7 @@ class SysUserService extends BaseService
         // 同步用户角色到 Casbin
         $this->casbinService->syncUserRolesFromDatabase($user->id);
 
-        // 生成 JWT Token（含 tenant_id）
-        $token = $this->generateJwtToken($user, $tenantId);
+        $token = $this->generateJwtToken($user);
 
         // 获取用户菜单
         $menus = $user->getMenuTree();
@@ -115,7 +112,7 @@ class SysUserService extends BaseService
      * @param SysUser $user 用户
      * @return string
      */
-    protected function generateJwtToken(SysUser $user, int $tenantId = 0): string
+    protected function generateJwtToken(SysUser $user): string
     {
         $jwt = app('jwt');
         $roles = $user->getRoleCodes();
@@ -126,7 +123,6 @@ class SysUserService extends BaseService
             'username' => $user->username,
             'role' => $primaryRole,
             'roles' => $roles,
-            'tenant_id' => $tenantId,
         ]);
 
         return $tokenData['token'];
@@ -151,30 +147,7 @@ class SysUserService extends BaseService
         $deptId = $params['dept_id'] ?? '';
         $currentUserId = (int)($params['current_user_id'] ?? 0);
 
-        // 获取当前租户ID
-        $tenantId = \Framework\Tenant\TenantContext::getTenantId();
-
         $query = SysUser::query();
-
-        // 不管是超级管理员还是普通管理员，都只能看到自己租户下的用户
-        // 这样可以避免超级管理员误将自己的租户ID写入其他租户用户的菜单表
-        if ($tenantId) {
-            $tenantUserIds = \App\Models\SysUserTenant::where('tenant_id', $tenantId)
-                ->pluck('user_id')
-                ->toArray();
-            
-            if (empty($tenantUserIds)) {
-                // 如果租户下没有用户，返回空列表
-                return [
-                    'list' => [],
-                    'total' => 0,
-                    'page' => $page,
-                    'limit' => $limit,
-                ];
-            }
-            
-            $query->whereIn('id', $tenantUserIds);
-        }
 
         // keyword 同时模糊匹配 username / realname / phone
         if ($keyword !== '') {
@@ -197,15 +170,12 @@ class SysUserService extends BaseService
             $query->where('status', (int)$status);
         }
 
-        // 按部门过滤：从sa_system_user_dept表查询当前租户下该部门的用户
-        if ($deptId !== '' && $tenantId) {
+        if ($deptId !== '') {
             $deptUserIds = \App\Models\SysUserDept::where('dept_id', (int)$deptId)
-                ->where('tenant_id', $tenantId)
                 ->pluck('user_id')
                 ->toArray();
             
             if (empty($deptUserIds)) {
-                // 如果该部门在当前租户下没有用户，返回空列表
                 return [
                     'list' => [],
                     'total' => 0,
@@ -225,25 +195,8 @@ class SysUserService extends BaseService
             ->get()
             ->toArray();
 
-        // 格式化数据并加载租户特定的部门信息
         foreach ($list as &$item) {
             $item = $this->formatUser($item);
-            
-            // 为每个用户加载租户特定的部门信息
-            if ($tenantId) {
-                $tenantDeptId = \App\Models\SysUserDept::getDeptIdByUserAndTenant($item['id'], $tenantId);
-                if ($tenantDeptId !== null) {
-                    $item['dept_id'] = $tenantDeptId;
-                    $dept = \App\Models\SysDept::find($tenantDeptId);
-                    if ($dept) {
-                        $item['dept'] = $dept->toArray();
-                    }
-                } else {
-                    // 用户在当前租户没有部门关联，设置为null
-                    $item['dept_id'] = null;
-                    $item['dept'] = null;
-                }
-            }
         }
 
         return [
@@ -267,26 +220,7 @@ class SysUserService extends BaseService
         $keyword = trim((string)($params['keyword'] ?? ''));
         $status = $params['status'] ?? '';
 
-        $tenantId = TenantContext::getTenantId();
         $query = SysUser::query();
-
-        // 仅返回当前租户用户
-        if ($tenantId) {
-            $tenantUserIds = SysUserTenant::where('tenant_id', $tenantId)
-                ->pluck('user_id')
-                ->toArray();
-
-            if (empty($tenantUserIds)) {
-                return [
-                    'list' => [],
-                    'total' => 0,
-                    'page' => $page,
-                    'limit' => $limit,
-                ];
-            }
-
-            $query->whereIn('id', $tenantUserIds);
-        }
 
         // 搜索用户名 / 姓名 / 手机号
         if ($keyword !== '') {
@@ -335,26 +269,6 @@ class SysUserService extends BaseService
 
         $data = $this->formatUser($user);
 
-        // 获取租户特定的部门ID和部门对象
-        $tenantId = \Framework\Tenant\TenantContext::getTenantId();
-        if ($tenantId) {
-            $tenantDeptId = \App\Models\SysUserDept::getDeptIdByUserAndTenant($userId, $tenantId);
-            if ($tenantDeptId !== null) {
-                $data['dept_id'] = $tenantDeptId;
-                
-                // 加载租户特定的部门对象
-                $dept = \App\Models\SysDept::find($tenantDeptId);
-                if ($dept) {
-                    $data['dept'] = $dept->toArray();
-                }
-            } else {
-                // 用户在当前租户没有部门关联，设置为null
-                $data['dept_id'] = null;
-                $data['dept'] = null;
-            }
-        }
-
-        // 直接通过中间表获取用户角色（绕过 roles() 的 tenant_id 约束）
         $roleIds = SysUserRole::where('user_id', $userId)->pluck('role_id')->toArray();
         $data['role_ids'] = $roleIds;
         if (!empty($roleIds)) {
@@ -378,8 +292,7 @@ class SysUserService extends BaseService
             $data['postList'] = [];
         }
 
-        // 获取用户个人菜单
-        $data['menu_ids'] = SysUserMenu::getMenuIdsByUserId($userId, $tenantId);
+        $data['menu_ids'] = SysUserMenu::getMenuIdsByUserId($userId);
 
         return $data;
     }
@@ -414,23 +327,11 @@ class SysUserService extends BaseService
                 $data['password'] = '123456'; // 默认密码
             }
 
-            // 创建用户
             $user = SysUser::create($data);
-            $tenantId = TenantContext::getTenantId() ?? 0;
 
-            
-
-            // 写入用户-租户关联表
-            if ($tenantId > 0) {
-                SysUserTenant::addUserToTenant($user->id, $tenantId, false, $operator);
-            }
-            
-
-            // 分配角色
             if (!empty($data['role_ids'])) {
-                SysUserRole::syncUserRolesByTenant($user->id, $tenantId, $data['role_ids'], $operator);
+                SysUserRole::syncUserRoles($user->id, $data['role_ids'], $operator);
                 
-                // 将用户和角色相关信息同步到 casbin 表里
                 $roles = \App\Models\SysRole::whereIn('id', $data['role_ids'])
                     ->where('status', \App\Models\SysRole::STATUS_ENABLED)
                     ->pluck('code')
@@ -441,19 +342,16 @@ class SysUserService extends BaseService
                 }
             }
 
-            // 分配岗位
             if (!empty($data['post_ids'])) {
-                SysUserPost::saveUserPosts($user->id, $data['post_ids'], $tenantId, $operator);
+                SysUserPost::saveUserPosts($user->id, $data['post_ids'], $operator);
             }
 
-            // 分配个人菜单
             if (!empty($data['menu_ids'])) {
-                SysUserMenu::syncUserMenus($user->id, $data['menu_ids'], $tenantId, $operator);
+                SysUserMenu::syncUserMenus($user->id, $data['menu_ids'], $operator);
             }
 
-            // 同步用户部门关联
-            if (!empty($data['dept_id']) && $tenantId > 0) {
-                \App\Models\SysUserDept::syncUserDept($user->id, $tenantId, $data['dept_id'], $operator);
+            if (!empty($data['dept_id'])) {
+                \App\Models\SysUserDept::syncUserDept($user->id, $data['dept_id'], $operator);
             }
 
             // Clear menu tree cache if user has role/menu assignments
@@ -509,31 +407,24 @@ class SysUserService extends BaseService
                 unset($data['password']);
             }
 
-            // 更新用户
             $user->fill($data);
             $user->save();
-            $tenantId = TenantContext::getTenantId() ?? 0;
 
-            // 更新角色
             if (isset($data['role_ids'])) {
-                SysUserRole::syncUserRolesByTenant($userId, $tenantId, $data['role_ids'], $operator);
-                // 同步 Casbin
+                SysUserRole::syncUserRoles($userId, $data['role_ids'], $operator);
                 $this->casbinService->syncUserRolesFromDatabase($userId);
             }
 
-            // 更新岗位
             if (isset($data['post_ids'])) {
-                SysUserPost::saveUserPosts($userId, $data['post_ids'], $tenantId);
+                SysUserPost::saveUserPosts($userId, $data['post_ids']);
             }
 
-            // 更新个人菜单
             if (isset($data['menu_ids'])) {
-                SysUserMenu::syncUserMenus($userId, $data['menu_ids'], $tenantId, $operator);
+                SysUserMenu::syncUserMenus($userId, $data['menu_ids'], $operator);
             }
 
-            // 同步用户部门关联
-            if (isset($data['dept_id']) && $tenantId > 0) {
-                \App\Models\SysUserDept::syncUserDept($userId, $tenantId, $data['dept_id'], $operator);
+            if (isset($data['dept_id'])) {
+                \App\Models\SysUserDept::syncUserDept($userId, $data['dept_id'], $operator);
             }
 
             // Clear menu tree cache if roles or menus changed
@@ -572,9 +463,6 @@ class SysUserService extends BaseService
 
         // 删除用户菜单关联（所有租户）
         SysUserMenu::deleteByUserId($userId);
-
-        // 删除用户租户关联
-        \App\Models\SysUserTenant::where('user_id', $userId)->delete();
 
         // 删除用户部门关联
         \App\Models\SysUserDept::where('user_id', $userId)->delete();
@@ -674,8 +562,7 @@ class SysUserService extends BaseService
      */
     public function getUserMenuIds(int $userId): array
     {
-        $tenantId = \Framework\Tenant\TenantContext::getTenantId();
-        return SysUserMenu::getMenuIdsByUserId($userId, $tenantId);
+        return SysUserMenu::getMenuIdsByUserId($userId);
     }
 
     /**
@@ -693,12 +580,9 @@ class SysUserService extends BaseService
             throw new \Exception('用户不存在');
         }
 
-        // 补全所有父级菜单ID，确保父子联动完整性
         $menuIds = SysMenu::expandWithParentIds($menuIds);
 
-        // 先清理旧记录，再写入新记录
-        $tenantId = \Framework\Tenant\TenantContext::getTenantId() ?? 0;
-        SysUserMenu::syncUserMenus($userId, $menuIds, $tenantId, $operator);
+        SysUserMenu::syncUserMenus($userId, $menuIds, $operator);
 
         // 同步用户菜单权限到 Casbin
         $this->casbinService->syncUserMenuPermissions($userId);

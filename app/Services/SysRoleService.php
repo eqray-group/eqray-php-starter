@@ -188,10 +188,8 @@ class SysRoleService extends BaseService
             // 创建角色
             $role = SysRole::create($data);
 
-            // 分配菜单
             if (!empty($data['menu_ids'])) {
-                $tenantId = \Framework\Tenant\TenantContext::getTenantId() ?? 0;
-                SysRoleMenu::syncRoleMenus($role->id, $data['menu_ids'], $tenantId, $operator);
+                SysRoleMenu::syncRoleMenus($role->id, $data['menu_ids'], $operator);
             }
 
             // Clear menu tree cache for affected users
@@ -241,11 +239,8 @@ class SysRoleService extends BaseService
             $role->fill($data);
             $role->save();
 
-            // 更新菜单
             if (isset($data['menu_ids'])) {
-                $tenantId = \Framework\Tenant\TenantContext::getTenantId() ?? 0;
-                SysRoleMenu::syncRoleMenus($roleId, $data['menu_ids'], $tenantId, $operator);
-                // 同步 Casbin 权限
+                SysRoleMenu::syncRoleMenus($roleId, $data['menu_ids'], $operator);
                 $this->casbinService->syncRoleMenuPermissions($roleId);
             }
 
@@ -344,11 +339,9 @@ class SysRoleService extends BaseService
         if ($roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
             throw new \Exception('系统内置角色菜单权限不允许修改');
         }
-        // 补全所有父级菜单ID，确保父子联动完整性
         $menuIds = SysMenu::expandWithParentIds($menuIds);
 
-        $tenantId = \Framework\Tenant\TenantContext::getTenantId() ?? 0;
-        SysRoleMenu::syncRoleMenus($roleId, $menuIds, $tenantId, $operator);
+        SysRoleMenu::syncRoleMenus($roleId, $menuIds, $operator);
 
         // 同步 Casbin 权限
         $this->casbinService->syncRoleMenuPermissions($roleId);

@@ -159,11 +159,8 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/var-dumper" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/var-exporter" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/theseer/tokenizer" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/topthink/think-cache" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/topthink/think-container" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/topthink/think-helper" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/topthink/think-orm" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/topthink/think-template" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/topthink/think-validate" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/twig/twig" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/vlucas/phpdotenv" />

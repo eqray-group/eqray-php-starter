@@ -88,16 +88,6 @@ declare namespace Api {
       password: string
       code: string
       uuid: string
-      tenant_id?: number
-    }
-
-    /** 租户信息 */
-    interface TenantItem {
-      id: number
-      name: string
-      code: string
-      is_default: boolean
-      status: number
     }
 
     /** 登录响应 */
@@ -106,17 +96,6 @@ declare namespace Api {
       expires_in: number
       access_token: string
       refresh_token: string
-    }
-
-    /** 切换租户响应 */
-    interface SwitchTenantResponse {
-      access_token: string
-      refresh_token: string
-      expires_in: number
-      tenant_id?: number
-      tenant_name?: string
-      menus?: any[]
-      permissions?: string[]
     }
 
     /** 用户信息 */

@@ -127,11 +127,10 @@ class SysArticleService extends BaseService
      * @param array<array-key, mixed> $data     文章数据
      * @param int   $userId   用户ID
      * @param int   $deptId   部门ID
-     * @param int   $tenantId 租户ID
      * @return SysArticle
      * @throws \Exception
      */
-    public function create(array $data, int $userId, int $deptId, int $tenantId): SysArticle
+    public function create(array $data, int $userId, int $deptId): SysArticle
     {
         // 验证必填字段
         if (empty($data['title'])) {
@@ -154,7 +153,6 @@ class SysArticleService extends BaseService
 
         // 设置默认值和审计字段
         $data['dept_id'] = $deptId;
-        $data['tenant_id'] = $tenantId;
         $data['created_by'] = $userId;
         $data['updated_by'] = $userId;
         $data['views'] = 0;
@@ -183,7 +181,7 @@ class SysArticleService extends BaseService
         }
 
         // 不允许修改的字段
-        unset($data['dept_id'], $data['created_by'], $data['tenant_id']);
+        unset($data['dept_id'], $data['created_by']);
 
         // 设置审计字段
         $data['updated_by'] = $userId;

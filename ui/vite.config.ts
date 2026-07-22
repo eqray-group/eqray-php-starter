@@ -35,13 +35,13 @@ export default ({ mode }: { mode: string }) => {
       port: 5730,
       hmr: true,
       open: true,
-      proxy: {
-        [env.VITE_API_URL]: {
-          target: env.VITE_API_PROXY_URL,
-          rewrite: (path) => path.replace(new RegExp('^' + env.VITE_API_URL), ''),
-          changeOrigin: true
-        }
-      }
+      // proxy: {
+      //   [env.VITE_API_URL]: {
+      //     target: env.VITE_API_PROXY_URL,
+      //     rewrite: (path) => path.replace(new RegExp('^' + env.VITE_API_URL), ''),
+      //     changeOrigin: true
+      //   }
+      // }
     },
     resolve: {
       // 避免多份 Vue 实例导致 vue-i18n 与 runtime 初始化不一致
@@ -102,7 +102,7 @@ export default ({ mode }: { mode: string }) => {
     plugins: [
       vue(),
       tailwindcss(),
-      IconifyOffline({ package: '@iconify/vue' }),
+      // IconifyOffline({ package: '@iconify/vue' }),
       AutoImport({
         imports: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
         dts: 'src/types/import/auto-imports.d.ts',

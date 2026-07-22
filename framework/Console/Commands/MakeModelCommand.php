@@ -135,48 +135,14 @@ class MakeModelCommand extends Command
 
 namespace App\\Models;
 
-use think\\Model;
+use Framework\\Basic\\BaseLaORMModel;
 
-class {$className} extends Model
+class {$className} extends BaseLaORMModel
 {
-    /**
-     * 对应的数据表名
-     * @var string
-     */
     protected \$table = '{$tableName}';
 
-    /**
-     * 主键名称
-     * @var string
-     */
-    protected \$pk = 'id';
-
-    /**
-     * 是否自动写入时间戳
-     * @var bool
-     */
-    protected \$autoWriteTimestamp = true;
-
-    /**
-     * 时间戳字段名
-     * @var array<mixed> */
-    protected \$createTime = 'created_at';
-    protected \$updateTime = 'updated_at';
-
-    /**
-     * 时间戳格式
-     * @var string
-     */
-    protected \$dateFormat = 'Y-m-d H:i:s';
-
-    /**
-     * 可以被批量赋值的属性
-     * @var array<mixed> */
     protected \$fillable = [];
 
-    /**
-     * 隐藏的属性
-     * @var array<mixed> */
     protected \$hidden = [];
 }
 PHP;

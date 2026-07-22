@@ -24,29 +24,15 @@ final class DatabaseServiceProvider implements ServiceProviderInterface
         $services = $configurator->services();
 
         $dbConfig = require BASE_PATH . '/config/database.php';
-        $ormType  = $dbConfig['engine'] ?? 'thinkORM';
 
-        // 注册 DatabaseFactory ，引入log服务
         $services->set(DatabaseFactory::class)
-            ->args([
-                $dbConfig,
-                $ormType,
-                service('log'), // ->nullOnInvalid(),
-            ])
+            ->args([$dbConfig, service('log')])
             ->public();
 
-        // 别名 "db" ，引入log服务
         $services->set('db', DatabaseFactory::class)
-            ->args([
-                $dbConfig,
-                $ormType,
-                service('log'), // service(LoggerInterface::class)->nullOnInvalid(),
-            ])
+            ->args([$dbConfig, service('log')])
             ->public();
     }
 
-    /*
-    模型基类的别名，暂时不可用
-    */
     public function boot(ContainerInterface $container): void {}
 }

@@ -41,11 +41,8 @@
       <path value="$PROJECT_DIR$/vendor/psr/log" />
       <path value="$PROJECT_DIR$/vendor/sebastian/comparator" />
       <path value="$PROJECT_DIR$/vendor/topthink/think-container" />
-      <path value="$PROJECT_DIR$/vendor/topthink/think-cache" />
-      <path value="$PROJECT_DIR$/vendor/topthink/think-orm" />
       <path value="$PROJECT_DIR$/vendor/topthink/think-helper" />
       <path value="$PROJECT_DIR$/vendor/topthink/think-validate" />
-      <path value="$PROJECT_DIR$/vendor/topthink/think-template" />
       <path value="$PROJECT_DIR$/vendor/psr/cache" />
       <path value="$PROJECT_DIR$/vendor/evenement/evenement" />
       <path value="$PROJECT_DIR$/vendor/carbonphp/carbon-doctrine-types" />

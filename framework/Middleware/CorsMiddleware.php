@@ -288,25 +288,24 @@ class CorsMiddleware implements MiddlewareInterface
     {
         $requestOrigin = $request->headers->get('Origin');
 
-        // 如果没有 Origin 头，返回默认值
-        if (! $requestOrigin) {
-            return $this->allowOrigin === '*' ? '*' : null;
+        // 允许所有来源
+        if ($this->allowOrigin === '*' || $this->allowOrigin === ['*']) {
+            return $requestOrigin ?: '*';
         }
 
-        // 如果配置为 '*'，直接返回
-        if ($this->allowOrigin === '*') {
-            return '*';
+        // 如果没有 Origin 头，返回默认值
+        if (! $requestOrigin) {
+            return null;
         }
 
         // 如果是数组形式的白名单，检查是否匹配
         if (is_array($this->allowOrigin)) {
-            // 检查是否在白名单中
             foreach ($this->allowOrigin as $allowed) {
                 if ($this->matchOrigin($requestOrigin, $allowed)) {
-                    return $requestOrigin; // 返回实际请求的来源
+                    return $requestOrigin;
                 }
             }
-            return null; // 不在白名单中
+            return null;
         }
 
         // 单个字符串配置

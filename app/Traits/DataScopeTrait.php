@@ -24,26 +24,15 @@ trait DataScopeTrait
      */
     protected static function buildDataScopeCondition(Builder $query): void
     {
-        $request = \Framework\Tenant\TenantContext::getCurrentRequest();
+        $request = app('request');
         $loginUser = $request?->attributes->get('current_user');
 
-        $tenantId = (int)\Framework\Tenant\TenantContext::getTenantId();
-
-        //dump($tenantId);
-
-        // 未登录直接无数据
         if (empty($loginUser)) {
             $query->whereRaw('1 = 0');
             return;
         }
 
-        // 1、全局强制租户隔离（多租户核心）
-        $tableName = method_exists(static::class, 'getTableName')
-            ? static::getTableName()
-            : (new static())->getTable();
-        $query->where($tableName . '.tenant_id', $tenantId);
-
-        // 2、系统超级管理员：跳过业务数据权限，只保留租户隔离
+        // 系统超级管理员：跳过业务数据权限
         // if (method_exists($loginUser, 'isSuperAdmin') && $loginUser->isSuperAdmin()) {
         //     return;
         // }
