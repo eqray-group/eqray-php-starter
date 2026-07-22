@@ -3,34 +3,26 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: Framework.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Core;
 
+use Composer\Autoload\ClassLoader;
 use Framework\Basic\BaseJsonResponse;
 use Framework\Container\Container;
 use Framework\Middleware\MiddlewareDispatcher;
 use Framework\Plugin\PluginManager;
+use Framework\Utils\ReflectionTypes;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
-use RuntimeException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Framework\Utils\ReflectionTypes;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Routing\RouteCollection;
-use Throwable;
 
 /**
  * Class Framework.
@@ -83,19 +75,17 @@ final class Framework
     /**
      * 防止克隆单例实例.
      */
-    private function __clone(): void
-    {
-    }
+    private function __clone(): void {}
 
     /**
      * 防止反序列化单例实例（修正为 public 可见性）.
      *
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
     public function __wakeup(): void
     {
         // 反序列化时抛出异常，彻底禁止重建实例
-        throw new RuntimeException('Cannot unserialize singleton');
+        throw new \RuntimeException('Cannot unserialize singleton');
     }
 
     /**
@@ -108,6 +98,41 @@ final class Framework
         }
 
         return self::$instance;
+    }
+
+    /**
+     * FPM入口：完整调度流程.
+     */
+    public function run(): void
+    {
+        $request  = Request::createFromGlobals();
+        $response = $this->dispatch($request);
+        $response->send();
+    }
+
+    /*
+     * 由workerman调度
+     * 传入的是symfony 的request
+     */
+    public function handleRequest(Request $request): Response
+    {
+        return $this->dispatch($request);
+    }
+
+    /**
+     * 获取容器（对外提供接口）.
+     */
+    public function getContainer(): ContainerInterface
+    {
+        return $this->container;
+    }
+
+    /**
+     * 获取插件管理器.
+     */
+    public function getPluginManager(): ?PluginManager
+    {
+        return $this->pluginManager;
     }
 
     /**
@@ -146,7 +171,7 @@ final class Framework
 
         foreach ($dirs as $dir) {
             if (! is_dir($dir) && ! mkdir($dir, (int) $permission, true) && ! is_dir($dir)) {
-                throw new RuntimeException(sprintf('无法创建目录: %s', $dir));
+                throw new \RuntimeException(sprintf('无法创建目录: %s', $dir));
             }
         }
     }
@@ -165,7 +190,7 @@ final class Framework
         // 查找 Composer 的 ClassLoader 实例
         $composerLoader = null;
         foreach (spl_autoload_functions() as $func) {
-            if (is_array($func) && $func[0] instanceof \Composer\Autoload\ClassLoader) {
+            if (is_array($func) && $func[0] instanceof ClassLoader) {
                 $composerLoader = $func[0];
                 break;
             }
@@ -177,7 +202,7 @@ final class Framework
             return;
         }
 
-        $apps = $this->getAppsConfig();
+        $apps       = $this->getAppsConfig();
         $registered = [];
         foreach ($apps as $key => $app) {
             if ($key === 'default') {
@@ -193,7 +218,7 @@ final class Framework
             // 推导基础命名空间和基础目录（去掉 \Controllers 后缀）
             // 例如 App\Admin\Controllers → App\Admin,  app/admin/Controllers → app/admin
             // 这样注册后，App\Admin\Models\、App\Admin\Providers\ 等均自动加载
-            $baseNamespace = preg_replace('/\\\\Controllers$/', '', $namespace);
+            $baseNamespace = preg_replace('/\\\Controllers$/', '', $namespace);
             $baseDir       = preg_replace('/\/Controllers$/D', '', $dir);
 
             if ($baseNamespace !== $namespace && $baseDir !== $dir && $baseDir !== '' && is_dir($baseDir)) {
@@ -201,15 +226,15 @@ final class Framework
                 $prefix = $baseNamespace . '\\';
                 $path   = $baseDir . '/';
                 $composerLoader->addPsr4($prefix, $path);
-                $registered[] = "$prefix => $path";
+                $registered[] = "{$prefix} => {$path}";
             } elseif (is_dir($dir)) {
                 // fallback: 仅注册控制器命名空间（原行为）
                 $prefix = $namespace . '\\';
                 $composerLoader->addPsr4($prefix, $dir);
-                $registered[] = "$prefix => $dir";
+                $registered[] = "{$prefix} => {$dir}";
             }
         }
-        if (!empty($registered)) {
+        if (! empty($registered)) {
             $this->logger?->info('[Framework] 动态注册 PSR-4 命名空间: ' . implode('; ', $registered));
         }
     }
@@ -230,7 +255,7 @@ final class Framework
         // 3. 从容器获取日志服务
         try {
             $this->logger = $this->container->get('log');
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             // 回退到 null，并在必要时使用 logError
             $this->logger = null;
             // 仅在调试时可能需要知道为什么日志初始化失败
@@ -257,7 +282,7 @@ final class Framework
             } else {
                 $this->middlewareDispatcher = new MiddlewareDispatcher($this->container);
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             // 回退
             $this->middlewareDispatcher = new MiddlewareDispatcher($this->container);
             $this->logError('Failed to initialize MiddlewareDispatcher: ' . $e->getMessage());
@@ -268,100 +293,72 @@ final class Framework
             $allRoutes,
             self::MAIN_CONTROLLER_NAMESPACE
         );
-		// 5. 从容器获取缓存实例
-		$cacheService = app('cache');
+        // 5. 从容器获取缓存实例
+        $cacheService = app('cache');
 
-		// 6. 注入到 Router
-		// 必须做类型检查，因为 Router 强类型要求 Psr\SimpleCache\CacheInterface
-		if ($cacheService instanceof CacheInterface) {
-			$this->router->setCache($cacheService);
-		} else {
-			// 假如你的 cache 是 PSR-6 (Symfony CacheItemPool)，可以用适配器转一下
-			// $psr16Cache = new \Symfony\Component\Cache\Psr16Cache($cacheService);
-			// $router->setCache($psr16Cache);
-			
-			// 或者记录个日志警告
-			error_log("Warning: app('cache') does not implement PSR-16 SimpleCache.");
-		}
-		
-		// 7. 配置安全策略 (可选，但推荐)
-		$this->router->setSecurityPolicy(
-			requireExplicitAction: false, // 默认关闭，建议开启，强制要求 #[Action]
-			blacklist: []
-		);
+        // 6. 注入到 Router
+        // 必须做类型检查，因为 Router 强类型要求 Psr\SimpleCache\CacheInterface
+        if ($cacheService instanceof CacheInterface) {
+            $this->router->setCache($cacheService);
+        } else {
+            // 假如你的 cache 是 PSR-6 (Symfony CacheItemPool)，可以用适配器转一下
+            // $psr16Cache = new \Symfony\Component\Cache\Psr16Cache($cacheService);
+            // $router->setCache($psr16Cache);
+
+            // 或者记录个日志警告
+            error_log("Warning: app('cache') does not implement PSR-16 SimpleCache.");
+        }
+
+        // 7. 配置安全策略 (可选，但推荐)
+        $this->router->setSecurityPolicy(
+            requireExplicitAction: false, // 默认关闭，建议开启，强制要求 #[Action]
+            blacklist: []
+        );
 
         // 8. 注入插件自动路由映射（/blog/post/list 风格）
         if ($this->pluginManager !== null) {
             $pluginAutoNamespaces = [];
             foreach ($this->pluginManager->getLoaded() as $pluginName => $manifest) {
-                if (!is_string($pluginName) || $pluginName === '') {
+                if (! is_string($pluginName) || $pluginName === '') {
                     continue;
                 }
-                $pluginAutoNamespaces[strtolower($pluginName)] = rtrim($manifest->namespace, '\\') . '\\Controllers';
+                $pluginAutoNamespaces[strtolower($pluginName)] = rtrim($manifest->namespace, '\\') . '\Controllers';
             }
             $this->router->setPluginAutoRouteNamespaces($pluginAutoNamespaces);
         }
 
         // 9. 注入应用自动路由映射（/admin/xxx, /api/xxx 风格）
         $appNamespaces = $this->getAppAutoRouteNamespaces();
-        if (!empty($appNamespaces)) {
+        if (! empty($appNamespaces)) {
             $this->router->setAppAutoRouteNamespaces($appNamespaces);
         }
-		
     }
 
     /**
-     * 初始化插件管理器
+     * 初始化插件管理器.
      */
     private function initializePluginManager(): void
     {
         // 检查插件配置文件是否存在
-        if (!file_exists(self::PLUGIN_CONFIG_FILE)) {
+        if (! file_exists(self::PLUGIN_CONFIG_FILE)) {
             $this->pluginManager = null;
             return;
         }
 
         try {
-            $pluginConfig = require self::PLUGIN_CONFIG_FILE;
+            $pluginConfig        = require self::PLUGIN_CONFIG_FILE;
             $this->pluginManager = new PluginManager($pluginConfig);
             $this->pluginManager->discover();
             $this->pluginManager->loadEnabled();
 
             $loadedPlugins = array_keys($this->pluginManager->getLoaded());
-            if (!empty($loadedPlugins)) {
+            if (! empty($loadedPlugins)) {
                 $this->logger?->info('[Plugins] Loaded: ' . implode(', ', $loadedPlugins));
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logError('Failed to initialize PluginManager: ' . $e->getMessage());
             $this->pluginManager = null;
         }
-    }
-
-    /**
-     * FPM入口：完整调度流程.
-     */
-    public function run(): void
-    {
-        $request  = Request::createFromGlobals();
-        $response = $this->dispatch($request);
-        $response->send();
-    }
-
-    /*
-     * 由workerman调度
-     * 传入的是symfony 的request
-     */
-    public function handleRequest(Request $request): Response
-    {
-        return $this->dispatch($request);
-    }
-
-    /**
-     * 获取容器（对外提供接口）.
-     */
-    public function getContainer(): ContainerInterface
-    {
-        return $this->container;
     }
 
     /**
@@ -380,8 +377,7 @@ final class Framework
 
         try {
             $route = $this->router->match($this->request);
-			
-			
+
             if ($route === null) {
                 $response = $this->handleNotFound();
                 $this->logRequestAndResponse($this->request, $response, $start);
@@ -393,7 +389,7 @@ final class Framework
                 $this->logRequestAndResponse($this->request, $response, $start);
                 return $response;
             }
-			
+
             $this->request->attributes->set('_route', $route);
 
             $response = $this->middlewareDispatcher->dispatch(
@@ -403,7 +399,7 @@ final class Framework
 
             $this->logRequestAndResponse($this->request, $response, $start);
             return $response;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $this->handleException($e);
         } finally {
             // Workerman 下必须释放
@@ -430,7 +426,6 @@ final class Framework
 
         file_put_contents($file, "[{$time}] {$message}\n", FILE_APPEND);
     }
-
 
     /**
      * 加载所有路由（手动+注解，支持环境区分的缓存）.
@@ -473,24 +468,24 @@ final class Framework
         }
 
         // 2. 加载 Attribute 注解路由（多应用 + 主应用）
-        $appConfigs = $this->getAppsConfig();
+        $appConfigs     = $this->getAppsConfig();
         $annotatedCount = 0;
 
         // 构建多应用控制器目录映射 [namespace => dir]
         $appControllerDirs = [];
         foreach ($appConfigs as $appKey => $app) {
-            $dir = $app['dir'] ?? '';
+            $dir = $app['dir']       ?? '';
             $ns  = $app['namespace'] ?? '';
             if ($dir && $ns && is_dir($dir)) {
                 $nsKey = rtrim($ns, '\\');
-                if (!isset($appControllerDirs[$nsKey])) {
+                if (! isset($appControllerDirs[$nsKey])) {
                     $appControllerDirs[$nsKey] = $dir;
                 }
             }
         }
 
         // 始终包含默认应用目录（兜底）
-        if (!isset($appControllerDirs[self::MAIN_CONTROLLER_NAMESPACE])) {
+        if (! isset($appControllerDirs[self::MAIN_CONTROLLER_NAMESPACE])) {
             $appControllerDirs[self::MAIN_CONTROLLER_NAMESPACE] = self::MAIN_CONTROLLER_DIR;
         }
 
@@ -501,7 +496,7 @@ final class Framework
 
         $annotatedRoutes = match (true) {
             count($appControllerDirs) === 1 => $attrLoader->loadRoutes(),
-            default => $attrLoader->loadRoutesFromMultipleDirs($appControllerDirs),
+            default                         => $attrLoader->loadRoutesFromMultipleDirs($appControllerDirs),
         };
 
         $allRoutes->addCollection($annotatedRoutes);
@@ -511,7 +506,7 @@ final class Framework
         $pluginCount = 0;
         if ($this->pluginManager !== null) {
             $pluginControllerDirs = $this->pluginManager->getControllerDirs();
-            if (!empty($pluginControllerDirs)) {
+            if (! empty($pluginControllerDirs)) {
                 $pluginRoutes = $attrLoader->loadRoutesFromMultipleDirs($pluginControllerDirs);
                 $allRoutes->addCollection($pluginRoutes);
                 $pluginCount = $pluginRoutes->count();
@@ -535,17 +530,7 @@ final class Framework
     }
 
     /**
-     * 获取插件管理器
-     *
-     * @return PluginManager|null
-     */
-    public function getPluginManager(): ?PluginManager
-    {
-        return $this->pluginManager;
-    }
-
-    /**
-     * 获取多应用配置
+     * 获取多应用配置.
      *
      * @return array<string, array{dir: string, namespace: string, prefix: string}>
      */
@@ -561,12 +546,12 @@ final class Framework
             $apps = require $configFile;
         }
 
-        if (!is_array($apps)) {
+        if (! is_array($apps)) {
             $apps = [];
         }
 
         // 始终保证 default 应用存在（向后兼容）
-        if (!isset($apps['default'])) {
+        if (! isset($apps['default'])) {
             $apps = array_merge([
                 'default' => [
                     'dir'       => self::MAIN_CONTROLLER_DIR,
@@ -580,7 +565,7 @@ final class Framework
     }
 
     /**
-     * 获取应用自动路由命名空间映射
+     * 获取应用自动路由命名空间映射.
      *
      * 格式: [ 'admin' => 'App\Admin\Controllers', 'api' => 'App\Api\Controllers' ]
      * 用于 Router 自动路由解析 /admin/xxx → App\Admin\Controllers\XxxController
@@ -663,9 +648,9 @@ final class Framework
         }
 
         // 从容器获取控制器实例（支持依赖注入）
-        //$controller = $this->container->get($controllerClass);
+        // $controller = $this->container->get($controllerClass);
         // 它会尝试从容器获取，如果获取不到，会自动 new 并执行我们注入逻辑#
-        $controller = \Framework\Core\App::make($controllerClass);
+        $controller = App::make($controllerClass);
 
         // 处理路径参数和查询参数的类型转换
         $this->processRequestParameters($controllerClass, $method, $routeParams);
@@ -682,25 +667,25 @@ final class Framework
     }
 
     /**
-     * 判断插件控制器当前是否可访问（已安装且启用）
+     * 判断插件控制器当前是否可访问（已安装且启用）.
      */
     private function isPluginControllerAvailable(string $controllerClass): bool
     {
-        if (!str_starts_with($controllerClass, 'Plugins\\')) {
+        if (! str_starts_with($controllerClass, 'Plugins\\')) {
             return true;
         }
 
-        $segments = explode('\\', $controllerClass);
+        $segments            = explode('\\', $controllerClass);
         $pluginNamespaceName = $segments[1] ?? '';
         if ($pluginNamespaceName === '') {
             return false;
         }
 
-        if (!file_exists(self::PLUGIN_CONFIG_FILE)) {
+        if (! file_exists(self::PLUGIN_CONFIG_FILE)) {
             return false;
         }
 
-        $config = require self::PLUGIN_CONFIG_FILE;
+        $config    = require self::PLUGIN_CONFIG_FILE;
         $installed = is_array($config['installed'] ?? null) ? $config['installed'] : [];
         if (empty($installed)) {
             return false;
@@ -737,7 +722,7 @@ final class Framework
     {
         try {
             $reflection = new \ReflectionMethod($controllerClass, $method);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             // 如果反射失败则跳过类型转换
             $this->logger?->warning('ReflectionMethod failed', ['exception' => $e]);
             return;
@@ -820,17 +805,16 @@ final class Framework
                 'status_code' => 404,
                 'path'        => $this->request->getPathInfo(),
             ]);
-        } catch (Throwable) {
+        } catch (\Throwable) {
             // ignore
         }
         return new Response($content, Response::HTTP_NOT_FOUND);
     }
 
-
     /**
      * 处理异常.
      */
-    private function handleException(Throwable $e): Response
+    private function handleException(\Throwable $e): Response
     {
         $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
 
@@ -878,9 +862,9 @@ final class Framework
                     'status_text' => Response::$statusTexts[$statusCode] ?? 'Server Error',
                     'message'     => 'An unexpected error occurred. Please try again later. 程序发生错误，请稍后再试！',
                 ]);
-				//$content = view('errors/debug.html.twig', $templateVars);
+                // $content = view('errors/debug.html.twig', $templateVars);
             }
-        } catch (Throwable $e2) {
+        } catch (\Throwable $e2) {
             // 记录渲染模板失败的错误日志
             $this->logError('Failed to render exception view: ' . $e2->getMessage());
             // 兜底返回简单的错误文本，避免二次报错
@@ -897,7 +881,7 @@ final class Framework
      */
     private function isEasterEggRoute(array $route): bool
     {
-        if (!isset($route['controller'], $route['method'])) {
+        if (! isset($route['controller'], $route['method'])) {
             return false;
         }
 
@@ -935,7 +919,7 @@ final class Framework
                 'duration' => round($duration * 1000, 2) . 'ms', // 转换为毫秒
                 'ip'       => $request->getClientIp(),
             ]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             // 回退到文件日志
             $this->logError('Failed to write structured request log: ' . $e->getMessage());
         }

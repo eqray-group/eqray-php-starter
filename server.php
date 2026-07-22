@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * server.php
- * Workerman wrapper for FSSPHP with WebSocket support
+ * Workerman wrapper for eqrayphp with WebSocket support
  *
  * Usage:
  *   php server.php start          - Start in debug mode (foreground)
@@ -503,7 +503,7 @@ class WebSocketManager
 // 创建 HTTP Worker
 // ----------------------------------------------------------------------
 $httpWorker = new Worker('http://0.0.0.0:8000');
-$httpWorker->name = 'FSSPHP-HTTP';
+$httpWorker->name = 'eqrayphp-HTTP';
 $httpWorker->count = 4;
 
 // 存储 Framework 实例
@@ -732,7 +732,7 @@ $httpWorker->onMessage = function(TcpConnection $connection, WorkermanRequest $r
 // 创建 WebSocket Worker (ws://0.0.0.0:1234)
 // ----------------------------------------------------------------------
 $wsWorker = new Worker('websocket://0.0.0.0:1234');
-$wsWorker->name = 'FSSPHP-WebSocket';
+$wsWorker->name = 'eqrayphp-WebSocket';
 $wsWorker->count = 1;
 
 // 如果需要 SSL/TLS (wss://)，取消下面的注释并配置证书路径
@@ -793,7 +793,7 @@ $wsWorker->onConnect = function(TcpConnection $connection) {
         'type' => 'connected',
         'data' => [
             'connection_id' => $connection->id,
-            'message' => 'Welcome to FSSPHP WebSocket Server',
+            'message' => 'Welcome to eqrayphp WebSocket Server',
             'time' => date('Y-m-d H:i:s')
         ]
     ]);
@@ -1002,7 +1002,7 @@ if (!empty($redisConfigForQueue['queue']['enabled'])) {
     $queueConfig   = $redisConfigForQueue['queue'];
     $workerCount   = (int) ($queueConfig['worker_count'] ?? 2);
     $queueWorker   = new Worker();
-    $queueWorker->name  = 'FSSPHP-Queue';
+    $queueWorker->name  = 'eqrayphp-Queue';
     $queueWorker->count = $workerCount;
 
     $queueWorker->onWorkerStart = function (Worker $worker) use ($redisConfigForQueue, $queueConfig) {

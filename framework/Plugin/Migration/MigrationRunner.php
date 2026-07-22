@@ -3,69 +3,54 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: MigrationRunner.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Plugin\Migration;
 
-use Framework\Core\App;
 use Framework\Database\DatabaseFactory;
-use RuntimeException;
 
 /**
- * 插件迁移执行器
+ * 插件迁移执行器.
  *
  * 负责执行和回滚插件的数据库迁移。
- *
- * @package Framework\Plugin\Migration
  */
 class MigrationRunner
 {
     /**
-     * 迁移记录表名
-     *
-     * @var string
+     * 迁移记录表名.
      */
     private string $migrationTable;
 
     /**
-     * 数据库实例
-     *
-     * @var DatabaseFactory
+     * 数据库实例.
      */
     private DatabaseFactory $db;
 
     /**
-     * 构造函数
+     * 构造函数.
      */
     public function __construct()
     {
-        $this->db = app('db');
-        $config = require BASE_PATH . '/config/plugin/migration.php';
+        $this->db             = app('db');
+        $config               = require BASE_PATH . '/config/plugin/migration.php';
         $this->migrationTable = $config['migration_table'] ?? 'plugin_migrations';
 
         $this->ensureMigrationTableExists();
     }
 
     /**
-     * 执行插件迁移
+     * 执行插件迁移.
      *
-     * @param string $pluginName 插件名称
-     * @param string $migrationDir 迁移目录
+     * @param  string       $pluginName   插件名称
+     * @param  string       $migrationDir 迁移目录
      * @return array<mixed> 已执行的迁移文件列表
      */
     public function run(string $pluginName, string $migrationDir): array
     {
         $migrations = $this->getPendingMigrations($pluginName, $migrationDir);
-        $executed = [];
+        $executed   = [];
 
         // 按文件名排序（时间戳排序）
         sort($migrations);
@@ -86,8 +71,8 @@ class MigrationRunner
 
                 $executed[] = $migration->getName();
             } catch (\Throwable $e) {
-                throw new RuntimeException(
-                    "Migration failed for {$pluginName}: " . $migration->getName() . " - " . $e->getMessage()
+                throw new \RuntimeException(
+                    "Migration failed for {$pluginName}: " . $migration->getName() . ' - ' . $e->getMessage()
                 );
             }
         }
@@ -96,16 +81,16 @@ class MigrationRunner
     }
 
     /**
-     * 回滚插件迁移
+     * 回滚插件迁移.
      *
-     * @param string $pluginName 插件名称
-     * @param string $migrationDir 迁移目录
-     * @param int $steps 回滚步数（0 表示全部回滚）
+     * @param  string       $pluginName   插件名称
+     * @param  string       $migrationDir 迁移目录
+     * @param  int          $steps        回滚步数（0 表示全部回滚）
      * @return array<mixed> 已回滚的迁移文件列表
      */
     public function rollback(string $pluginName, string $migrationDir, int $steps = 0): array
     {
-        $executed = $this->getExecutedMigrations($pluginName);
+        $executed   = $this->getExecutedMigrations($pluginName);
         $rolledBack = [];
 
         // 按执行时间倒序排列
@@ -118,7 +103,7 @@ class MigrationRunner
         foreach ($executed as $record) {
             $migrationFile = $record['migration_file'];
 
-            if (!file_exists($migrationFile)) {
+            if (! file_exists($migrationFile)) {
                 continue;
             }
 
@@ -137,8 +122,8 @@ class MigrationRunner
 
                 $rolledBack[] = $migration->getName();
             } catch (\Throwable $e) {
-                throw new RuntimeException(
-                    "Rollback failed for {$pluginName}: " . $migration->getName() . " - " . $e->getMessage()
+                throw new \RuntimeException(
+                    "Rollback failed for {$pluginName}: " . $migration->getName() . ' - ' . $e->getMessage()
                 );
             }
         }
@@ -147,14 +132,14 @@ class MigrationRunner
     }
 
     /**
-     * 获取待执行的迁移文件
+     * 获取待执行的迁移文件.
      *
      * @param string $pluginName 插件名称
      * @param string $migrationDir 迁移目录
      * @return array<mixed> */
     public function getPendingMigrations(string $pluginName, string $migrationDir): array
     {
-        if (!is_dir($migrationDir)) {
+        if (! is_dir($migrationDir)) {
             return [];
         }
 
@@ -180,7 +165,7 @@ class MigrationRunner
     }
 
     /**
-     * 获取已执行的迁移记录
+     * 获取已执行的迁移记录.
      *
      * @param string $pluginName 插件名称
      * @return array<mixed> */
@@ -198,15 +183,15 @@ class MigrationRunner
                 if (is_object($row)) {
                     $row = get_object_vars($row);
                 }
-                if (!is_array($row)) {
+                if (! is_array($row)) {
                     continue;
                 }
 
                 $normalized[] = [
-                    'plugin_name' => (string) ($row['plugin_name'] ?? ''),
+                    'plugin_name'    => (string) ($row['plugin_name'] ?? ''),
                     'migration_name' => (string) ($row['migration_name'] ?? ''),
                     'migration_file' => (string) ($row['migration_file'] ?? ''),
-                    'executed_at' => (string) ($row['executed_at'] ?? ''),
+                    'executed_at'    => (string) ($row['executed_at'] ?? ''),
                 ];
             }
 
@@ -217,14 +202,13 @@ class MigrationRunner
     }
 
     /**
-     * 加载迁移文件
+     * 加载迁移文件.
      *
      * @param string $file 迁移文件路径
-     * @return Migration|null
      */
     private function loadMigration(string $file): ?Migration
     {
-        if (!file_exists($file)) {
+        if (! file_exists($file)) {
             return null;
         }
 
@@ -238,13 +222,13 @@ class MigrationRunner
         // 包含文件
         require_once $file;
 
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             return null;
         }
 
         $migration = new $className();
 
-        if (!($migration instanceof Migration)) {
+        if (! $migration instanceof Migration) {
             return null;
         }
 
@@ -254,10 +238,9 @@ class MigrationRunner
     }
 
     /**
-     * 从文件获取类名
+     * 从文件获取类名.
      *
      * @param string $file 文件路径
-     * @return string|null
      */
     private function getClassNameFromFile(string $file): ?string
     {
@@ -288,26 +271,26 @@ class MigrationRunner
     }
 
     /**
-     * 记录迁移执行
+     * 记录迁移执行.
      *
-     * @param string $pluginName 插件名称
+     * @param string $pluginName    插件名称
      * @param string $migrationName 迁移名称
      * @param string $migrationFile 迁移文件路径
      */
     private function recordMigration(string $pluginName, string $migrationName, string $migrationFile): void
     {
         $this->db->table($this->migrationTable)->insert([
-            'plugin_name' => $pluginName,
+            'plugin_name'    => $pluginName,
             'migration_name' => $migrationName,
             'migration_file' => $migrationFile,
-            'executed_at' => date('Y-m-d H:i:s'),
+            'executed_at'    => date('Y-m-d H:i:s'),
         ]);
     }
 
     /**
-     * 删除迁移记录
+     * 删除迁移记录.
      *
-     * @param string $pluginName 插件名称
+     * @param string $pluginName    插件名称
      * @param string $migrationName 迁移名称
      */
     private function deleteMigrationRecord(string $pluginName, string $migrationName): void
@@ -319,7 +302,7 @@ class MigrationRunner
     }
 
     /**
-     * 确保迁移记录表存在
+     * 确保迁移记录表存在.
      */
     private function ensureMigrationTableExists(): void
     {

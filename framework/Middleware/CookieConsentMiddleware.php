@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -15,7 +16,7 @@ class CookieConsentMiddleware implements MiddlewareInterface
 {
     // API 路径通常不需要处理，静态资源也应跳过
     /** @var array<mixed> */
-    private array $excludedPaths = ['/api/*']; 
+    private array $excludedPaths = ['/api/*'];
 
     public function handle(Request $request, callable $next): Response
     {
@@ -29,7 +30,7 @@ class CookieConsentMiddleware implements MiddlewareInterface
         // 2. 核心修复：确保 response 是 Response 对象
         // 并且 Content-Type 必须包含 text/html (兼容 'text/html; charset=UTF-8')
         $contentType = $response->headers->get('Content-Type', 'text/html');
-        
+
         // 【错误修复点】：原代码逻辑是 "如果是 HTML 则跳过"，这里改为 "如果不是 HTML 则跳过"
         if (! $response instanceof Response || strpos($contentType, 'text/html') === false) {
             return $response;

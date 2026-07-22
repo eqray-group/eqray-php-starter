@@ -650,10 +650,10 @@ CREATE TABLE `sa_system_config` (
 -- ----------------------------
 -- Records of sa_system_config
 -- ----------------------------
-INSERT INTO `sa_system_config` VALUES ('1', '1', 'site_copyright', 'Copyright © 2026 FSSPHP Team', '版权信息', 'textarea', null, '96', '', '1', '1', '2026-01-01 00:00:00', '2026-03-22 20:34:45', null);
-INSERT INTO `sa_system_config` VALUES ('2', '1', 'site_desc', '基于Vue3 + FSSPHP 的极速开发框架', '网站描述', 'textarea', null, '97', null, '1', '1', '2026-01-01 00:00:00', '2026-04-23 21:36:30', null);
-INSERT INTO `sa_system_config` VALUES ('3', '1', 'site_keywords', 'FSSPHP, Workerman，symfony，Thinkphp，后台管理系统', '网站关键字', 'input', null, '98', null, '1', '1', '2026-01-01 00:00:00', '2026-04-23 21:36:23', null);
-INSERT INTO `sa_system_config` VALUES ('4', '1', 'site_name', 'FssAdmin后台管理系统', '网站名称', 'input', null, '99', null, '1', '1', '2026-01-01 00:00:00', '2026-04-23 21:36:24', null);
+INSERT INTO `sa_system_config` VALUES ('1', '1', 'site_copyright', 'Copyright © 2026 eqrayphp Team', '版权信息', 'textarea', null, '96', '', '1', '1', '2026-01-01 00:00:00', '2026-03-22 20:34:45', null);
+INSERT INTO `sa_system_config` VALUES ('2', '1', 'site_desc', '基于Vue3 + eqrayphp 的极速开发框架', '网站描述', 'textarea', null, '97', null, '1', '1', '2026-01-01 00:00:00', '2026-04-23 21:36:30', null);
+INSERT INTO `sa_system_config` VALUES ('3', '1', 'site_keywords', 'eqrayphp, Workerman，symfony，Thinkphp，后台管理系统', '网站关键字', 'input', null, '98', null, '1', '1', '2026-01-01 00:00:00', '2026-04-23 21:36:23', null);
+INSERT INTO `sa_system_config` VALUES ('4', '1', 'site_name', 'eqrayadmin后台管理系统', '网站名称', 'input', null, '99', null, '1', '1', '2026-01-01 00:00:00', '2026-04-23 21:36:24', null);
 INSERT INTO `sa_system_config` VALUES ('5', '1', 'site_record_number', '9527', '网站备案号', 'input', null, '95', null, '1', '1', '2026-01-01 00:00:00', '2026-01-01 00:00:00', null);
 INSERT INTO `sa_system_config` VALUES ('6', '2', 'upload_allow_file', 'txt,doc,docx,xls,xlsx,ppt,pptx,rar,zip,7z,gz,pdf,wps,md,jpg,png,jpeg,mp4,pem,crt', '文件类型', 'input', null, '0', null, '1', '1', '2026-01-01 00:00:00', '2026-01-01 00:00:00', null);
 INSERT INTO `sa_system_config` VALUES ('7', '2', 'upload_allow_image', 'jpg,jpeg,png,gif,svg,bmp', '图片类型', 'input', null, '0', null, '1', '1', '2026-01-01 00:00:00', '2026-01-01 00:00:00', null);
@@ -1544,7 +1544,7 @@ CREATE TABLE `sa_system_user` (
 -- ----------------------------
 -- Records of sa_system_user
 -- ----------------------------
-INSERT INTO `sa_system_user` VALUES ('1', 'admin', '$2y$10$wnixh48uDnaW/6D9EygDd.OHJK0vQY/4nHaTjMKBCVDBP2NiTatqS', '冷月如霜', '1', '/uploads/2026/03/28/69c7a15ee50ff0.57272058.jpg', 'fssphp@admin.com', '15888888888', 'FSSADMIN是兼具设计美学与高效开发的后台系统!11', 'statistics', '1', '1', '1', null, '2026-05-17 09:28:26', '127.0.0.1', '1', '1', '2026-01-01 00:00:00', '2026-05-17 09:28:27', null);
+INSERT INTO `sa_system_user` VALUES ('1', 'admin', '$2y$10$wnixh48uDnaW/6D9EygDd.OHJK0vQY/4nHaTjMKBCVDBP2NiTatqS', '冷月如霜', '1', '/uploads/2026/03/28/69c7a15ee50ff0.57272058.jpg', 'eqrayphp@admin.com', '15888888888', 'eqrayadmin是兼具设计美学与高效开发的后台系统!11', 'statistics', '1', '1', '1', null, '2026-05-17 09:28:26', '127.0.0.1', '1', '1', '2026-01-01 00:00:00', '2026-05-17 09:28:27', null);
 INSERT INTO `sa_system_user` VALUES ('2', 'martin', '$2y$10$L3sEraye7Q8XPenbx5M8JOW6j9BP1B/E2Iox6o6mVYB1MjML942N2', '刘炽平', '2', 'https://static.wandongli.com/static/pc/images/png.png', 'martin@163.com', '15888888888', null, 'work', '2', '0', '1', '', '2026-05-03 23:23:33', '127.0.0.1', '1', '1', '2026-01-01 00:00:00', '2026-05-03 23:23:33', null);
 INSERT INTO `sa_system_user` VALUES ('3', 'allen', '$2y$10$H8d7riOjOiwPSopguEQ1fuKZz.fA0A54OvuzTqgJlbG1N3uOxEwM.', '张小龙', '1', 'https://static.wandongli.com/static/pc/images/png.png', '', '15888888888', null, 'work', '10', '0', '1', '', null, null, '1', '1', '2026-01-01 00:00:00', '2026-03-21 23:24:03', null);
 INSERT INTO `sa_system_user` VALUES ('4', 'mark', '$2y$10$sY/4StKVV.N/8Ock8J8kdeIOK4jS4tAUoYjkzvB8Tzy0fLh.wA2KS', '任宇昕', '2', 'https://static.wandongli.com/static/pc/images/png.png', null, '15888888888', null, 'work', '11', '0', '1', null, null, null, '1', '1', '2026-01-01 00:00:00', '2026-03-21 23:20:40', null);

@@ -14,7 +14,7 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
+ * This file is part of eqrayphp Framework.
  *
  * @link     https://github.com/xuey490/project
  * @license  https://github.com/xuey490/project/blob/main/LICENSE
@@ -195,7 +195,7 @@ class User
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
+ * This file is part of eqrayphp Framework.
  *
  * @link     https://github.com/xuey490/project
  * @license  https://github.com/xuey490/project/blob/main/LICENSE

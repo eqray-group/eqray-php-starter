@@ -3,70 +3,54 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: PluginManager.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Plugin;
 
 use Composer\Autoload\ClassLoader;
-use Framework\Container\Container;
 use Framework\Plugin\Migration\MigrationRunner;
-use InvalidArgumentException;
-use RuntimeException;
 
 /**
- * 插件管理器
+ * 插件管理器.
  *
  * 负责插件的发现、加载、安装、卸载、启用、禁用等生命周期管理。
- *
- * @package Framework\Plugin
  */
 class PluginManager
 {
     /**
-     * 已发现的插件清单（已解析的 manifest）
+     * 已发现的插件清单（已解析的 manifest）.
      *
      * @var array<string, PluginManifest>
      */
     private array $manifests = [];
 
     /**
-     * 已加载的插件实例
+     * 已加载的插件实例.
      *
      * @var array<string, PluginManifest>
      */
     private array $loaded = [];
 
     /**
-     * 插件配置
+     * 插件配置.
      *
      * @var array<mixed> */
     private array $config;
 
     /**
-     * Composer 自动加载器实例
-     *
-     * @var ClassLoader|null
+     * Composer 自动加载器实例.
      */
     private ?ClassLoader $classLoader = null;
 
     /**
-     * 迁移执行器
-     *
-     * @var MigrationRunner|null
+     * 迁移执行器.
      */
     private ?MigrationRunner $migrationRunner = null;
 
     /**
-     * 构造函数
+     * 构造函数.
      *
      * @param array<mixed> $config 插件配置
      */
@@ -74,22 +58,19 @@ class PluginManager
     {
         $this->config = array_merge([
             'installed' => [],
-            'paths' => [BASE_PATH . '/plugins'],
-            'defaults' => [
+            'paths'     => [BASE_PATH . '/plugins'],
+            'defaults'  => [
                 'autoload_providers' => true,
-                'autoload_routes' => true,
-                'cache_enabled' => true,
-                'cache_ttl' => 3600,
+                'autoload_routes'    => true,
+                'cache_enabled'      => true,
+                'cache_ttl'          => 3600,
             ],
             'namespace_prefix' => 'Plugins\\',
         ], $config);
     }
 
     /**
-     * 设置迁移执行器
-     *
-     * @param MigrationRunner $runner
-     * @return self
+     * 设置迁移执行器.
      */
     public function setMigrationRunner(MigrationRunner $runner): self
     {
@@ -98,18 +79,16 @@ class PluginManager
     }
 
     /**
-     * 发现所有插件
+     * 发现所有插件.
      *
      * 扫描配置的插件目录，解析所有 plugin.json 文件。
-     *
-     * @return self
      */
     public function discover(): self
     {
         $paths = $this->config['paths'] ?? [BASE_PATH . '/plugins'];
 
         foreach ($paths as $path) {
-            if (!is_dir($path)) {
+            if (! is_dir($path)) {
                 continue;
             }
 
@@ -127,9 +106,9 @@ class PluginManager
                 if (file_exists($manifestPath)) {
                     try {
                         $manifest = PluginManifest::fromFile($manifestPath);
-                        //dump($manifest);
+                        // dump($manifest);
                         $this->manifests[$manifest->name] = $manifest;
-                    } catch (InvalidArgumentException $e) {
+                    } catch (\InvalidArgumentException $e) {
                         // 记录错误但继续扫描其他插件
                         error_log("[PluginManager] Failed to load manifest: {$manifestPath} - " . $e->getMessage());
                     }
@@ -141,11 +120,9 @@ class PluginManager
     }
 
     /**
-     * 加载已启用的插件
+     * 加载已启用的插件.
      *
      * 根据依赖关系排序后依次加载。
-     *
-     * @return self
      */
     public function loadEnabled(): self
     {
@@ -160,12 +137,12 @@ class PluginManager
 
         foreach ($sortedPlugins as $name => $info) {
             // 跳过未启用的插件
-            if (!($info['enabled'] ?? false)) {
+            if (! ($info['enabled'] ?? false)) {
                 continue;
             }
 
             // 跳过未发现的插件
-            if (!isset($this->manifests[$name])) {
+            if (! isset($this->manifests[$name])) {
                 error_log("[PluginManager] Plugin '{$name}' is installed but not found in any path");
                 continue;
             }
@@ -177,18 +154,17 @@ class PluginManager
     }
 
     /**
-     * 加载单个插件
+     * 加载单个插件.
      *
-     * @param string $name 插件名称
-     * @return self
-     * @throws InvalidArgumentException 插件不存在
-     * @throws RuntimeException 依赖检查失败
+     * @param  string                    $name 插件名称
+     * @throws \InvalidArgumentException 插件不存在
+     * @throws \RuntimeException         依赖检查失败
      */
     public function load(string $name): self
     {
         $manifest = $this->manifests[$name] ?? null;
-        if (!$manifest) {
-            throw new InvalidArgumentException("Plugin not found: {$name}");
+        if (! $manifest) {
+            throw new \InvalidArgumentException("Plugin not found: {$name}");
         }
 
         // 检查是否已加载
@@ -198,16 +174,16 @@ class PluginManager
 
         // 检查运行环境要求
         $requirements = $manifest->checkRequirements();
-        if (!$requirements['satisfied']) {
-            throw new RuntimeException(
+        if (! $requirements['satisfied']) {
+            throw new \RuntimeException(
                 "Plugin '{$name}' requirements not satisfied: " . implode(', ', $requirements['errors'])
             );
         }
 
         // 检查插件依赖
         $dependencies = $this->checkDependencies($name);
-        if (!$dependencies['satisfied']) {
-            throw new RuntimeException(
+        if (! $dependencies['satisfied']) {
+            throw new \RuntimeException(
                 "Plugin '{$name}' dependencies not satisfied: " . implode(', ', $dependencies['errors'])
             );
         }
@@ -222,15 +198,15 @@ class PluginManager
     }
 
     /**
-     * 安装插件
+     * 安装插件.
      *
-     * @param string $name 插件名称
+     * @param  string                                                          $name 插件名称
      * @return array{success: bool, message: string, migrations: array<mixed>}
      */
     public function install(string $name): array
     {
         $manifest = $this->manifests[$name] ?? null;
-        if (!$manifest) {
+        if (! $manifest) {
             return ['success' => false, 'message' => "Plugin not found: {$name}", 'migrations' => []];
         }
 
@@ -241,21 +217,21 @@ class PluginManager
 
         // 检查运行环境要求
         $requirements = $manifest->checkRequirements();
-        if (!$requirements['satisfied']) {
+        if (! $requirements['satisfied']) {
             return [
-                'success' => false,
-                'message' => "Requirements not satisfied: " . implode(', ', $requirements['errors']),
-                'migrations' => []
+                'success'    => false,
+                'message'    => 'Requirements not satisfied: ' . implode(', ', $requirements['errors']),
+                'migrations' => [],
             ];
         }
 
         // 检查依赖
         $dependencies = $this->checkDependencies($name);
-        if (!$dependencies['satisfied']) {
+        if (! $dependencies['satisfied']) {
             return [
-                'success' => false,
-                'message' => "Dependencies not satisfied: " . implode(', ', $dependencies['errors']),
-                'migrations' => []
+                'success'    => false,
+                'message'    => 'Dependencies not satisfied: ' . implode(', ', $dependencies['errors']),
+                'migrations' => [],
             ];
         }
 
@@ -281,46 +257,46 @@ class PluginManager
 
             // 更新配置
             $this->updateInstalledConfig($name, [
-                'enabled' => true,
-                'version' => $manifest->version,
+                'enabled'      => true,
+                'version'      => $manifest->version,
                 'installed_at' => date('Y-m-d H:i:s'),
             ]);
             $this->clearRouteCacheBestEffort();
 
             return [
-                'success' => true,
-                'message' => "Plugin '{$name}' installed successfully",
+                'success'    => true,
+                'message'    => "Plugin '{$name}' installed successfully",
                 'migrations' => $migrations,
             ];
         } catch (\Throwable $e) {
             return [
-                'success' => false,
-                'message' => "Installation failed: " . $e->getMessage(),
+                'success'    => false,
+                'message'    => 'Installation failed: ' . $e->getMessage(),
                 'migrations' => $migrations,
             ];
         }
     }
 
     /**
-     * 卸载插件
+     * 卸载插件.
      *
-     * @param string $name 插件名称
-     * @param bool $force 是否强制卸载（忽略依赖检查）
+     * @param  string                                $name  插件名称
+     * @param  bool                                  $force 是否强制卸载（忽略依赖检查）
      * @return array{success: bool, message: string}
      */
     public function uninstall(string $name, bool $force = false): array
     {
         // 检查是否已安装
-        if (!$this->isInstalled($name)) {
+        if (! $this->isInstalled($name)) {
             return ['success' => false, 'message' => "Plugin not installed: {$name}"];
         }
 
         // 检查是否有其他插件依赖此插件
         $dependents = $this->getDependents($name);
-        if (!empty($dependents) && !$force) {
+        if (! empty($dependents) && ! $force) {
             return [
                 'success' => false,
-                'message' => "Cannot uninstall: other plugins depend on it: " . implode(', ', $dependents)
+                'message' => 'Cannot uninstall: other plugins depend on it: ' . implode(', ', $dependents),
             ];
         }
 
@@ -352,19 +328,19 @@ class PluginManager
 
             return ['success' => true, 'message' => "Plugin '{$name}' uninstalled successfully"];
         } catch (\Throwable $e) {
-            return ['success' => false, 'message' => "Uninstallation failed: " . $e->getMessage()];
+            return ['success' => false, 'message' => 'Uninstallation failed: ' . $e->getMessage()];
         }
     }
 
     /**
-     * 启用插件
+     * 启用插件.
      *
-     * @param string $name 插件名称
+     * @param  string                                $name 插件名称
      * @return array{success: bool, message: string}
      */
     public function enable(string $name): array
     {
-        if (!$this->isInstalled($name)) {
+        if (! $this->isInstalled($name)) {
             return ['success' => false, 'message' => "Plugin not installed: {$name}"];
         }
 
@@ -395,23 +371,23 @@ class PluginManager
 
             return ['success' => true, 'message' => "Plugin '{$name}' enabled successfully"];
         } catch (\Throwable $e) {
-            return ['success' => false, 'message' => "Enable failed: " . $e->getMessage()];
+            return ['success' => false, 'message' => 'Enable failed: ' . $e->getMessage()];
         }
     }
 
     /**
-     * 禁用插件
+     * 禁用插件.
      *
-     * @param string $name 插件名称
+     * @param  string                                $name 插件名称
      * @return array{success: bool, message: string}
      */
     public function disable(string $name): array
     {
-        if (!$this->isInstalled($name)) {
+        if (! $this->isInstalled($name)) {
             return ['success' => false, 'message' => "Plugin not installed: {$name}"];
         }
 
-        if (!$this->isEnabled($name)) {
+        if (! $this->isEnabled($name)) {
             return ['success' => false, 'message' => "Plugin already disabled: {$name}"];
         }
 
@@ -438,15 +414,14 @@ class PluginManager
 
             return ['success' => true, 'message' => "Plugin '{$name}' disabled successfully"];
         } catch (\Throwable $e) {
-            return ['success' => false, 'message' => "Disable failed: " . $e->getMessage()];
+            return ['success' => false, 'message' => 'Disable failed: ' . $e->getMessage()];
         }
     }
 
     /**
-     * 检查插件是否已安装
+     * 检查插件是否已安装.
      *
      * @param string $name 插件名称
-     * @return bool
      */
     public function isInstalled(string $name): bool
     {
@@ -454,10 +429,9 @@ class PluginManager
     }
 
     /**
-     * 检查插件是否已启用
+     * 检查插件是否已启用.
      *
      * @param string $name 插件名称
-     * @return bool
      */
     public function isEnabled(string $name): bool
     {
@@ -465,10 +439,9 @@ class PluginManager
     }
 
     /**
-     * 检查插件是否已加载
+     * 检查插件是否已加载.
      *
      * @param string $name 插件名称
-     * @return bool
      */
     public function isLoaded(string $name): bool
     {
@@ -476,7 +449,7 @@ class PluginManager
     }
 
     /**
-     * 获取所有已发现的插件清单
+     * 获取所有已发现的插件清单.
      *
      * @return array<string, PluginManifest>
      */
@@ -486,10 +459,9 @@ class PluginManager
     }
 
     /**
-     * 获取单个插件清单
+     * 获取单个插件清单.
      *
      * @param string $name 插件名称
-     * @return PluginManifest|null
      */
     public function getManifest(string $name): ?PluginManifest
     {
@@ -497,7 +469,7 @@ class PluginManager
     }
 
     /**
-     * 获取所有已加载的插件
+     * 获取所有已加载的插件.
      *
      * @return array<string, PluginManifest>
      */
@@ -507,7 +479,7 @@ class PluginManager
     }
 
     /**
-     * 获取所有已加载插件的控制器目录
+     * 获取所有已加载插件的控制器目录.
      *
      * 返回格式：[namespace => directory]
      *
@@ -519,7 +491,7 @@ class PluginManager
         foreach ($this->loaded as $manifest) {
             $controllerDir = $manifest->getControllerDir();
             if (is_dir($controllerDir)) {
-                $dirs[$manifest->namespace . '\\Controllers'] = $controllerDir;
+                $dirs[$manifest->namespace . '\Controllers'] = $controllerDir;
             }
         }
         return $dirs;
@@ -528,18 +500,17 @@ class PluginManager
     /**
      * 获取插件服务
      *
-     * @param string $pluginName 插件名称
+     * @param string $pluginName  插件名称
      * @param string $serviceName 服务名称（不含命名空间）
-     * @return object|null
      */
     public function getService(string $pluginName, string $serviceName): ?object
     {
         $manifest = $this->loaded[$pluginName] ?? null;
-        if (!$manifest) {
+        if (! $manifest) {
             return null;
         }
 
-        $serviceClass = $manifest->namespace . '\\Services\\' . $serviceName;
+        $serviceClass = $manifest->namespace . '\Services\\' . $serviceName;
         if (class_exists($serviceClass)) {
             return app()->make($serviceClass);
         }
@@ -548,32 +519,32 @@ class PluginManager
     }
 
     /**
-     * 检查插件依赖
+     * 检查插件依赖.
      *
-     * @param string $name 插件名称
+     * @param  string                                       $name 插件名称
      * @return array{satisfied: bool, errors: array<mixed>}
      */
     public function checkDependencies(string $name): array
     {
         $manifest = $this->manifests[$name] ?? null;
-        if (!$manifest) {
+        if (! $manifest) {
             return ['satisfied' => false, 'errors' => ["Plugin not found: {$name}"]];
         }
 
-        $errors = [];
+        $errors       = [];
         $dependencies = $manifest->dependencies;
 
-        //error_log(json_encode($dependencies));
+        // error_log(json_encode($dependencies));
 
         foreach ($dependencies as $depName => $versionConstraint) {
             // 检查依赖是否已安装
-            if (!$this->isInstalled($depName)) {
+            if (! $this->isInstalled($depName)) {
                 $errors[] = "Required plugin not installed: {$depName}";
                 continue;
             }
 
             // 检查依赖是否已启用
-            if (!$this->isEnabled($depName)) {
+            if (! $this->isEnabled($depName)) {
                 $errors[] = "Required plugin not enabled: {$depName}";
                 continue;
             }
@@ -590,7 +561,7 @@ class PluginManager
     }
 
     /**
-     * 获取依赖指定插件的其他插件
+     * 获取依赖指定插件的其他插件.
      *
      * @param string $name 插件名称
      * @return array<mixed> */
@@ -608,7 +579,7 @@ class PluginManager
     }
 
     /**
-     * 按依赖关系排序插件
+     * 按依赖关系排序插件.
      *
      * 使用拓扑排序确保依赖的插件先加载。
      *
@@ -617,12 +588,12 @@ class PluginManager
     private function sortByDependencies(array $plugins): array
     {
         // 构建依赖图
-        $graph = [];
+        $graph    = [];
         $inDegree = [];
 
         foreach ($plugins as $name => $info) {
-            if (!isset($graph[$name])) {
-                $graph[$name] = [];
+            if (! isset($graph[$name])) {
+                $graph[$name]    = [];
                 $inDegree[$name] = 0;
             }
 
@@ -632,7 +603,7 @@ class PluginManager
                     // 只有当依赖也是已安装插件时才加入图
                     if (isset($plugins[$dep])) {
                         $graph[$dep][] = $name;
-                        $inDegree[$name]++;
+                        ++$inDegree[$name];
                     }
                 }
             }
@@ -647,12 +618,12 @@ class PluginManager
         }
 
         $sorted = [];
-        while (!empty($queue)) {
-            $node = array_shift($queue);
+        while (! empty($queue)) {
+            $node          = array_shift($queue);
             $sorted[$node] = $plugins[$node];
 
             foreach ($graph[$node] ?? [] as $neighbor) {
-                $inDegree[$neighbor]--;
+                --$inDegree[$neighbor];
                 if ($inDegree[$neighbor] === 0) {
                     $queue[] = $neighbor;
                 }
@@ -662,7 +633,7 @@ class PluginManager
         // 检测循环依赖
         if (count($sorted) !== count($plugins)) {
             // 存在循环依赖，返回原始顺序
-            error_log("[PluginManager] Circular dependency detected in plugins");
+            error_log('[PluginManager] Circular dependency detected in plugins');
             return $plugins;
         }
 
@@ -670,9 +641,7 @@ class PluginManager
     }
 
     /**
-     * 注册插件命名空间到 Composer 自动加载器
-     *
-     * @param PluginManifest $manifest
+     * 注册插件命名空间到 Composer 自动加载器.
      */
     private function registerAutoload(PluginManifest $manifest): void
     {
@@ -687,9 +656,9 @@ class PluginManager
     }
 
     /**
-     * 更新已安装插件配置
+     * 更新已安装插件配置.
      *
-     * @param string $name 插件名称
+     * @param string       $name 插件名称
      * @param array<mixed> $info 插件信息
      */
     private function updateInstalledConfig(string $name, array $info): void
@@ -697,7 +666,7 @@ class PluginManager
         $configFile = BASE_PATH . '/config/plugin/plugins.php';
 
         if (file_exists($configFile)) {
-            $config = require $configFile;
+            $config                     = require $configFile;
             $config['installed'][$name] = array_merge(
                 $config['installed'][$name] ?? [],
                 $info
@@ -712,7 +681,7 @@ class PluginManager
     }
 
     /**
-     * 从已安装插件配置中移除
+     * 从已安装插件配置中移除.
      *
      * @param string $name 插件名称
      */

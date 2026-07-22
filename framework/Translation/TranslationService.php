@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Translation;
@@ -32,15 +25,11 @@ use Symfony\Component\Translation\Translator;
  * - 提供翻译方法，支持参数替换
  *
  * 支持的语言：en（英语）、zh_CN（简体中文）、zh_TW（繁体中文）、ja（日语）
- *
- * @package Framework\Translation
  */
 class TranslationService
 {
     /**
      * Symfony Translator 实例.
-     *
-     * @var Translator
      */
     private Translator $translator;
 
@@ -62,10 +51,10 @@ class TranslationService
      *
      * 根据当前语言环境翻译指定的消息 ID，支持参数占位符替换。
      *
-     * @param string      $id         翻译键（消息 ID）
+     * @param string       $id         翻译键（消息 ID）
      * @param array<mixed> $parameters 占位符替换参数数组
-     * @param string      $domain     翻译域，默认为 'messages'
-     * @param string|null $locale     目标语言，为 null 时使用当前语言环境
+     * @param string       $domain     翻译域，默认为 'messages'
+     * @param null|string  $locale     目标语言，为 null 时使用当前语言环境
      *
      * @return string 翻译后的文本
      */

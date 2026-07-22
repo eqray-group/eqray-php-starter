@@ -2,13 +2,17 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace Framework\Core;
 
 use Framework\Attributes\Action;
 use Framework\Attributes\Auth;
-use Framework\Attributes\Role;
 use Framework\Attributes\MiddlewareProviderInterface;
-use Psr\Container\ContainerInterface;
+use Framework\Attributes\Role;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
@@ -16,12 +20,9 @@ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
-use ReflectionClass;
-use ReflectionMethod;
-use Throwable;
 
 /**
- * Router (Enhanced Version)
+ * Router (Enhanced Version).
  *
  * 功能特性：
  * - 混合路由：支持 Symfony 定义路由 + 自动推断路由
@@ -33,18 +34,25 @@ use Throwable;
 class Router
 {
     private const AUTO_ROUTE_PREFIX = 'auto_route_';
+
     private const PLUGIN_AUTO_ROUTE_PREFIX = 'plugin_auto_route_';
+
     private const DEFAULT_CONTROLLER_NAMESPACE = 'App\Controllers';
-    private const CACHE_KEY_PREFIX = ':route_match_v1_';//redis 分组
+
+    private const CACHE_KEY_PREFIX = ':route_match_v1_'; // redis 分组
+
     private const CACHE_TTL = 3600; // 缓存 1 小时
 
     // 定义参数处理常量
     private const PARAM_SINGLE_KEY = 'id';
+
     private const PARAM_MULTI_PREFIX = 'param';
 
     // 核心依赖
     private RouteCollection $routes;
+
     private ?CacheInterface $cache = null; // PSR-16 缓存实例
+
     private string $controllerNamespace;
 
     // 编译后的元数据缓存 (Controller::Method => Metadata Array)
@@ -74,7 +82,7 @@ class Router
      * [
      *   'blog' => 'Plugins\Blog\Controllers',
      *   'bbs'  => 'Plugins\Bbs\Controllers'
-     * ]
+     * ].
      *
      * @var array<string, string>
      */
@@ -85,7 +93,7 @@ class Router
      * [
      *   'admin' => 'App\Admin\Controllers',
      *   'api'   => 'App\Api\Controllers'
-     * ]
+     * ].
      *
      * 优先级：低于插件，高于默认 controllerNamespace
      *
@@ -97,13 +105,13 @@ class Router
         RouteCollection $routes,
         string $controllerNamespace = self::DEFAULT_CONTROLLER_NAMESPACE
     ) {
-        $this->routes = $routes;
+        $this->routes              = $routes;
         $this->controllerNamespace = rtrim($controllerNamespace, '\\');
     }
 
     /**
      * 设置缓存实例 (PSR-16)
-     * 建议注入 Redis 或 ArrayCache
+     * 建议注入 Redis 或 ArrayCache.
      */
     public function setCache(CacheInterface $cache): self
     {
@@ -112,11 +120,11 @@ class Router
     }
 
     /**
-     * 设置安全策略
+     * 设置安全策略.
      *
-     * @param bool $requireExplicitAction 是否开启显式 Action 模式
-     * @param array<mixed> $whitelist 允许的命名空间前缀，例如 ['App\Controllers\Api']
-     * @param array<mixed> $blacklist 禁止的命名空间前缀，例如 ['App\Controllers\Internal']
+     * @param bool         $requireExplicitAction 是否开启显式 Action 模式
+     * @param array<mixed> $whitelist             允许的命名空间前缀，例如 ['App\Controllers\Api']
+     * @param array<mixed> $blacklist             禁止的命名空间前缀，例如 ['App\Controllers\Internal']
      */
     public function setSecurityPolicy(
         bool $requireExplicitAction = false,
@@ -124,13 +132,13 @@ class Router
         array $blacklist = []
     ): self {
         $this->requireExplicitAction = $requireExplicitAction;
-        $this->whitelist = $whitelist;
-        $this->blacklist = $blacklist;
+        $this->whitelist             = $whitelist;
+        $this->blacklist             = $blacklist;
         return $this;
     }
 
     /**
-     * 设置应用自动路由命名空间映射
+     * 设置应用自动路由命名空间映射.
      *
      * 用于支持多应用模式，如 /admin/controller/action → App\Admin\Controllers
      *
@@ -140,10 +148,10 @@ class Router
     {
         $normalized = [];
         foreach ($namespaces as $slug => $namespace) {
-            if (!is_string($slug) || !is_string($namespace)) {
+            if (! is_string($slug) || ! is_string($namespace)) {
                 continue;
             }
-            $slug = strtolower(trim($slug));
+            $slug      = strtolower(trim($slug));
             $namespace = trim($namespace, '\\');
             if ($slug === '' || $namespace === '') {
                 continue;
@@ -155,7 +163,7 @@ class Router
     }
 
     /**
-     * 设置插件自动路由命名空间映射
+     * 设置插件自动路由命名空间映射.
      *
      * @param array<string, string> $namespaces
      */
@@ -163,10 +171,10 @@ class Router
     {
         $normalized = [];
         foreach ($namespaces as $slug => $namespace) {
-            if (!is_string($slug) || !is_string($namespace)) {
+            if (! is_string($slug) || ! is_string($namespace)) {
                 continue;
             }
-            $slug = strtolower(trim($slug));
+            $slug      = strtolower(trim($slug));
             $namespace = trim($namespace, '\\');
             if ($slug === '' || $namespace === '') {
                 continue;
@@ -179,9 +187,9 @@ class Router
 
     /**
      * 加载预编译的元数据
-     * 生产环境应在引导阶段调用此方法，传入由 dumpMetadata 生成的数组
+     * 生产环境应在引导阶段调用此方法，传入由 dumpMetadata 生成的数组.
      * @param array<mixed> $metadata
- */
+     */
     public function loadMetadata(array $metadata): void
     {
         $this->compiledMetadata = $metadata;
@@ -189,20 +197,18 @@ class Router
 
     /**
      * 获取当前收集到的所有元数据
-     * 用于构建脚本导出并缓存到文件
+     * 用于构建脚本导出并缓存到文件.
      * @return array<mixed>
- */
+     */
     public function dumpMetadata(): array
     {
         return $this->compiledMetadata;
     }
 
     /**
-     * 执行路由匹配
-
+     * 执行路由匹配.
+     *
      * @return ?array<mixed>
-    
-
      */
     public function match(Request $request): ?array
     {
@@ -211,7 +217,7 @@ class Router
 
         // 2. 检查路由命中缓存 (Route Hit Cache)
         // 如果命中缓存，直接恢复环境并返回，跳过后续所有逻辑
-		//dump($this->cache);
+        // dump($this->cache);
         $cacheKey = $this->getCacheKey($request);
         if ($this->cache && $cachedResult = $this->cache->get($cacheKey)) {
             return $this->restoreFromCache($request, $cachedResult);
@@ -226,8 +232,8 @@ class Router
         }
 
         // 准备路由上下文
-        $context = (new RequestContext())->fromRequest($request);
-        $path = $request->getPathInfo();
+        $context      = (new RequestContext())->fromRequest($request);
+        $path         = $request->getPathInfo();
         $matchedRoute = null;
 
         // 4. 尝试匹配定义路由 (Symfony Routes)
@@ -236,7 +242,7 @@ class Router
         }
 
         // 5. 如果未匹配，尝试自动路由 (Auto Route)
-        if (!$matchedRoute) {
+        if (! $matchedRoute) {
             $matchedRoute = $this->matchAutoRoute($path, $request);
         }
 
@@ -250,10 +256,9 @@ class Router
     }
 
     /**
-     * 匹配 Symfony 定义的静态路由
-
-     * @return ?array<mixed> 
-
+     * 匹配 Symfony 定义的静态路由.
+     *
+     * @return ?array<mixed>
      */
     private function matchDefinedRoutes(
         string $path,
@@ -262,9 +267,9 @@ class Router
     ): ?array {
         try {
             $matcher = new UrlMatcher($this->routes, $context);
-            $params = $matcher->match($path);
+            $params  = $matcher->match($path);
 
-            if (!isset($params['_controller'])) {
+            if (! isset($params['_controller'])) {
                 return null;
             }
 
@@ -274,7 +279,7 @@ class Router
                 : [$params['_controller'], '__invoke'];
 
             // 验证控制器方法是否存在
-            if (!$this->isControllerMethodValid($controller, $method)) {
+            if (! $this->isControllerMethodValid($controller, $method)) {
                 return null;
             }
 
@@ -286,23 +291,20 @@ class Router
                 $params,
                 $params['_route'] ?? 'defined_route'
             );
-
         } catch (MethodNotAllowedException|ResourceNotFoundException $e) {
             return null;
         }
     }
 
     /**
-     * 匹配自动推断路由 /Controller/Action/Params
-
+     * 匹配自动推断路由 /Controller/Action/Params.
+     *
      * @return ?array<mixed>
-    
-
      */
     private function matchAutoRoute(string $path, Request $request): ?array
     {
         $segments = array_values(array_filter(explode('/', trim($path, '/'))));
-        $method = $request->getMethod();
+        $method   = $request->getMethod();
 
         // 根路径尝试 Home 控制器
         if (empty($segments)) {
@@ -341,9 +343,9 @@ class Router
         for ($i = count($segments); $i >= 1; --$i) {
             // 构建潜在的控制器类名
             $controller = $this->buildControllerClass(array_slice($segments, 0, $i));
-            
+
             // 如果类不存在，或者被安全策略拦截，则跳过
-            if (!$controller || !$this->isControllerAllowed($controller)) {
+            if (! $controller || ! $this->isControllerAllowed($controller)) {
                 continue;
             }
 
@@ -357,7 +359,7 @@ class Router
             if ($route) {
                 // 自动生成路由名称
                 $routeName = self::AUTO_ROUTE_PREFIX . md5($controller . $route['method']);
-                
+
                 return $this->finalizeRoute(
                     $request,
                     $controller,
@@ -372,13 +374,11 @@ class Router
     }
 
     /**
-     * 匹配插件自动路由（仅在第一段命中插件标识时生效）
+     * 匹配插件自动路由（仅在第一段命中插件标识时生效）.
      *
      * @param array<int, string> $segments
-
+     *
      * @return ?array<mixed>
-    
-
      */
     private function matchPluginAutoRoute(array $segments, string $httpMethod, Request $request): ?array
     {
@@ -386,13 +386,13 @@ class Router
             return null;
         }
 
-        $pluginSlug = strtolower((string)($segments[0] ?? ''));
-        if ($pluginSlug === '' || !isset($this->pluginRouteNamespaces[$pluginSlug])) {
+        $pluginSlug = strtolower((string) ($segments[0] ?? ''));
+        if ($pluginSlug === '' || ! isset($this->pluginRouteNamespaces[$pluginSlug])) {
             return null;
         }
 
         $pluginControllerNamespace = $this->pluginRouteNamespaces[$pluginSlug];
-        $controllerSegments = array_slice($segments, 1);
+        $controllerSegments        = array_slice($segments, 1);
         if (empty($controllerSegments)) {
             return null;
         }
@@ -402,7 +402,7 @@ class Router
                 $pluginControllerNamespace,
                 array_slice($controllerSegments, 0, $i)
             );
-            if (!$controller || !$this->isControllerAllowed($controller)) {
+            if (! $controller || ! $this->isControllerAllowed($controller)) {
                 continue;
             }
 
@@ -428,13 +428,11 @@ class Router
     }
 
     /**
-     * 匹配应用自动路由 /admin/user/list => App\Admin\Controllers\UserController::list
+     * 匹配应用自动路由 /admin/user/list => App\Admin\Controllers\UserController::list.
      *
      * @param array<int, string> $segments
-
+     *
      * @return ?array<mixed>
-    
-
      */
     private function matchAppAutoRoute(array $segments, string $httpMethod, Request $request): ?array
     {
@@ -443,13 +441,13 @@ class Router
             return null;
         }
 
-        $appSlug = strtolower((string)($segments[0] ?? ''));
-        if ($appSlug === '' || !isset($this->appRouteNamespaces[$appSlug])) {
+        $appSlug = strtolower((string) ($segments[0] ?? ''));
+        if ($appSlug === '' || ! isset($this->appRouteNamespaces[$appSlug])) {
             return null;
         }
 
         $appControllerNamespace = $this->appRouteNamespaces[$appSlug];
-        $controllerSegments = array_slice($segments, 1);
+        $controllerSegments     = array_slice($segments, 1);
         if (empty($controllerSegments)) {
             return null;
         }
@@ -459,7 +457,7 @@ class Router
                 $appControllerNamespace,
                 array_slice($controllerSegments, 0, $i)
             );
-            if (!$controller || !$this->isControllerAllowed($controller)) {
+            if (! $controller || ! $this->isControllerAllowed($controller)) {
                 continue;
             }
 
@@ -490,10 +488,8 @@ class Router
      * 如 admin.example.com/user/list → App\Admin\Controllers\UserController::list
      *
      * @param array<int, string> $segments URL 路径段（已去除 prefix）
-
+     *
      * @return ?array<mixed>
-    
-
      */
     private function matchDomainAppRoute(string $namespace, array $segments, string $httpMethod, Request $request): ?array
     {
@@ -502,7 +498,7 @@ class Router
                 $namespace,
                 array_slice($segments, 0, $i)
             );
-            if (!$controller || !$this->isControllerAllowed($controller)) {
+            if (! $controller || ! $this->isControllerAllowed($controller)) {
                 continue;
             }
 
@@ -528,10 +524,10 @@ class Router
     }
 
     /**
-     * 最终化路由：提取 Attribute，注入 Request，构建返回数组
-     * @param array<mixed> $params
- * @return array<mixed>
- */
+     * 最终化路由：提取 Attribute，注入 Request，构建返回数组.
+     * @param  array<mixed> $params
+     * @return array<mixed>
+     */
     private function finalizeRoute(
         Request $request,
         string $controller,
@@ -558,7 +554,7 @@ class Router
         ];
 
         $request->attributes->add($attributes);
-        #dump($meta);
+        # dump($meta);
         // 返回结果数组 (部分数据用于缓存)
         return [
             'controller' => $controller,
@@ -572,12 +568,12 @@ class Router
                 // 注意：attributes_instances 包含对象，序列化可能较重，
                 // 如果缓存驱动不支持对象序列化，这里需要剔除或特殊处理。
                 // 假设 PSR-16 驱动支持 serialize。
-            ]
+            ],
         ];
     }
 
     /**
-     * 安全策略检查：控制器是否允许访问
+     * 安全策略检查：控制器是否允许访问.
      */
     private function isControllerAllowed(string $controller): bool
     {
@@ -589,7 +585,7 @@ class Router
         }
 
         // 2. 白名单检查 (如果有配置)
-        if (!empty($this->whitelist)) {
+        if (! empty($this->whitelist)) {
             foreach ($this->whitelist as $allowed) {
                 if (str_starts_with($controller, $allowed)) {
                     return true;
@@ -604,9 +600,9 @@ class Router
     }
 
     /**
-     * 获取元数据：从预编译数组读取 或 实时扫描
+     * 获取元数据：从预编译数组读取 或 实时扫描.
      * @return array<mixed>
- */
+     */
     private function getMetadata(string $controller, string $method): array
     {
         $key = "{$controller}::{$method}";
@@ -620,18 +616,18 @@ class Router
     }
 
     /**
-     * 扫描 Attributes (Reflection)
+     * 扫描 Attributes (Reflection).
      * @return array<mixed>
- */
+     */
     private function scanAttributes(string $controller, string $method): array
     {
-        $middleware = [];
-        $auth = null;
-        $roles = [];
+        $middleware         = [];
+        $auth               = null;
+        $roles              = [];
         $attributeInstances = []; // 存储原始 Attribute 实例 (Role, Auth 对象)
 
         try {
-            $rc = new ReflectionClass($controller);
+            $rc = new \ReflectionClass($controller);
             $rm = $rc->getMethod($method);
 
             // 合并类级别和方法级别的 Attributes
@@ -652,22 +648,21 @@ class Router
 
                     // 收集 Auth
                     if ($instance instanceof Auth) {
-                        $auth = $instance->required; // 假设 Auth 有 required 属性
+                        $auth                            = $instance->required; // 假设 Auth 有 required 属性
                         $attributeInstances[Auth::class] = $instance;
                     }
 
                     // 收集 Role
                     if ($instance instanceof Role) {
-                        $roles = array_merge($roles, $instance->roles); // 假设 Role 有 roles 数组
+                        $roles                           = array_merge($roles, $instance->roles); // 假设 Role 有 roles 数组
                         $attributeInstances[Role::class] = $instance;
                     }
-
-                } catch (Throwable $e) {
+                } catch (\Throwable $e) {
                     // 忽略无法实例化的 Attribute
                     continue;
                 }
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logException($e, "Attribute scan failed for {$controller}::{$method}");
         }
 
@@ -681,33 +676,33 @@ class Router
 
     /**
      * 从缓存恢复请求状态
-     * @param array<mixed> $cachedRoute
- * @return array<mixed>
- */
+     * @param  array<mixed> $cachedRoute
+     * @return array<mixed>
+     */
     private function restoreFromCache(Request $request, array $cachedRoute): array
     {
         // 恢复基本的 Request Attributes
-        $attributes = $cachedRoute['params'] ?? [];
+        $attributes                = $cachedRoute['params'] ?? [];
         $attributes['_controller'] = $cachedRoute['controller'] . '::' . $cachedRoute['method'];
-        $cachedMiddleware = is_array($cachedRoute['middleware'] ?? null) ? $cachedRoute['middleware'] : [];
+        $cachedMiddleware          = is_array($cachedRoute['middleware'] ?? null) ? $cachedRoute['middleware'] : [];
 
         // 即使命中缓存，也重新读取最新 Attribute 元数据，避免注解变更后缓存导致鉴权失效
         $controller = (string) ($cachedRoute['controller'] ?? '');
-        $method = (string) ($cachedRoute['method'] ?? '');
+        $method     = (string) ($cachedRoute['method'] ?? '');
         if ($controller !== '' && $method !== '') {
-            $meta = $this->getMetadata($controller, $method);
+            $meta                      = $this->getMetadata($controller, $method);
             $attributes['_middleware'] = array_values(array_unique(array_merge(
                 $cachedMiddleware,
                 (array) ($meta['middleware'] ?? [])
             )));
-            $attributes['_auth'] = $meta['auth'] ?? null;
-            $attributes['_roles'] = array_values(array_unique((array) ($meta['roles'] ?? [])));
+            $attributes['_auth']       = $meta['auth'] ?? null;
+            $attributes['_roles']      = array_values(array_unique((array) ($meta['roles'] ?? [])));
             $attributes['_attributes'] = $meta['attributes_instances'] ?? [];
 
             // 同步更新缓存结果中的扁平元数据，保证后续逻辑一致
-            $cachedRoute['middleware'] = $attributes['_middleware'];
+            $cachedRoute['middleware']  = $attributes['_middleware'];
             $cachedRoute['__meta_flat'] = [
-                '_auth' => $attributes['_auth'],
+                '_auth'  => $attributes['_auth'],
                 '_roles' => $attributes['_roles'],
             ];
         } else {
@@ -722,12 +717,12 @@ class Router
     }
 
     /**
-     * 写入缓存
+     * 写入缓存.
      * @param array<mixed> $route
- */
+     */
     private function saveToCache(string $key, array $route): void
     {
-        if (!$this->cache) {
+        if (! $this->cache) {
             return;
         }
 
@@ -744,23 +739,20 @@ class Router
 
     /**
      * @param array<mixed> $segments
-
-     * @return ?string
-
      */
     private function buildControllerClass(array $segments): ?string
     {
         $segments = array_map(
-            fn($s) => preg_replace('/[^a-zA-Z0-9_]/', '', $s),
+            fn ($s) => preg_replace('/[^a-zA-Z0-9_]/', '', $s),
             $segments
         );
 
-        if (!$segments) {
+        if (! $segments) {
             return null;
         }
 
         $segments = array_map('ucfirst', $segments);
-        
+
         // 尝试1: 完整命名空间类 (App\Controllers\Admin\User)
         $base = $this->controllerNamespace . '\\' . implode('\\', $segments);
         if (class_exists($base)) {
@@ -775,18 +767,18 @@ class Router
     }
 
     /**
-     * 在指定命名空间下构建控制器类名
+     * 在指定命名空间下构建控制器类名.
      *
      * @param array<int, string> $segments
      */
     private function buildControllerClassForNamespace(string $baseNamespace, array $segments): ?string
     {
         $segments = array_map(
-            fn($s) => preg_replace('/[^a-zA-Z0-9_]/', '', $s),
+            fn ($s) => preg_replace('/[^a-zA-Z0-9_]/', '', $s),
             $segments
         );
 
-        if (!$segments) {
+        if (! $segments) {
             return null;
         }
 
@@ -804,11 +796,10 @@ class Router
     }
 
     /**
-    * @param array<mixed> $segments
-
-    * @return ?array<mixed> 
-
-    */
+     * @param array<mixed> $segments
+     *
+     * @return ?array<mixed>
+     */
     private function matchActionAndParams(
         string $controller,
         array $segments,
@@ -818,7 +809,7 @@ class Router
         $methods = $this->getValidControllerMethods($controller);
 
         // 如果没有 URL 片段，尝试 RESTful 默认动作 (index, store...)
-        if (!$segments) {
+        if (! $segments) {
             $action = $this->getRestAction($httpMethod);
             return in_array($action, $methods, true)
                 ? ['method' => $action, 'params' => []]
@@ -830,16 +821,16 @@ class Router
         // 例如 /User/Get/Info -> 优先匹配 getInfo(), 参数无
         // 其次匹配 get(), 参数 Info
         for ($i = count($segments); $i >= 1; --$i) {
-             // 修正逻辑：原版是从 1 递增，这里建议倒序或正序根据业务习惯
-             // 这里采用标准逻辑：尝试把 segments[0...i] 组合成方法名
-             $actionName = $this->buildActionName(array_slice($segments, 0, $i));
-             
-             if (in_array($actionName, $methods, true)) {
-                 return [
-                     'method' => $actionName,
-                     'params' => $this->extractParams(array_slice($segments, $i)),
-                 ];
-             }
+            // 修正逻辑：原版是从 1 递增，这里建议倒序或正序根据业务习惯
+            // 这里采用标准逻辑：尝试把 segments[0...i] 组合成方法名
+            $actionName = $this->buildActionName(array_slice($segments, 0, $i));
+
+            if (in_array($actionName, $methods, true)) {
+                return [
+                    'method' => $actionName,
+                    'params' => $this->extractParams(array_slice($segments, $i)),
+                ];
+            }
         }
 
         // 最后尝试：RESTful 默认动作，剩余全部作为参数
@@ -847,7 +838,7 @@ class Router
         if (in_array($fallback, $methods, true)) {
             return [
                 'method' => $fallback,
-                'params' => $this->extractParams($segments)
+                'params' => $this->extractParams($segments),
             ];
         }
 
@@ -856,9 +847,9 @@ class Router
 
     /**
      * 获取控制器中有效的 public 方法列表
-     * 应用 requireExplicitAction 策略
+     * 应用 requireExplicitAction 策略.
      * @return array<mixed>
- */
+     */
     private function getValidControllerMethods(string $class): array
     {
         if (isset($this->methodExistenceCache[$class])) {
@@ -866,10 +857,10 @@ class Router
         }
 
         try {
-            $rc = new ReflectionClass($class);
+            $rc           = new \ReflectionClass($class);
             $validMethods = [];
 
-            foreach ($rc->getMethods(ReflectionMethod::IS_PUBLIC) as $m) {
+            foreach ($rc->getMethods(\ReflectionMethod::IS_PUBLIC) as $m) {
                 // 忽略构造函数和魔术方法
                 if ($m->isConstructor() || str_starts_with($m->getName(), '__')) {
                     continue;
@@ -886,16 +877,13 @@ class Router
             }
 
             return $this->methodExistenceCache[$class] = $validMethods;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $this->methodExistenceCache[$class] = [];
         }
     }
 
     /**
      * @param array<mixed> $segments
-
-     * @return string
-
      */
     private function buildActionName(array $segments): string
     {
@@ -904,9 +892,9 @@ class Router
     }
 
     /**
-    * @param array<mixed> $segments
-    * @return array<mixed>
-    */
+     * @param  array<mixed> $segments
+     * @return array<mixed>
+     */
     private function extractParams(array $segments): array
     {
         if (empty($segments)) {
@@ -935,9 +923,8 @@ class Router
     }
 
     /**
-    * @return ?array<mixed>
-    
-    */
+     * @return ?array<mixed>
+     */
     private function tryHomeController(Request $request): ?array
     {
         // 域名绑定应用优先：尝试域名对应应用的 HomeController
@@ -945,7 +932,7 @@ class Router
         if ($domainAppSlug !== null && isset($this->appRouteNamespaces[$domainAppSlug])) {
             $namespace = $this->appRouteNamespaces[$domainAppSlug];
             foreach (['Home', 'HomeController'] as $name) {
-                $class = "{$namespace}\\{$name}";
+                $class  = "{$namespace}\\{$name}";
                 $method = $this->getRestAction($request->getMethod());
                 if ($this->isControllerMethodValid($class, $method)) {
                     return $this->finalizeRoute(
@@ -995,7 +982,7 @@ class Router
         }
     }
 
-    private function logException(Throwable $e, string $context): void
+    private function logException(\Throwable $e, string $context): void
     {
         // 建议替换为 Psr\Log\LoggerInterface
         error_log("[Router] {$context}: {$e->getMessage()}");

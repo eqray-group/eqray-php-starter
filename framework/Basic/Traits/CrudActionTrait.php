@@ -3,24 +3,17 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2026-1-10
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Basic\Traits;
 
+use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Throwable;
 
 /**
- * CRUD 操作 Trait
+ * CRUD 操作 Trait.
  *
  * 为控制器提供标准的增删改查（CRUD）操作方法。
  * 封装了列表查询、详情查看、新增、更新、删除等常用操作，
@@ -39,13 +32,11 @@ use Throwable;
  *     protected UserService $service;
  *     protected UserValidator $validator;
  * }
- *
- * @package Framework\Basic\Traits
  */
 trait CrudActionTrait
 {
     /**
-     * 获取列表数据
+     * 获取列表数据.
      *
      * 支持多种输出格式：
      * - normal: 普通分页列表
@@ -53,8 +44,8 @@ trait CrudActionTrait
      * - tree: 树形结构
      * - table_tree: 表格树形结构
      *
-     * @param Request $request HTTP 请求对象
-     * @return \Framework\Basic\BaseJsonResponse 返回 JSON 格式的列表数据
+     * @param  Request          $request HTTP 请求对象
+     * @return BaseJsonResponse 返回 JSON 格式的列表数据
      */
     public function index(Request $request)
     {
@@ -72,19 +63,19 @@ trait CrudActionTrait
             ];
 
             $method = $methodMap[$format] ?? 'formatNormal';
-            return $this->$method($list, $total);
-        } catch (Throwable $e) {
+            return $this->{$method}($list, $total);
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
 
     /**
-     * 获取单条数据详情
+     * 获取单条数据详情.
      *
      * 根据 ID 获取数据详情，如果数据不存在则返回错误信息。
      *
-     * @param Request $request HTTP 请求对象，需包含 id 参数
-     * @return \Framework\Basic\BaseJsonResponse 返回 JSON 格式的详情数据
+     * @param  Request          $request HTTP 请求对象，需包含 id 参数
+     * @return BaseJsonResponse 返回 JSON 格式的详情数据
      */
     public function show(Request $request)
     {
@@ -97,19 +88,19 @@ trait CrudActionTrait
             }
 
             return $this->success($data->toArray(), 'ok');
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
 
     /**
-     * 新增数据
+     * 新增数据.
      *
      * 创建新的数据记录。如果设置了验证器，会先进行数据验证。
      * 验证场景为 'store'。
      *
-     * @param Request $request HTTP 请求对象，包含新增数据
-     * @return \Framework\Basic\BaseJsonResponse 返回 JSON 格式的操作结果，成功时包含新创建的数据
+     * @param  Request          $request HTTP 请求对象，包含新增数据
+     * @return BaseJsonResponse 返回 JSON 格式的操作结果，成功时包含新创建的数据
      */
     public function store(Request $request)
     {
@@ -122,19 +113,19 @@ trait CrudActionTrait
 
             $model = $this->service->save($data);
             return $this->success($model->toArray(), 'ok');
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
 
     /**
-     * 更新数据
+     * 更新数据.
      *
      * 根据 ID 更新已有数据记录。如果设置了验证器，会先进行数据验证。
      * 验证场景为 'update'。
      *
-     * @param Request $request HTTP 请求对象，需在 attributes 中包含 id，以及更新数据
-     * @return \Framework\Basic\BaseJsonResponse 返回 JSON 格式的操作结果
+     * @param  Request          $request HTTP 请求对象，需在 attributes 中包含 id，以及更新数据
+     * @return BaseJsonResponse 返回 JSON 格式的操作结果
      */
     public function update(Request $request)
     {
@@ -148,18 +139,18 @@ trait CrudActionTrait
 
             $this->service->update($id, $data);
             return $this->success();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
 
     /**
-     * 删除数据
+     * 删除数据.
      *
      * 根据 ID 删除数据记录。
      *
-     * @param Request $request HTTP 请求对象，需在 attributes 中包含 id
-     * @return \Framework\Basic\BaseJsonResponse 返回 JSON 格式的操作结果
+     * @param  Request          $request HTTP 请求对象，需在 attributes 中包含 id
+     * @return BaseJsonResponse 返回 JSON 格式的操作结果
      */
     public function destroy(Request $request)
     {
@@ -168,7 +159,7 @@ trait CrudActionTrait
 
             $this->service->delete($id);
             return $this->success();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }

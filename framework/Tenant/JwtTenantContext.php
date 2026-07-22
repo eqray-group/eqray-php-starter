@@ -3,23 +3,17 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: JwtTenantContext.php
- * @Date: 2026-03-19
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Tenant;
 
 use Framework\Utils\JwtFactory;
+use Lcobucci\JWT\Token\Plain;
 
 /**
- * JWT Token 租户上下文管理器
+ * JWT Token 租户上下文管理器.
  *
  * 基于现有的 JwtFactory（Lcobucci）封装，提供租户信息管理能力。
  * 兼容现有 JWT 实现，支持：
@@ -33,7 +27,7 @@ use Framework\Utils\JwtFactory;
  * Token 结构（claims）：
  * ```
  * {
- *   "iss": "FssPhp",           // 签发者
+ *   "iss": "eqrayphp",           // 签发者
  *   "iat": 1234567890,         // 签发时间
  *   "exp": 1234571490,         // 过期时间
  *   "uid": 1001,               // 用户ID
@@ -42,41 +36,29 @@ use Framework\Utils\JwtFactory;
  *   "role": "admin"            // 角色
  * }
  * ```
- *
- * @package Framework\Tenant
  */
 final class JwtTenantContext
 {
     /**
-     * 默认 Token 有效期（秒）
+     * 默认 Token 有效期（秒）.
      */
     /**
-     * 刷新 Token 有效期（秒）
+     * 刷新 Token 有效期（秒）.
      */
     private const REFRESH_TTL = 604800; // 7天
 
     /**
-     * 获取 JwtFactory 实例
-     *
-     * @return JwtFactory
-     */
-    protected static function getJwtFactory(): JwtFactory
-    {
-        return app('jwt');
-    }
-
-    /**
-     * 生成访问 Token（包含租户信息）
+     * 生成访问 Token（包含租户信息）.
      *
      * 使用现有的 JwtFactory::issue() 方法
      *
-     * @param array<mixed> $userData 用户数据，必须包含：
-     *   - uid: 用户ID（必须）
-     *   - name: 用户名
-     *   - tenant_id: 租户ID（可选）
-     *   - role: 角色（可选）
-     *   - 其他自定义 claims
-     * @param int|null $ttl Token 有效期（秒），默认使用 config/jwt.php 中的 ttl
+     * @param  array<mixed> $userData 用户数据，必须包含：
+     *                                - uid: 用户ID（必须）
+     *                                - name: 用户名
+     *                                - tenant_id: 租户ID（可选）
+     *                                - role: 角色（可选）
+     *                                - 其他自定义 claims
+     * @param  null|int     $ttl      Token 有效期（秒），默认使用 config/jwt.php 中的 ttl
      * @return array<mixed> 包含 token、expiresAt、ttl 的数组
      */
     public static function generateToken(array $userData, ?int $ttl = null): array
@@ -85,13 +67,13 @@ final class JwtTenantContext
     }
 
     /**
-     * 生成刷新 Token
+     * 生成刷新 Token.
      *
      * 使用现有的 JwtFactory::issueRefreshToken() 方法
      *
-     * @param int $userId 用户ID
-     * @param int|null $ttl 有效期（秒），默认 7 天
-     * @return string 刷新 Token
+     * @param  int      $userId 用户ID
+     * @param  null|int $ttl    有效期（秒），默认 7 天
+     * @return string   刷新 Token
      */
     public static function generateRefreshToken(int $userId, ?int $ttl = null): string
     {
@@ -100,24 +82,24 @@ final class JwtTenantContext
     }
 
     /**
-     * 解析 Token 获取完整 Payload
+     * 解析 Token 获取完整 Payload.
      *
      * 使用现有的 JwtFactory::parse() 方法
      *
-     * @param string $token JWT Token
-     * @return \Lcobucci\JWT\Token\Plain Token 对象
+     * @param  string     $token JWT Token
+     * @return Plain      Token 对象
      * @throws \Exception Token 无效或过期时抛出
      */
-    public static function decodeToken(string $token): \Lcobucci\JWT\Token\Plain
+    public static function decodeToken(string $token): Plain
     {
         return self::getJwtFactory()->parse($token);
     }
 
     /**
-     * 从 Token 获取租户ID
+     * 从 Token 获取租户ID.
      *
-     * @param string $token JWT Token
-     * @return int|null 租户ID，解析失败返回 null
+     * @param  string   $token JWT Token
+     * @return null|int 租户ID，解析失败返回 null
      */
     public static function getTenantIdFromToken(string $token): ?int
     {
@@ -131,10 +113,10 @@ final class JwtTenantContext
     }
 
     /**
-     * 从 Token 获取用户ID
+     * 从 Token 获取用户ID.
      *
-     * @param string $token JWT Token
-     * @return int|null 用户ID，解析失败返回 null
+     * @param  string   $token JWT Token
+     * @return null|int 用户ID，解析失败返回 null
      */
     public static function getUserIdFromToken(string $token): ?int
     {
@@ -148,10 +130,10 @@ final class JwtTenantContext
     }
 
     /**
-     * 从 Token 获取完整用户信息
+     * 从 Token 获取完整用户信息.
      *
-     * @param string $token JWT Token
-     * @return array<mixed>|null 用户信息数组，解析失败返回 null
+     * @param  string            $token JWT Token
+     * @return null|array<mixed> 用户信息数组，解析失败返回 null
      */
     public static function getUserDataFromToken(string $token): ?array
     {
@@ -160,10 +142,10 @@ final class JwtTenantContext
             $claims = $parsed->claims()->all();
 
             return [
-                'user_id' => $claims['uid'] ?? null,
+                'user_id'   => $claims['uid']         ?? null,
                 'tenant_id' => $claims['tenant_id'] ?? null,
-                'username' => $claims['name'] ?? null,
-                'role' => $claims['role'] ?? null,
+                'username'  => $claims['name']       ?? null,
+                'role'      => $claims['role']           ?? null,
             ];
         } catch (\Exception $e) {
             return null;
@@ -171,12 +153,12 @@ final class JwtTenantContext
     }
 
     /**
-     * 验证 Token 是否有效
+     * 验证 Token 是否有效.
      *
      * 使用现有的 JwtFactory::parse() 方法验证
      *
-     * @param string $token JWT Token
-     * @return bool 有效返回 true
+     * @param  string $token JWT Token
+     * @return bool   有效返回 true
      */
     public static function validateToken(string $token): bool
     {
@@ -191,15 +173,15 @@ final class JwtTenantContext
     /**
      * 检查 Token 是否即将过期
      *
-     * @param string $token JWT Token
-     * @param int $threshold 提前阈值（秒），默认 300 秒（5分钟）
-     * @return bool 即将过期返回 true
+     * @param  string $token     JWT Token
+     * @param  int    $threshold 提前阈值（秒），默认 300 秒（5分钟）
+     * @return bool   即将过期返回 true
      */
     public static function isTokenExpiringSoon(string $token, int $threshold = 300): bool
     {
         try {
             $parsed = self::decodeToken($token);
-            $exp = $parsed->claims()->get('exp');
+            $exp    = $parsed->claims()->get('exp');
             if ($exp instanceof \DateTimeImmutable) {
                 return (time() + $threshold) >= $exp->getTimestamp();
             }
@@ -210,13 +192,13 @@ final class JwtTenantContext
     }
 
     /**
-     * 刷新访问 Token
+     * 刷新访问 Token.
      *
      * 使用现有的 JwtFactory::refresh() 方法
      *
-     * @param string $token 当前 Token
-     * @param int|null $ttl 新的有效期（秒）
-     * @return string 新的访问 Token
+     * @param  string     $token 当前 Token
+     * @param  null|int   $ttl   新的有效期（秒）
+     * @return string     新的访问 Token
      * @throws \Exception 刷新失败时抛出
      */
     public static function refreshAccessToken(string $token, ?int $ttl = null): string
@@ -225,11 +207,11 @@ final class JwtTenantContext
     }
 
     /**
-     * 轮换刷新 Token（用完即焚）
+     * 轮换刷新 Token（用完即焚）.
      *
      * 使用现有的 JwtFactory::rotateRefreshToken() 方法
      *
-     * @param string $refreshToken 当前刷新 Token
+     * @param  string $refreshToken 当前刷新 Token
      * @return string 新的刷新 Token
      */
     public static function rotateRefreshToken(string $refreshToken): string
@@ -238,12 +220,12 @@ final class JwtTenantContext
     }
 
     /**
-     * 验证刷新 Token
+     * 验证刷新 Token.
      *
      * 使用现有的 JwtFactory::validateRefreshToken() 方法
      *
-     * @param string $refreshToken 刷新 Token
-     * @return int 用户ID
+     * @param  string     $refreshToken 刷新 Token
+     * @return int        用户ID
      * @throws \Exception 验证失败时抛出
      */
     public static function validateRefreshToken(string $refreshToken): int
@@ -252,14 +234,14 @@ final class JwtTenantContext
     }
 
     /**
-     * 从 Authorization Header 提取 Token
+     * 从 Authorization Header 提取 Token.
      *
-     * @param string|null $authHeader Authorization Header 值
-     * @return string|null Token 字符串，未找到返回 null
+     * @param  null|string $authHeader Authorization Header 值
+     * @return null|string Token 字符串，未找到返回 null
      */
     public static function extractTokenFromHeader(?string $authHeader): ?string
     {
-        if (!$authHeader) {
+        if (! $authHeader) {
             return null;
         }
 
@@ -271,16 +253,16 @@ final class JwtTenantContext
     }
 
     /**
-     * 获取 Token 过期时间
+     * 获取 Token 过期时间.
      *
-     * @param string $token JWT Token
-     * @return int|null 过期时间戳，解析失败返回 null
+     * @param  string   $token JWT Token
+     * @return null|int 过期时间戳，解析失败返回 null
      */
     public static function getTokenExpireTime(string $token): ?int
     {
         try {
             $parsed = self::decodeToken($token);
-            $exp = $parsed->claims()->get('exp');
+            $exp    = $parsed->claims()->get('exp');
             if ($exp instanceof \DateTimeImmutable) {
                 return $exp->getTimestamp();
             }
@@ -291,16 +273,16 @@ final class JwtTenantContext
     }
 
     /**
-     * 获取 Token 剩余有效时间
+     * 获取 Token 剩余有效时间.
      *
-     * @param string $token JWT Token
-     * @return int 剩余秒数，已过期返回 0，解析失败返回 -1
+     * @param  string $token JWT Token
+     * @return int    剩余秒数，已过期返回 0，解析失败返回 -1
      */
     public static function getTokenRemainingTime(string $token): int
     {
         try {
             $parsed = self::decodeToken($token);
-            $exp = $parsed->claims()->get('exp');
+            $exp    = $parsed->claims()->get('exp');
             if ($exp instanceof \DateTimeImmutable) {
                 $remaining = $exp->getTimestamp() - time();
                 return max(0, $remaining);
@@ -312,12 +294,11 @@ final class JwtTenantContext
     }
 
     /**
-     * 注销 Token
+     * 注销 Token.
      *
      * 使用现有的 JwtFactory::revoke() 方法
      *
      * @param string $token JWT Token
-     * @return void
      */
     public static function revokeToken(string $token): void
     {
@@ -325,12 +306,11 @@ final class JwtTenantContext
     }
 
     /**
-     * 注销用户的所有 Token（踢下线）
+     * 注销用户的所有 Token（踢下线）.
      *
      * 使用现有的 JwtFactory::revokeAllForUser() 方法
      *
      * @param int $userId 用户ID
-     * @return void
      */
     public static function revokeAllForUser(int $userId): void
     {
@@ -338,11 +318,11 @@ final class JwtTenantContext
     }
 
     /**
-     * 获取 Token 的 Payload（不验证签名，仅用于调试）
+     * 获取 Token 的 Payload（不验证签名，仅用于调试）.
      *
      * 使用现有的 JwtFactory::getPayload() 方法
      *
-     * @param string $token JWT Token
+     * @param  string       $token JWT Token
      * @return array<mixed> Payload 数组
      */
     public static function getPayload(string $token): array
@@ -351,26 +331,26 @@ final class JwtTenantContext
     }
 
     /**
-     * 解析 Token（用于刷新场景，允许过期）
+     * 解析 Token（用于刷新场景，允许过期）.
      *
      * 使用现有的 JwtFactory::parseForRefresh() 方法
      *
-     * @param string $token JWT Token
-     * @return \Lcobucci\JWT\Token\Plain Token 对象
+     * @param  string     $token JWT Token
+     * @return Plain      Token 对象
      * @throws \Exception 解析失败时抛出
      */
-    public static function parseForRefresh(string $token): \Lcobucci\JWT\Token\Plain
+    public static function parseForRefresh(string $token): Plain
     {
         return self::getJwtFactory()->parseForRefresh($token);
     }
 
     /**
-     * 生成包含租户信息的完整登录响应
+     * 生成包含租户信息的完整登录响应.
      *
      * 整合 access token 和 refresh token 生成
      *
-     * @param array<mixed> $userData 用户数据
-     * @param int|null $ttl Token 有效期
+     * @param  array<mixed> $userData 用户数据
+     * @param  null|int     $ttl      Token 有效期
      * @return array<mixed> 包含 token、refresh_token、expires_at 的数组
      */
     public static function generateLoginTokens(array $userData, ?int $ttl = null): array
@@ -379,14 +359,22 @@ final class JwtTenantContext
         $access = self::generateToken($userData, $ttl);
 
         // 生成 refresh token
-        $userId = $userData['uid'] ?? 0;
+        $userId       = $userData['uid'] ?? 0;
         $refreshToken = self::generateRefreshToken($userId);
 
         return [
-            'token' => $access['token'],
+            'token'         => $access['token'],
             'refresh_token' => $refreshToken,
-            'expires_at' => $access['expiresAt'],
-            'ttl' => $access['ttl'],
+            'expires_at'    => $access['expiresAt'],
+            'ttl'           => $access['ttl'],
         ];
+    }
+
+    /**
+     * 获取 JwtFactory 实例.
+     */
+    private static function getJwtFactory(): JwtFactory
+    {
+        return app('jwt');
     }
 }

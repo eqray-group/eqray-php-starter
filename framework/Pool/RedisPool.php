@@ -3,20 +3,16 @@
 declare(strict_types=1);
 
 /**
- * @Filename: RedisPool.php
- * @Date: 2026-06-02
- * @Developer: blue2004
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Pool;
 
 use Predis\Client as PredisClient;
-use RuntimeException;
-use SplStack;
 
 /**
- * Redis 连接池
+ * Redis 连接池.
  *
  * 基于 predis/predis 实现，支持：
  * - 最小/最大连接数管理
@@ -27,8 +23,8 @@ use SplStack;
  */
 class RedisPool implements PoolInterface
 {
-    /** @var SplStack<PredisClient> 空闲连接栈（O(1) push/pop）*/
-    private SplStack $idle;
+    /** @var \SplStack<PredisClient> 空闲连接栈（O(1) push/pop） */
+    private \SplStack $idle;
 
     /** @var int 当前活跃（已借出）连接数 */
     private int $active = 0;
@@ -55,20 +51,20 @@ class RedisPool implements PoolInterface
     private bool $closed = false;
 
     /**
-     * 构造函数
+     * 构造函数.
      *
      * @param array<string, mixed> $config 连接池配置，示例：
-     *   [
-     *     'host'           => '127.0.0.1',
-     *     'port'           => 6379,
-     *     'password'       => null,
-     *     'database'       => 0,
-     *     'timeout'        => 2.0,
-     *     'min_connections'=> 2,
-     *     'max_connections'=> 10,
-     *     'borrow_timeout' => 3.0,
-     *     'retry_attempts' => 3,
-     *   ]
+     *                                     [
+     *                                     'host'           => '127.0.0.1',
+     *                                     'port'           => 6379,
+     *                                     'password'       => null,
+     *                                     'database'       => 0,
+     *                                     'timeout'        => 2.0,
+     *                                     'min_connections'=> 2,
+     *                                     'max_connections'=> 10,
+     *                                     'borrow_timeout' => 3.0,
+     *                                     'retry_attempts' => 3,
+     *                                     ]
      */
     public function __construct(private readonly array $config = [])
     {
@@ -90,52 +86,24 @@ class RedisPool implements PoolInterface
             'exceptions' => true,
         ];
 
-        $this->idle = new SplStack();
+        $this->idle = new \SplStack();
         $this->warmup();
     }
 
-    /**
-     * 预热：初始化最小连接数
-     */
-    private function warmup(): void
-    {
-        for ($i = 0; $i < $this->minConnections; $i++) {
-            try {
-                $this->idle->push($this->createConnection());
-            } catch (\Throwable $e) {
-                // 预热失败记录日志但不阻塞启动
-                $this->log(sprintf(
-                    '[RedisPool] 预热连接 #%d 失败：%s',
-                    $i + 1,
-                    $e->getMessage()
-                ));
-            }
-        }
-
-        $this->log(sprintf(
-            '[RedisPool] 预热完成，空闲连接数：%d / %d',
-            $this->idle->count(),
-            $this->minConnections
-        ));
-    }
-
-    /**
-     * {@inheritDoc}
- */
     public function borrow(): object
     {
         if ($this->closed) {
-            throw new RuntimeException('Redis 连接池已关闭，无法借出连接。');
+            throw new \RuntimeException('Redis 连接池已关闭，无法借出连接。');
         }
 
         $deadline = microtime(true) + $this->borrowTimeout;
 
         while (true) {
             // 1. 优先从空闲栈取
-            if (!$this->idle->isEmpty()) {
+            if (! $this->idle->isEmpty()) {
                 $conn = $this->idle->pop();
                 if ($this->healthCheck($conn)) {
-                    $this->active++;
+                    ++$this->active;
                     return $conn;
                 }
                 // 不健康则丢弃，继续循环
@@ -147,13 +115,13 @@ class RedisPool implements PoolInterface
             $total = $this->active + $this->idle->count();
             if ($total < $this->maxConnections) {
                 $conn = $this->createConnectionWithRetry();
-                $this->active++;
+                ++$this->active;
                 return $conn;
             }
 
             // 3. 池已满，等待或超时
             if (microtime(true) >= $deadline) {
-                throw new RuntimeException(sprintf(
+                throw new \RuntimeException(sprintf(
                     'Redis 连接池已耗尽（最大 %d），等待超时（%.1f 秒）。',
                     $this->maxConnections,
                     $this->borrowTimeout
@@ -165,12 +133,9 @@ class RedisPool implements PoolInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function release(object $connection): void
     {
-        if (!$connection instanceof PredisClient) {
+        if (! $connection instanceof PredisClient) {
             return;
         }
 
@@ -200,12 +165,9 @@ class RedisPool implements PoolInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function healthCheck(object $connection): bool
     {
-        if (!$connection instanceof PredisClient) {
+        if (! $connection instanceof PredisClient) {
             return false;
         }
 
@@ -217,9 +179,8 @@ class RedisPool implements PoolInterface
     }
 
     /**
-     * {@inheritDoc}
      * @return array<mixed>
- */
+     */
     public function stats(): array
     {
         return [
@@ -230,14 +191,11 @@ class RedisPool implements PoolInterface
         ];
     }
 
-    /**
-     * {@inheritDoc}
- */
     public function close(): void
     {
         $this->closed = true;
 
-        while (!$this->idle->isEmpty()) {
+        while (! $this->idle->isEmpty()) {
             $conn = $this->idle->pop();
             try {
                 $conn->disconnect();
@@ -250,16 +208,40 @@ class RedisPool implements PoolInterface
     }
 
     /**
-     * 创建一个新的 Predis 连接（带重试）
+     * 预热：初始化最小连接数.
+     */
+    private function warmup(): void
+    {
+        for ($i = 0; $i < $this->minConnections; ++$i) {
+            try {
+                $this->idle->push($this->createConnection());
+            } catch (\Throwable $e) {
+                // 预热失败记录日志但不阻塞启动
+                $this->log(sprintf(
+                    '[RedisPool] 预热连接 #%d 失败：%s',
+                    $i + 1,
+                    $e->getMessage()
+                ));
+            }
+        }
+
+        $this->log(sprintf(
+            '[RedisPool] 预热完成，空闲连接数：%d / %d',
+            $this->idle->count(),
+            $this->minConnections
+        ));
+    }
+
+    /**
+     * 创建一个新的 Predis 连接（带重试）.
      *
-     * @return PredisClient
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
     private function createConnectionWithRetry(): PredisClient
     {
         $lastException = null;
 
-        for ($attempt = 1; $attempt <= $this->retryAttempts; $attempt++) {
+        for ($attempt = 1; $attempt <= $this->retryAttempts; ++$attempt) {
             try {
                 return $this->createConnection();
             } catch (\Throwable $e) {
@@ -276,7 +258,7 @@ class RedisPool implements PoolInterface
             }
         }
 
-        throw new RuntimeException(
+        throw new \RuntimeException(
             sprintf('Redis 连接创建失败，已重试 %d 次：%s', $this->retryAttempts, $lastException?->getMessage()),
             0,
             $lastException
@@ -284,9 +266,8 @@ class RedisPool implements PoolInterface
     }
 
     /**
-     * 创建一个原始 Predis 连接
+     * 创建一个原始 Predis 连接.
      *
-     * @return PredisClient
      * @throws \Throwable
      */
     private function createConnection(): PredisClient
@@ -298,7 +279,7 @@ class RedisPool implements PoolInterface
     }
 
     /**
-     * 写日志（复用全局 log_info 或回退 error_log）
+     * 写日志（复用全局 log_info 或回退 error_log）.
      */
     private function log(string $message): void
     {

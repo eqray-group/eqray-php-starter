@@ -3,26 +3,16 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: Container.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Container;
 
 use ArrayAccess; // Import ArrayAccess for facade compatibility
+use Composer\Autoload\ClassLoader;
 use Framework\Container\Compiler\AttributeInjectionPass;
 use Framework\DI\AttributeInjector;
-use ReflectionClass;
-use ReflectionException;
-use ReflectionNamedType;
-use RuntimeException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
@@ -36,19 +26,21 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Dotenv\Dotenv;
 
 /**
- * A wrapper class for Symfony's Dependency Injection Container with extended functionality
+ * A wrapper class for Symfony's Dependency Injection Container with extended functionality.
  *
- * @implements ArrayAccess<mixed, mixed>
+ * @implements \ArrayAccess<mixed, mixed>
  */
-class Container implements SymfonyContainerInterface, ArrayAccess
+class Container implements SymfonyContainerInterface, \ArrayAccess
 {
     private const CACHE_FILE = BASE_PATH . '/storage/cache/container.php';
-    private static SymfonyContainer|ContainerBuilder|null $container = null;
+
+    private static ContainerBuilder|SymfonyContainer|null $container = null;
+
     private static ?ContainerProviders $providers = null;
 
     /**
-    * @param array<mixed> $parameters
-    */
+     * @param array<mixed> $parameters
+     */
     public static function init(array $parameters = []): void
     {
         if (self::$container !== null) {
@@ -60,17 +52,17 @@ class Container implements SymfonyContainerInterface, ArrayAccess
             (new Dotenv())->load($envFile);
         }
 
-        $env    = env('APP_ENV') ?: 'local';
-        $isProd = $env === 'prod';
+        $env         = env('APP_ENV') ?: 'local';
+        $isProd      = $env === 'prod';
         $projectRoot = BASE_PATH;
         $configDir   = $projectRoot . '/config';
 
         if (! is_dir($configDir)) {
-            throw new RuntimeException("Configuration directory does not exist: {$configDir}");
+            throw new \RuntimeException("Configuration directory does not exist: {$configDir}");
         }
         $servicesFile = $configDir . '/services.php';
         if (! file_exists($servicesFile)) {
-            throw new RuntimeException("Services configuration file does not exist: {$servicesFile}");
+            throw new \RuntimeException("Services configuration file does not exist: {$servicesFile}");
         }
 
         $providersManager = new ContainerProviders();
@@ -92,7 +84,7 @@ class Container implements SymfonyContainerInterface, ArrayAccess
         if ($isProd) {
             $cacheDir = dirname(self::CACHE_FILE);
             if (! is_dir($cacheDir) && ! mkdir($cacheDir, 0777, true) && ! is_dir($cacheDir)) {
-                throw new RuntimeException(sprintf('Directory "%s" was not created', $cacheDir));
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $cacheDir));
             }
             $dumper       = new PhpDumper($containerBuilder);
             $cacheContent = $dumper->dump(['class' => 'ProjectServiceContainer']);
@@ -107,45 +99,9 @@ class Container implements SymfonyContainerInterface, ArrayAccess
         }
     }
 
-    private function getBuilder(): ContainerBuilder
-    {
-        if (self::$container instanceof ContainerBuilder) {
-            return self::$container;
-        }
-        throw new RuntimeException('Current container is not an instance of ContainerBuilder (it might be compiled or cached).');
-    }
-
     /**
-     * 加载已编译的容器缓存文件
-     *
-     * 缓存文件由 file_put_contents 在编译后生成，静态分析时可能尚不存在，
-     * 因此路径通过参数传入，避免分析器误报文件不存在。
-     *
-     * @param string $cacheFile 缓存文件路径
-     * @param SymfonyContainerInterface $fallback 编译后的容器构建器（兜底）
-     * @return SymfonyContainer
+     * @param array<mixed> $parameters
      */
-    private static function loadCompiledContainer(string $cacheFile, SymfonyContainerInterface $fallback): SymfonyContainer
-    {
-        if (! is_file($cacheFile)) {
-            if ($fallback instanceof SymfonyContainer) {
-                return $fallback;
-            }
-            throw new RuntimeException('Compiled container fallback is not a Symfony Container instance.');
-        }
-
-        $container = require $cacheFile;
-
-        return $container instanceof SymfonyContainer
-            ? $container
-            : ($fallback instanceof SymfonyContainer
-                ? $fallback
-                : throw new RuntimeException('Compiled container is not a Symfony Container instance.'));
-    }
-
-    /**
-    * @param array<mixed> $parameters
-    */
     public function make(string $abstract, array $parameters = []): object
     {
         if (empty($parameters) && self::$container->has($abstract)) {
@@ -153,13 +109,13 @@ class Container implements SymfonyContainerInterface, ArrayAccess
         }
 
         try {
-            $reflector = new ReflectionClass($abstract);
+            $reflector = new \ReflectionClass($abstract);
             if (! $reflector->isInstantiable()) {
-                throw new RuntimeException("Class [{$abstract}] is not instantiable.");
+                throw new \RuntimeException("Class [{$abstract}] is not instantiable.");
             }
 
             $constructor = $reflector->getConstructor();
-            $instance = null;
+            $instance    = null;
 
             if (is_null($constructor)) {
                 $instance = new $abstract();
@@ -173,7 +129,7 @@ class Container implements SymfonyContainerInterface, ArrayAccess
                     }
 
                     $type = $parameter->getType();
-                    if ($type instanceof ReflectionNamedType && ! $type->isBuiltin()) {
+                    if ($type instanceof \ReflectionNamedType && ! $type->isBuiltin()) {
                         $dependencyClassName = $type->getName();
                         if (self::$container->has($dependencyClassName)) {
                             $dependencies[] = self::$container->get($dependencyClassName);
@@ -188,16 +144,15 @@ class Container implements SymfonyContainerInterface, ArrayAccess
                     if ($parameter->isDefaultValueAvailable()) {
                         $dependencies[] = $parameter->getDefaultValue();
                     } else {
-                        throw new RuntimeException("Unable to resolve dependency [{$parameter->name}] in class {$abstract}");
+                        throw new \RuntimeException("Unable to resolve dependency [{$parameter->name}] in class {$abstract}");
                     }
                 }
                 $instance = $reflector->newInstanceArgs($dependencies);
             }
-            
+
             AttributeInjector::inject($instance);
             return $instance;
-
-        } catch (ReflectionException $e) {
+        } catch (\ReflectionException $e) {
             $message = $e->getMessage();
 
             // 区分"类文件不存在"和"依赖解析失败"两种场景
@@ -207,21 +162,21 @@ class Container implements SymfonyContainerInterface, ArrayAccess
                 $className = $m[1] ?? $abstract;
 
                 // 检查可能的 autoload 问题
-                $hints = [];
+                $hints    = [];
                 $filePath = BASE_PATH . '/vendor/autoload.php';
-                if (!file_exists($filePath)) {
+                if (! file_exists($filePath)) {
                     $hints[] = 'vendor/autoload.php 不存在，请运行 composer install';
                 } else {
-                    $namespace = implode('\\', array_slice(explode('\\', $className), 0, -1)) . '\\';
+                    $namespace        = implode('\\', array_slice(explode('\\', $className), 0, -1)) . '\\';
                     $composerAutoload = null;
                     foreach (spl_autoload_functions() as $func) {
-                        if (is_array($func) && $func[0] instanceof \Composer\Autoload\ClassLoader) {
+                        if (is_array($func) && $func[0] instanceof ClassLoader) {
                             $composerAutoload = $func[0];
                             break;
                         }
                     }
                     if ($composerAutoload) {
-                        $prefixes = $composerAutoload->getPrefixesPsr4();
+                        $prefixes    = $composerAutoload->getPrefixesPsr4();
                         $foundPrefix = false;
                         foreach ($prefixes as $prefix => $dirs) {
                             if (str_starts_with($namespace, $prefix)) {
@@ -229,8 +184,8 @@ class Container implements SymfonyContainerInterface, ArrayAccess
                                 break;
                             }
                         }
-                        if (!$foundPrefix) {
-                            $hints[] = "命名空间 \"$namespace\" 未注册到 PSR-4 自动加载器";
+                        if (! $foundPrefix) {
+                            $hints[] = "命名空间 \"{$namespace}\" 未注册到 PSR-4 自动加载器";
                             $hints[] = '请检查 config/apps.php 中 namespace 配置是否正确，或在 composer.json 中添加映射后执行 composer dump-autoload';
                         }
                     } else {
@@ -239,34 +194,34 @@ class Container implements SymfonyContainerInterface, ArrayAccess
 
                     // 检查控制器文件是否存在
                     $expectedFile = BASE_PATH . '/app/' . str_replace('App\\', '', str_replace('\\', '/', $className)) . '.php';
-                    if (!file_exists($expectedFile)) {
-                        $hints[] = "预期文件不存在: $expectedFile";
+                    if (! file_exists($expectedFile)) {
+                        $hints[] = "预期文件不存在: {$expectedFile}";
                     }
                 }
 
                 $detail = $hints ? ' (建议: ' . implode('; ', $hints) . ')' : '';
-                throw new RuntimeException("容器解析失败: 类 \"$className\" 不存在{$detail}");
+                throw new \RuntimeException("容器解析失败: 类 \"{$className}\" 不存在{$detail}");
             }
 
             if (str_contains($message, 'is not instantiable')) {
-                throw new RuntimeException("容器解析失败: 类 {$abstract} 不可实例化（可能是抽象类或接口），请确认类定义");
+                throw new \RuntimeException("容器解析失败: 类 {$abstract} 不可实例化（可能是抽象类或接口），请确认类定义");
             }
 
-            throw new RuntimeException("容器解析失败: {$abstract} -> {$message}");
+            throw new \RuntimeException("容器解析失败: {$abstract} -> {$message}");
         }
     }
 
     public function singleton(string $id, callable $factory): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         if (! self::$container instanceof ContainerBuilder) {
-            throw new RuntimeException('Cannot register service. Current container is not a modifiable ContainerBuilder instance.');
+            throw new \RuntimeException('Cannot register service. Current container is not a modifiable ContainerBuilder instance.');
         }
         $containerBuilder = $this->getBuilder();
         if ($containerBuilder->isCompiled()) {
-            throw new RuntimeException('Container has already been compiled, cannot register new services.');
+            throw new \RuntimeException('Container has already been compiled, cannot register new services.');
         }
         $definition = new Definition();
         $definition->setFactory($factory);
@@ -277,14 +232,14 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     public function bind(string $abstract, string $concrete, bool $shared = false): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         if (! self::$container instanceof ContainerBuilder) {
-            throw new RuntimeException('Current container does not support dynamic service registration.');
+            throw new \RuntimeException('Current container does not support dynamic service registration.');
         }
         $containerBuilder = $this->getBuilder();
         if ($containerBuilder->isCompiled()) {
-            throw new RuntimeException('Container has already been compiled, cannot register new services.');
+            throw new \RuntimeException('Container has already been compiled, cannot register new services.');
         }
         $definition = new Definition($concrete);
         $definition->setShared($shared);
@@ -294,14 +249,14 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     public function factory(string $id, callable $factory, bool $shared = false): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         if (! self::$container instanceof ContainerBuilder) {
-            throw new RuntimeException('Current container does not support dynamic service registration.');
+            throw new \RuntimeException('Current container does not support dynamic service registration.');
         }
         $containerBuilder = self::$container;
         if ($containerBuilder->isCompiled()) {
-            throw new RuntimeException('Container has already been compiled, cannot register new services.');
+            throw new \RuntimeException('Container has already been compiled, cannot register new services.');
         }
         $definition = new Definition();
         $definition->setFactory($factory);
@@ -312,7 +267,7 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     public function instance(string $id, object $instance): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         self::$container->set($id, $instance);
     }
@@ -320,25 +275,25 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     public function parameter(string $name, mixed $value): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         self::$container->setParameter($name, $value);
     }
 
     /**
-    * @param array<mixed> $attributes
-    */
+     * @param array<mixed> $attributes
+     */
     public function tag(string $id, string $tag, array $attributes = []): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         if (! self::$container instanceof ContainerBuilder) {
-            throw new RuntimeException('Current container does not support dynamic service registration.');
+            throw new \RuntimeException('Current container does not support dynamic service registration.');
         }
         $containerBuilder = self::$container;
         if ($containerBuilder->isCompiled()) {
-            throw new RuntimeException('Container has already been compiled, cannot register new services.');
+            throw new \RuntimeException('Container has already been compiled, cannot register new services.');
         }
         $definition = $containerBuilder->getDefinition($id);
         $definition->addTag($tag, $attributes);
@@ -347,14 +302,14 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     public function lazy(string $id, string $concrete, bool $shared = true): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         if (! self::$container instanceof ContainerBuilder) {
-            throw new RuntimeException('Current container does not support dynamic service registration.');
+            throw new \RuntimeException('Current container does not support dynamic service registration.');
         }
         $containerBuilder = self::$container;
         if ($containerBuilder->isCompiled()) {
-            throw new RuntimeException('Container has already been compiled, cannot register new services.');
+            throw new \RuntimeException('Container has already been compiled, cannot register new services.');
         }
         $definition = new Definition($concrete);
         $definition->setShared($shared);
@@ -396,8 +351,8 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public function getServiceIds(): array
     {
         return $this->getSymfonyContainer()->getServiceIds();
@@ -406,7 +361,7 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     public function setParameter(string $name, mixed $value): void
     {
         if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
+            throw new \RuntimeException('Container has not been initialized.');
         }
         self::$container->setParameter($name, $value);
     }
@@ -417,8 +372,8 @@ class Container implements SymfonyContainerInterface, ArrayAccess
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public function getParameter(string $name): array|bool|float|int|string|\UnitEnum|null
     {
         return self::$container->getParameter($name);
@@ -456,15 +411,6 @@ class Container implements SymfonyContainerInterface, ArrayAccess
         return $this;
     }
 
-    private function getSymfonyContainer(): SymfonyContainer
-    {
-        if (self::$container === null) {
-            throw new RuntimeException('Container has not been initialized.');
-        }
-
-        return self::$container;
-    }
-
     // ========== ArrayAccess Implementation for Facade Compatibility ==========
 
     public function offsetExists(mixed $offset): bool
@@ -482,15 +428,15 @@ class Container implements SymfonyContainerInterface, ArrayAccess
         if (is_object($value)) {
             $this->set((string) $offset, $value);
         } else {
-            // If value is not object, assume it's a class string for binding? 
+            // If value is not object, assume it's a class string for binding?
             // Or just fail? Facade usually sets instance.
             // But if bind() is needed, Facade doesn't support bind via array access usually.
             // For now, only support setting instances or ignoring if null
-             if ($value === null) {
-                 // Do nothing or unset? Symfony container doesn't really support unset easily at runtime
-                 return;
-             }
-             throw new RuntimeException("Container array access set only supports objects.");
+            if ($value === null) {
+                // Do nothing or unset? Symfony container doesn't really support unset easily at runtime
+                return;
+            }
+            throw new \RuntimeException('Container array access set only supports objects.');
         }
     }
 
@@ -499,5 +445,49 @@ class Container implements SymfonyContainerInterface, ArrayAccess
         // Symfony container doesn't support unsetting easily
         // We can set to null if needed, but 'set' requires ?object
         $this->set((string) $offset, null);
+    }
+
+    private function getBuilder(): ContainerBuilder
+    {
+        if (self::$container instanceof ContainerBuilder) {
+            return self::$container;
+        }
+        throw new \RuntimeException('Current container is not an instance of ContainerBuilder (it might be compiled or cached).');
+    }
+
+    /**
+     * 加载已编译的容器缓存文件.
+     *
+     * 缓存文件由 file_put_contents 在编译后生成，静态分析时可能尚不存在，
+     * 因此路径通过参数传入，避免分析器误报文件不存在。
+     *
+     * @param string                    $cacheFile 缓存文件路径
+     * @param SymfonyContainerInterface $fallback  编译后的容器构建器（兜底）
+     */
+    private static function loadCompiledContainer(string $cacheFile, SymfonyContainerInterface $fallback): SymfonyContainer
+    {
+        if (! is_file($cacheFile)) {
+            if ($fallback instanceof SymfonyContainer) {
+                return $fallback;
+            }
+            throw new \RuntimeException('Compiled container fallback is not a Symfony Container instance.');
+        }
+
+        $container = require $cacheFile;
+
+        return $container instanceof SymfonyContainer
+            ? $container
+            : ($fallback instanceof SymfonyContainer
+                ? $fallback
+                : throw new \RuntimeException('Compiled container is not a Symfony Container instance.'));
+    }
+
+    private function getSymfonyContainer(): SymfonyContainer
+    {
+        if (self::$container === null) {
+            throw new \RuntimeException('Container has not been initialized.');
+        }
+
+        return self::$container;
     }
 }

@@ -3,23 +3,14 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: PluginConfigManager.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Plugin;
 
-use RuntimeException;
-
 /**
- * 插件配置管理器
+ * 插件配置管理器.
  *
  * 负责插件配置的读取、合并和管理。
  *
@@ -27,24 +18,21 @@ use RuntimeException;
  * 1. 运行时配置: config/plugin/{name}.php
  * 2. 插件默认配置: plugins/{name}/config/config.php
  * 3. 全局默认配置: config/plugin/plugins.php -> defaults
- *
- * @package Framework\Plugin
  */
 class PluginConfigManager
 {
     /**
-     * 配置缓存
+     * 配置缓存.
      *
      * @var array<mixed> */
     private array $configCache = [];
 
     /**
-     * 获取插件配置
+     * 获取插件配置.
      *
-     * @param string $pluginName 插件名称
-     * @param string|null $key 配置键（支持点语法），null 返回全部配置
-     * @param mixed $default 默认值
-     * @return mixed
+     * @param string      $pluginName 插件名称
+     * @param null|string $key        配置键（支持点语法），null 返回全部配置
+     * @param mixed       $default    默认值
      */
     public function get(string $pluginName, ?string $key = null, mixed $default = null): mixed
     {
@@ -58,18 +46,17 @@ class PluginConfigManager
     }
 
     /**
-     * 设置插件配置（运行时）
+     * 设置插件配置（运行时）.
      *
      * 注意：这只是运行时修改，不会持久化到文件。
      *
      * @param string $pluginName 插件名称
-     * @param string $key 配置键
-     * @param mixed $value 配置值
-     * @return self
+     * @param string $key        配置键
+     * @param mixed  $value      配置值
      */
     public function set(string $pluginName, string $key, mixed $value): self
     {
-        if (!isset($this->configCache[$pluginName])) {
+        if (! isset($this->configCache[$pluginName])) {
             $this->loadPluginConfig($pluginName);
         }
 
@@ -79,11 +66,10 @@ class PluginConfigManager
     }
 
     /**
-     * 持久化插件配置到文件
+     * 持久化插件配置到文件.
      *
-     * @param string $pluginName 插件名称
-     * @param array<mixed> $config 完整配置
-     * @return bool
+     * @param string       $pluginName 插件名称
+     * @param array<mixed> $config     完整配置
      */
     public function save(string $pluginName, array $config): bool
     {
@@ -100,9 +86,24 @@ class PluginConfigManager
     }
 
     /**
-     * 加载插件配置（合并策略）
+     * 清除配置缓存.
      *
-     * @param string $pluginName
+     * @param null|string $pluginName 插件名称，null 清除全部
+     */
+    public function clearCache(?string $pluginName = null): self
+    {
+        if ($pluginName === null) {
+            $this->configCache = [];
+        } else {
+            unset($this->configCache[$pluginName]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * 加载插件配置（合并策略）.
+     *
      * @return array<mixed> */
     private function loadPluginConfig(string $pluginName): array
     {
@@ -130,7 +131,7 @@ class PluginConfigManager
     }
 
     /**
-     * 获取全局默认配置
+     * 获取全局默认配置.
      *
      * @return array<mixed> */
     private function getGlobalDefaults(): array
@@ -150,17 +151,16 @@ class PluginConfigManager
     }
 
     /**
-     * 获取插件默认配置
+     * 获取插件默认配置.
      *
-     * @param string $pluginName
      * @return array<mixed> */
     private function getPluginDefaults(string $pluginName): array
     {
         // 尝试从 manifest 获取插件路径
         $manifestFile = BASE_PATH . "/plugins/{$pluginName}/plugin.json";
         if (file_exists($manifestFile)) {
-            $json = file_get_contents($manifestFile);
-            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            $json       = file_get_contents($manifestFile);
+            $data       = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
             $pluginPath = dirname($manifestFile);
 
             $configFile = $pluginPath . '/config/config.php';
@@ -173,9 +173,8 @@ class PluginConfigManager
     }
 
     /**
-     * 获取运行时配置
+     * 获取运行时配置.
      *
-     * @param string $pluginName
      * @return array<mixed> */
     private function getRuntimeConfig(string $pluginName): array
     {
@@ -196,20 +195,17 @@ class PluginConfigManager
     }
 
     /**
-     * 获取嵌套值（支持点语法）
+     * 获取嵌套值（支持点语法）.
      *
      * @param array<mixed> $array
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
      */
     private function getNestedValue(array $array, string $key, mixed $default): mixed
     {
-        $keys = explode('.', $key);
+        $keys  = explode('.', $key);
         $value = $array;
 
         foreach ($keys as $k) {
-            if (!is_array($value) || !array_key_exists($k, $value)) {
+            if (! is_array($value) || ! array_key_exists($k, $value)) {
                 return $default;
             }
             $value = $value[$k];
@@ -219,19 +215,17 @@ class PluginConfigManager
     }
 
     /**
-     * 设置嵌套值（支持点语法）
+     * 设置嵌套值（支持点语法）.
      *
      * @param array<mixed> &$array
-     * @param string $key
-     * @param mixed $value
      */
     private function setNestedValue(array &$array, string $key, mixed $value): void
     {
-        $keys = explode('.', $key);
+        $keys    = explode('.', $key);
         $current = &$array;
 
         foreach ($keys as $k) {
-            if (!isset($current[$k]) || !is_array($current[$k])) {
+            if (! isset($current[$k]) || ! is_array($current[$k])) {
                 $current[$k] = [];
             }
             $current = &$current[$k];
@@ -244,13 +238,11 @@ class PluginConfigManager
      * 格式化数组为 PHP 代码
      *
      * @param array<mixed> $array
-     * @param int $indent
-     * @return string
      */
     private function varExport(array $array, int $indent = 0): string
     {
         $spaces = str_repeat('    ', $indent);
-        $lines = ["["];
+        $lines  = ['['];
 
         foreach ($array as $key => $value) {
             $keyStr = is_string($key) ? "'{$key}'" : $key;
@@ -273,22 +265,5 @@ class PluginConfigManager
         $lines[] = "{$spaces}]";
 
         return implode("\n", $lines);
-    }
-
-    /**
-     * 清除配置缓存
-     *
-     * @param string|null $pluginName 插件名称，null 清除全部
-     * @return self
-     */
-    public function clearCache(?string $pluginName = null): self
-    {
-        if ($pluginName === null) {
-            $this->configCache = [];
-        } else {
-            unset($this->configCache[$pluginName]);
-        }
-
-        return $this;
     }
 }

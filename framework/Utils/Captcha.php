@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
@@ -19,18 +12,16 @@ namespace Framework\Utils;
 use Ramsey\Uuid\Uuid;
 
 /**
- * 验证码工具类
+ * 验证码工具类.
  *
  * 提供图形验证码的生成和验证功能，支持字母验证码、数学验证码、
  * 中文验证码等多种类型，可配置干扰线、杂点、背景图片等视觉效果。
  * 验证码值通过 Redis 存储并使用 bcrypt 加密，确保安全性。
- *
- * @package Framework\Utils
  */
 class Captcha
 {
     /**
-     * 验证验证码是否正确
+     * 验证验证码是否正确.
      *
      * 从 Redis 中获取存储的验证码哈希值，与用户输入进行比对验证。
      * 验证成功后会自动删除 Redis 中的验证码记录，防止重复使用。
@@ -63,7 +54,7 @@ class Captcha
     }
 
     /**
-     * 生成 Base64 编码的验证码图片
+     * 生成 Base64 编码的验证码图片.
      *
      * 根据配置生成验证码图片，返回 Base64 编码的图片数据和验证码键名。
      * 支持自定义配置覆盖默认配置，生成的验证码值会存储到 Redis 中。
@@ -148,7 +139,7 @@ class Captcha
     }
 
     /**
-     * 生成验证码内容并保存到 Redis
+     * 生成验证码内容并保存到 Redis.
      *
      * 根据配置生成验证码内容，支持数学运算验证码和字符验证码。
      * 验证码答案经过 bcrypt 加密后存储到 Redis，设置过期时间。
@@ -194,12 +185,12 @@ class Captcha
     }
 
     /**
-     * 从指定路径随机选择一个字体文件
+     * 从指定路径随机选择一个字体文件.
      *
      * 扫描指定目录下的 TTF 和 OTF 字体文件，随机选择一个返回。
      * 如果配置中已指定字体，则直接使用配置的字体。
      *
-     * @param string $path   字体文件所在目录路径
+     * @param string       $path   字体文件所在目录路径
      * @param array<mixed> $config 配置数组，可包含 'fontttf' 指定字体文件
      *
      * @return string 完整的字体文件路径
@@ -230,8 +221,8 @@ class Captcha
      * 用于增加验证码识别难度，防止机器识别。
      *
      * @param array<mixed> $config 验证码配置数组，包含图片宽高信息
-     * @param mixed $im     图像资源句柄
-     * @param mixed $color  线条颜色
+     * @param mixed        $im     图像资源句柄
+     * @param mixed        $color  线条颜色
      */
     protected static function writeCurve(array $config, $im, $color): void
     {
@@ -279,17 +270,17 @@ class Captcha
     }
 
     /**
-     * 绘制杂点干扰
+     * 绘制杂点干扰.
      *
      * 在验证码图片上随机绘制多个不同颜色的字母或数字杂点，
      * 增加验证码识别难度，防止机器自动识别。
      *
      * @param array<mixed> $config 验证码配置数组，包含图片宽高信息
-     * @param mixed $im     图像资源句柄
+     * @param mixed        $im     图像资源句柄
      */
     protected static function writeNoise(array $config, $im): void
     {
-        $codeSet = 'FSSPHP20222345678abcdefhijkmnpqrstuvwxyz';
+        $codeSet = 'eqrayphp20222345678abcdefhijkmnpqrstuvwxyz';
         for ($i = 0; $i < 10; ++$i) {
             // 杂点颜色
             $noiseColor = imagecolorallocate($im, mt_rand(150, 225), mt_rand(150, 225), mt_rand(150, 225));
@@ -301,13 +292,13 @@ class Captcha
     }
 
     /**
-     * 绘制背景图片
+     * 绘制背景图片.
      *
      * 从指定目录随机选择一张背景图片，并将其缩放填充到验证码图片中。
      * 注意：大尺寸背景图片会占用较多系统资源。
      *
      * @param array<mixed> $config 验证码配置数组，包含图片宽高信息
-     * @param mixed $im     图像资源句柄
+     * @param mixed        $im     图像资源句柄
      */
     protected static function background(array $config, $im): void
     {

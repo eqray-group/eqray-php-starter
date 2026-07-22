@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: TenantContext.php
- * @Date: 2026-03-19
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Tenant;
@@ -20,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * 租户上下文管理器（Symfony Request 版本）
+ * 租户上下文管理器（Symfony Request 版本）.
  *
  * 该类提供基于 Symfony Request 的租户隔离上下文管理，
  * 使用 Request 属性存储租户信息，避免 Workerman 常驻进程下的静态变量污染问题。
@@ -44,33 +37,31 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *     return User::all(); // 返回所有租户数据
  * });
  * ```
- *
- * @package Framework\Tenant
  */
 final class TenantContext
 {
     /**
-     * Request 属性键名 - 租户ID
+     * Request 属性键名 - 租户ID.
      */
     private const TENANT_ID_KEY = '_tenant_id';
 
     /**
-     * Request 属性键名 - 忽略租户隔离
+     * Request 属性键名 - 忽略租户隔离.
      */
     private const IGNORE_TENANT_KEY = '_ignore_tenant';
 
     /**
-     * Request 属性键名 - 用户ID（用于JWT场景）
+     * Request 属性键名 - 用户ID（用于JWT场景）.
      */
     private const USER_ID_KEY = '_user_id';
 
     /**
-     * RequestStack 实例
+     * RequestStack 实例.
      */
     private static ?RequestStack $requestStack = null;
 
     /**
-     * 设置 RequestStack（在容器启动时调用）
+     * 设置 RequestStack（在容器启动时调用）.
      *
      * @param RequestStack $requestStack Symfony RequestStack
      */
@@ -80,9 +71,9 @@ final class TenantContext
     }
 
     /**
-     * 获取当前 Request
+     * 获取当前 Request.
      *
-     * @return Request|null 当前请求实例
+     * @return null|Request 当前请求实例
      */
     public static function getCurrentRequest(): ?Request
     {
@@ -93,10 +84,9 @@ final class TenantContext
     }
 
     /**
-     * 设置租户ID到当前 Request
+     * 设置租户ID到当前 Request.
      *
-     * @param int|null $tenantId 租户ID
-     * @return void
+     * @param null|int $tenantId 租户ID
      */
     public static function setTenantId(?int $tenantId): void
     {
@@ -107,11 +97,10 @@ final class TenantContext
     }
 
     /**
-     * 设置租户ID到指定 Request（用于中间件）
+     * 设置租户ID到指定 Request（用于中间件）.
      *
-     * @param Request $request Request 实例
-     * @param int|null $tenantId 租户ID
-     * @return void
+     * @param Request  $request  Request 实例
+     * @param null|int $tenantId 租户ID
      */
     public static function setTenantIdToRequest(Request $request, ?int $tenantId): void
     {
@@ -119,15 +108,15 @@ final class TenantContext
     }
 
     /**
-     * 获取当前租户ID
+     * 获取当前租户ID.
      *
-     * @return int|null 租户ID，未设置时返回 null
+     * @return null|int 租户ID，未设置时返回 null
      */
     public static function getTenantId(): ?int
     {
         $request = self::getCurrentRequest();
 
-        //error_log('request: ' . json_encode($request));
+        // error_log('request: ' . json_encode($request));
         if ($request === null) {
             return null;
         }
@@ -135,10 +124,10 @@ final class TenantContext
     }
 
     /**
-     * 从指定 Request 获取租户ID
+     * 从指定 Request 获取租户ID.
      *
-     * @param Request $request Request 实例
-     * @return int|null 租户ID
+     * @param  Request  $request Request 实例
+     * @return null|int 租户ID
      */
     public static function getTenantIdFromRequest(Request $request): ?int
     {
@@ -146,10 +135,9 @@ final class TenantContext
     }
 
     /**
-     * 设置用户ID（用于JWT场景）
+     * 设置用户ID（用于JWT场景）.
      *
-     * @param int|null $userId 用户ID
-     * @return void
+     * @param null|int $userId 用户ID
      */
     public static function setUserId(?int $userId): void
     {
@@ -160,9 +148,9 @@ final class TenantContext
     }
 
     /**
-     * 获取当前用户ID
+     * 获取当前用户ID.
      *
-     * @return int|null 用户ID
+     * @return null|int 用户ID
      */
     public static function getUserId(): ?int
     {
@@ -174,9 +162,7 @@ final class TenantContext
     }
 
     /**
-     * 忽略租户隔离（超管模式）
-     *
-     * @return void
+     * 忽略租户隔离（超管模式）.
      */
     public static function ignore(): void
     {
@@ -187,10 +173,9 @@ final class TenantContext
     }
 
     /**
-     * 在指定 Request 上忽略租户隔离
+     * 在指定 Request 上忽略租户隔离.
      *
      * @param Request $request Request 实例
-     * @return void
      */
     public static function ignoreOnRequest(Request $request): void
     {
@@ -198,9 +183,7 @@ final class TenantContext
     }
 
     /**
-     * 恢复租户隔离
-     *
-     * @return void
+     * 恢复租户隔离.
      */
     public static function restore(): void
     {
@@ -225,7 +208,7 @@ final class TenantContext
     }
 
     /**
-     * 判断是否应启用租户隔离
+     * 判断是否应启用租户隔离.
      *
      * 当租户 ID 不为空且未设置忽略标志时返回 true
      *
@@ -238,20 +221,20 @@ final class TenantContext
             return false;
         }
 
-        $ignore = $request->attributes->get(self::IGNORE_TENANT_KEY, false);
+        $ignore   = $request->attributes->get(self::IGNORE_TENANT_KEY, false);
         $tenantId = $request->attributes->get(self::TENANT_ID_KEY);
 
-        return !$ignore && $tenantId !== null;
+        return ! $ignore && $tenantId !== null;
     }
 
     /**
-     * 在忽略租户隔离的作用域内安全执行回调函数
+     * 在忽略租户隔离的作用域内安全执行回调函数.
      *
      * 执行期间临时忽略租户隔离，执行完成后自动恢复原状态
      * 使用 try-finally 确保状态始终被恢复
      *
-     * @param callable $fn 要执行的回调函数
-     * @return mixed 回调函数的返回值
+     * @param  callable $fn 要执行的回调函数
+     * @return mixed    回调函数的返回值
      */
     public static function withIgnore(callable $fn)
     {
@@ -271,7 +254,7 @@ final class TenantContext
     }
 
     /**
-     * 获取最大影响行数限制
+     * 获取最大影响行数限制.
      *
      * 用于限制批量删除或更新操作的最大影响行数，防止误操作
      *
@@ -283,11 +266,9 @@ final class TenantContext
     }
 
     /**
-     * 清理当前请求的租户上下文
+     * 清理当前请求的租户上下文.
      *
      * 在请求结束时调用，清理 Request 中的租户相关属性
-     *
-     * @return void
      */
     public static function clear(): void
     {
@@ -300,7 +281,7 @@ final class TenantContext
     }
 
     /**
-     * 检查当前请求是否有租户上下文
+     * 检查当前请求是否有租户上下文.
      *
      * @return bool 有租户上下文返回 true
      */

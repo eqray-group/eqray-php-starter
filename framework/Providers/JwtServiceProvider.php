@@ -3,21 +3,14 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Providers;
 
 use Framework\Container\ServiceProviderInterface;
-#use Framework\Security\AuthGuard;
+# use Framework\Security\AuthGuard;
 use Framework\Utils\JwtFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -35,8 +28,8 @@ final class JwtServiceProvider implements ServiceProviderInterface
         $services->set('jwt', JwtFactory::class)
             ->autowire()
             ->public();
-		
-		/*
+
+        /*
         $services->set(AuthGuard::class)
             ->args([
                 service('jwt'),
@@ -50,7 +43,7 @@ final class JwtServiceProvider implements ServiceProviderInterface
             ])
             ->autowire()
             ->public();
-		*/
+        */
     }
 
     public function boot(ContainerInterface $container): void

@@ -3,20 +3,12 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: Cache.php
- * @Date: 2025-12-17
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Attributes;
 
-use Attribute;
 use App\Middlewares\CacheMiddleware;
 
 /**
@@ -29,12 +21,12 @@ use App\Middlewares\CacheMiddleware;
  * #[Cache(ttl: 300)] // 缓存 5分钟
  * #[Cache(ttl: 600, key: 'home_page_data')] // 自定义 Key
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Cache implements MiddlewareProviderInterface
 {
     /**
-     * @param int         $ttl  缓存有效期（秒），默认 60 秒
-     * @param string|null $key  自定义缓存 Key，留空则根据 URL 自动生成
+     * @param int         $ttl 缓存有效期（秒），默认 60 秒
+     * @param null|string $key 自定义缓存 Key，留空则根据 URL 自动生成
      */
     public function __construct(
         public int $ttl = 60,
@@ -42,10 +34,9 @@ class Cache implements MiddlewareProviderInterface
     ) {}
 
     /**
-    * @return string|array<mixed>
-    
-    */
-    public function getMiddleware(): string|array
+     * @return array<mixed>|string
+     */
+    public function getMiddleware(): array|string
     {
         return CacheMiddleware::class;
     }

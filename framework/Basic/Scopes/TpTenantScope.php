@@ -3,22 +3,15 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2026-1-11
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Basic\Scopes;
 
+use Framework\Tenant\TenantContext;
 use think\db\Query;
 use think\Model;
-use Framework\Tenant\TenantContext;
 
 /**
  * ThinkPHP 模型租户隔离作用域
@@ -41,8 +34,6 @@ use Framework\Tenant\TenantContext;
  *     parent::init();
  *     self::addGlobalScope('tenant', new TpTenantScope());
  * }
- *
- * @package Framework\Basic\Scopes
  */
 class TpTenantScope
 {
@@ -58,7 +49,6 @@ class TpTenantScope
      *
      * @param Query $query ThinkPHP 查询构建器
      * @param Model $model 模型实例
-     * @return void
      */
     public function apply(Query $query, Model $model): void
     {
@@ -68,21 +58,21 @@ class TpTenantScope
         }
 
         $tenantId = TenantContext::getTenantId();
-        if (!$tenantId) {
+        if (! $tenantId) {
             return;
         }
 
         $fields = $model->getFields();
-        if (!array_key_exists('tenant_id', $fields)) {
+        if (! array_key_exists('tenant_id', $fields)) {
             return;
         }
 
         $fieldKey = $model->getTable() . '.tenant_id';
 
         // 避免重复添加
-        $options = $query->getOptions();
+        $options  = $query->getOptions();
         $hasWhere = false;
-        if (!empty($options['where'])) {
+        if (! empty($options['where'])) {
             foreach ($options['where'] as $where) {
                 if (isset($where[0]) && $where[0] === $fieldKey) {
                     $hasWhere = true;
@@ -91,7 +81,7 @@ class TpTenantScope
             }
         }
 
-        if (!$hasWhere) {
+        if (! $hasWhere) {
             $query->where($fieldKey, '=', $tenantId);
         }
     }

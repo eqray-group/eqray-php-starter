@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: RouteListCommand.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Console\Commands;
@@ -19,7 +12,6 @@ namespace Framework\Console\Commands;
 use Framework\Core\AttributeRouteLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -28,7 +20,7 @@ use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
- * 路由列表命令
+ * 路由列表命令.
  *
  * 显示系统中所有注册的路由，包括：
  * - 手动路由 (config/routes.php)
@@ -40,38 +32,32 @@ use Symfony\Component\Routing\RouteCollection;
  *   php novaphp route:list --method=GET
  *   php novaphp route:list --path=/api
  *   php novaphp route:list --name=user
- *
- * @package Framework\Console\Commands
  */
 class RouteListCommand extends Command
 {
     /**
-     * 命令名称
+     * 命令名称.
      *
      * @var string
      */
     protected static $defaultName = 'route:list';
 
     /**
-     * 配置命令
+     * 配置命令.
      */
     protected function configure(): void
     {
         $this->setName('route:list') // ✅ 关键修复
-             ->setDescription('列出所有路由')
-             ->setHelp('此命令显示系统中所有注册的路由，包括手动路由、注解路由和插件路由。')
-             ->addOption('method', 'm', InputOption::VALUE_OPTIONAL, '按 HTTP 方法筛选')
-             ->addOption('path', 'p', InputOption::VALUE_OPTIONAL, '按路径前缀筛选')
-             ->addOption('name', null, InputOption::VALUE_OPTIONAL, '按路由名称筛选')
-             ->addOption('json', 'j', InputOption::VALUE_NONE, '以 JSON 格式输出');
+            ->setDescription('列出所有路由')
+            ->setHelp('此命令显示系统中所有注册的路由，包括手动路由、注解路由和插件路由。')
+            ->addOption('method', 'm', InputOption::VALUE_OPTIONAL, '按 HTTP 方法筛选')
+            ->addOption('path', 'p', InputOption::VALUE_OPTIONAL, '按路径前缀筛选')
+            ->addOption('name', null, InputOption::VALUE_OPTIONAL, '按路由名称筛选')
+            ->addOption('json', 'j', InputOption::VALUE_NONE, '以 JSON 格式输出');
     }
 
     /**
-     * 执行命令
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return int
+     * 执行命令.
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -79,9 +65,9 @@ class RouteListCommand extends Command
 
         // 获取筛选条件
         $methodFilter = strtoupper($input->getOption('method') ?? '');
-        $pathFilter = $input->getOption('path');
-        $nameFilter = $input->getOption('name');
-        $jsonOutput = $input->getOption('json');
+        $pathFilter   = $input->getOption('path');
+        $nameFilter   = $input->getOption('name');
+        $jsonOutput   = $input->getOption('json');
 
         // 收集所有路由
         $allRoutes = [];
@@ -127,7 +113,7 @@ class RouteListCommand extends Command
         $allRoutes = $this->filterRoutes($allRoutes, $methodFilter, $pathFilter, $nameFilter);
 
         // 5. 排序（按路径）
-        usort($allRoutes, fn($a, $b) => strcmp($a['path'], $b['path']));
+        usort($allRoutes, fn ($a, $b) => strcmp($a['path'], $b['path']));
 
         // 6. 输出
         if ($jsonOutput) {
@@ -143,18 +129,18 @@ class RouteListCommand extends Command
     }
 
     /**
-     * 加载手动路由
+     * 加载手动路由.
      *
      * @return array<mixed> */
     private function loadManualRoutes(): array
     {
         $routesFile = BASE_PATH . '/config/routes.php';
-        if (!file_exists($routesFile)) {
+        if (! file_exists($routesFile)) {
             return [];
         }
 
         $routes = require $routesFile;
-        if (!($routes instanceof RouteCollection)) {
+        if (! $routes instanceof RouteCollection) {
             return [];
         }
 
@@ -167,18 +153,18 @@ class RouteListCommand extends Command
     }
 
     /**
-     * 加载多应用配置
+     * 加载多应用配置.
      *
      * @return array<mixed> */
     private function loadAppsConfig(): array
     {
         $appsFile = BASE_PATH . '/config/apps.php';
-        if (!file_exists($appsFile)) {
+        if (! file_exists($appsFile)) {
             return [];
         }
 
         $config = require $appsFile;
-        if (!is_array($config)) {
+        if (! is_array($config)) {
             return [];
         }
 
@@ -186,14 +172,12 @@ class RouteListCommand extends Command
     }
 
     /**
-     * 加载注解路由
+     * 加载注解路由.
      *
-     * @param string $controllerDir
-     * @param string $namespace
      * @return array<mixed> */
     private function loadAnnotatedRoutes(string $controllerDir, string $namespace): array
     {
-        if (!is_dir($controllerDir)) {
+        if (! is_dir($controllerDir)) {
             return [];
         }
 
@@ -209,13 +193,13 @@ class RouteListCommand extends Command
     }
 
     /**
-     * 加载插件路由
+     * 加载插件路由.
      *
      * @return array<mixed> */
     private function loadPluginRoutes(): array
     {
         $pluginDir = BASE_PATH . '/plugins';
-        if (!is_dir($pluginDir)) {
+        if (! is_dir($pluginDir)) {
             return [];
         }
 
@@ -233,19 +217,19 @@ class RouteListCommand extends Command
             }
 
             $manifestPath = "{$pluginDir}/{$dir}/plugin.json";
-            if (!file_exists($manifestPath)) {
+            if (! file_exists($manifestPath)) {
                 continue;
             }
 
             // 解析插件获取命名空间
-            $json = file_get_contents($manifestPath);
-            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            $json      = file_get_contents($manifestPath);
+            $data      = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
             $namespace = $data['namespace'] ?? "Plugins\\{$dir}";
 
             // 加载插件控制器路由
             $controllerDir = "{$pluginDir}/{$dir}/Controllers";
             if (is_dir($controllerDir)) {
-                $routes = $this->loadAnnotatedRoutes($controllerDir, $namespace . '\\Controllers');
+                $routes = $this->loadAnnotatedRoutes($controllerDir, $namespace . '\Controllers');
                 foreach ($routes as $name => $route) {
                     $result[$name] = $route;
                 }
@@ -256,11 +240,8 @@ class RouteListCommand extends Command
     }
 
     /**
-     * 格式化路由信息
+     * 格式化路由信息.
      *
-     * @param string $name
-     * @param Route $route
-     * @param string $source
      * @return array<mixed> */
     private function formatRoute(string $name, Route $route, string $source): array
     {
@@ -270,37 +251,34 @@ class RouteListCommand extends Command
         }
 
         return [
-            'name' => $name,
-            'path' => $route->getPath(),
-            'methods' => implode(', ', $methods),
+            'name'       => $name,
+            'path'       => $route->getPath(),
+            'methods'    => implode(', ', $methods),
             'controller' => $route->getDefault('_controller') ?? '-',
-            'source' => $source,
+            'source'     => $source,
         ];
     }
 
     /**
-     * 筛选路由
+     * 筛选路由.
      *
      * @param array<mixed> $routes
-     * @param string|null $method
-     * @param string|null $path
-     * @param string|null $name
      * @return array<mixed> */
     private function filterRoutes(array $routes, ?string $method, ?string $path, ?string $name): array
     {
         return array_filter($routes, function ($route) use ($method, $path, $name) {
             // 方法筛选
-            if ($method && !str_contains($route['methods'], $method)) {
+            if ($method && ! str_contains($route['methods'], $method)) {
                 return false;
             }
 
             // 路径筛选
-            if ($path && !str_contains($route['path'], $path)) {
+            if ($path && ! str_contains($route['path'], $path)) {
                 return false;
             }
 
             // 名称筛选
-            if ($name && !str_contains($route['name'], $name)) {
+            if ($name && ! str_contains($route['name'], $name)) {
                 return false;
             }
 
@@ -311,7 +289,6 @@ class RouteListCommand extends Command
     /**
      * 渲染表格
      *
-     * @param OutputInterface $output
      * @param array<mixed> $routes
      */
     private function renderTable(OutputInterface $output, array $routes): void
@@ -334,11 +311,7 @@ class RouteListCommand extends Command
     }
 
     /**
-     * 截断字符串
-     *
-     * @param string $str
-     * @param int $length
-     * @return string
+     * 截断字符串.
      */
     private function truncate(string $str, int $length): string
     {

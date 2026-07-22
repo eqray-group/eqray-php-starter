@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-12-13
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -22,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * CSRF Token 生成 / 同步中间件（SPA 友好版）
+ * CSRF Token 生成 / 同步中间件（SPA 友好版）.
  *
  * 设计说明（非常重要）：
  *
@@ -75,7 +68,7 @@ class CsrfTokenGenerateMiddleware
             return $next($request);
         }
 
-        /**
+        /*
          * ❗ 特殊接口跳过 CSRF 生成
          * 例如：
          * - /login/getCsrfToken
@@ -83,22 +76,21 @@ class CsrfTokenGenerateMiddleware
          *
          * 这些接口通常用于“尚未建立 Session”的阶段
          */
-        if ($path === '/login/getCsrfToken' || $path === '/login/captcha' || $path === '/login/getCaptchaOpenFlag'  ) {
+        if ($path === '/login/getCsrfToken' || $path === '/login/captcha' || $path === '/login/getCaptchaOpenFlag') {
             return $next($request);
         }
 
         /**
          * 1️⃣ 从 Session 中获取 CSRF Token
          * - 若已存在：直接返回（不会刷新）
-         * - 若不存在：生成并写入 Session
+         * - 若不存在：生成并写入 Session.
          */
         $token = $this->tokenManager->getToken($this->tokenId);
 
-        
         $response = $next($request);
 
         /**
-         * 2️⃣ 同步 Token 到 Cookie
+         * 2️⃣ 同步 Token 到 Cookie.
          *
          * 设计原则：
          * - Cookie 只是「前端读取通道」
@@ -109,8 +101,8 @@ class CsrfTokenGenerateMiddleware
          * - Cookie 与 Session Token 不一致
          */
         $cookieToken = $request->cookies->get($this->cookieName);
-		
-		$request->headers->set('X-CSRF-TOKEN' , $token);
+
+        $request->headers->set('X-CSRF-TOKEN', $token);
 
         if ($cookieToken !== $token) {
             $response->headers->setCookie(

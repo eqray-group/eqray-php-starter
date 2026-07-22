@@ -3,24 +3,18 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Container;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 /**
- * 容器服务提供者管理器
+ * 容器服务提供者管理器.
  *
  * 该类负责自动扫描并加载服务提供者类。
  * 支持同时加载核心服务提供者（框架内部）和应用服务提供者（用户自定义）。
@@ -30,19 +24,17 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
  * 2. 通过反射验证是否实现 ServiceProviderInterface 接口
  * 3. 调用 register() 方法注册服务定义
  * 4. 在容器编译后调用 boot() 方法执行初始化逻辑
- *
- * @package Framework\Container
  */
 class ContainerProviders
 {
     /**
-     * 已加载的服务提供者实例列表
+     * 已加载的服务提供者实例列表.
      *
      * @var array<mixed> */
     protected array $loadedProviders = [];
 
     /**
-     * 待引导的服务提供者列表
+     * 待引导的服务提供者列表.
      *
      * 在 ContainerConfigurator 阶段暂时存储，
      * 等待 ContainerBuilder 阶段再执行 boot 方法。
@@ -51,16 +43,14 @@ class ContainerProviders
     protected array $pendingBoot = [];
 
     /**
-     * 扫描并注册所有服务提供者（核心 + 应用）
+     * 扫描并注册所有服务提供者（核心 + 应用）.
      *
      * 同时加载框架核心服务提供者和应用自定义服务提供者。
      * 核心服务提供者通过 Composer 自动映射定位。
      *
      * @param ContainerConfigurator $configurator   容器配置器
-     * @param string                $namespaceBase   应用提供者的命名空间基础
-     * @param string|null           $appProviderDir 应用服务提供者目录路径（可选）
-     *
-     * @return void
+     * @param string                $namespaceBase  应用提供者的命名空间基础
+     * @param null|string           $appProviderDir 应用服务提供者目录路径（可选）
      */
     public function loadAll(ContainerConfigurator $configurator, string $namespaceBase, ?string $appProviderDir = null): void
     {
@@ -79,7 +69,7 @@ class ContainerProviders
     }
 
     /**
-     * 根据目录扫描并注册服务提供者
+     * 根据目录扫描并注册服务提供者.
      *
      * 递归遍历指定目录，查找所有以 "Provider.php" 结尾的文件，
      * 解析类名并注册到容器中。
@@ -87,8 +77,6 @@ class ContainerProviders
      * @param ContainerConfigurator $configurator  容器配置器
      * @param string                $directory     要扫描的目录路径
      * @param string                $namespaceBase 命名空间基础（如 'Framework\Providers\'）
-     *
-     * @return void
      */
     public function loadFromDirectory(ContainerConfigurator $configurator, string $directory, string $namespaceBase): void
     {
@@ -118,7 +106,7 @@ class ContainerProviders
     }
 
     /**
-     * 注册单个服务提供者
+     * 注册单个服务提供者.
      *
      * 验证服务提供者是否实现了 ServiceProviderInterface 接口，
      * 然后调用其 register() 方法注册服务定义。
@@ -126,8 +114,6 @@ class ContainerProviders
      *
      * @param ContainerConfigurator $configurator 容器配置器
      * @param string                $className    服务提供者的完整类名
-     *
-     * @return void
      */
     public function registerProvider(ContainerConfigurator $configurator, string $className): void
     {
@@ -143,7 +129,6 @@ class ContainerProviders
             return;
         }
 
-        
         $provider = $ref->newInstance();
 
         // 调用 register 方法
@@ -155,14 +140,12 @@ class ContainerProviders
     }
 
     /**
-     * 启动所有服务提供者的 boot 方法
+     * 启动所有服务提供者的 boot 方法.
      *
      * 在容器编译后执行，用于初始化服务逻辑。
      * 如果容器是 ContainerConfigurator，则推迟 boot 到 ContainerBuilder 阶段。
      *
-     * @param ContainerBuilder|ContainerConfigurator|\Framework\Container\Container|\Symfony\Component\DependencyInjection\ContainerInterface $container 容器实例
-     *
-     * @return void
+     * @param Container|ContainerBuilder|ContainerConfigurator|ContainerInterface $container 容器实例
      */
     public function bootProviders($container): void
     {
@@ -182,13 +165,13 @@ class ContainerProviders
     }
 
     /**
-     * 自动获取 Composer 的 PSR-4 映射路径
+     * 自动获取 Composer 的 PSR-4 映射路径.
      *
      * 解析 Composer 自动加载配置，获取指定命名空间对应的目录路径。
      *
      * @param string $namespace 命名空间（如 'Framework\Providers\'）
      *
-     * @return string|null 对应的目录路径，如果未找到返回 null
+     * @return null|string 对应的目录路径，如果未找到返回 null
      */
     protected function getComposerNamespacePath(string $namespace): ?string
     {
@@ -212,7 +195,7 @@ class ContainerProviders
     }
 
     /**
-     * 根据文件路径解析命名空间类名
+     * 根据文件路径解析命名空间类名.
      *
      * 将文件系统路径转换为完整的类名（FQCN）。
      * 支持子目录结构，健壮地处理各种路径格式。

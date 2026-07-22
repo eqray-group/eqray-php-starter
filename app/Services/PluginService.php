@@ -186,7 +186,7 @@ class PluginService
             'namespace' => "Plugins\\{$className}",
             'requires' => [
                 'php' => '^8.3',
-                'Fssphp' => '^0.8.0',
+                'eqrayphp' => '^0.8.0',
             ],
             'dependencies' => new \stdClass(),
             'autoload' => [

@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace Framework\Middleware;
 
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -12,29 +17,30 @@ use Symfony\Component\HttpFoundation\Response;
 class XssFilterMiddleware
 {
     private bool $enabled = true;
+
     private ?\HTMLPurifier $purifier = null;
-    
+
     // 默认不处理的字段，例如密码字段不应被修改
     /** @var array<mixed> */
     private array $except = [
         'password',
         'password_confirmation',
-        '_token'
+        '_token',
     ];
 
     /**
-    * @param array<mixed> $allowedHtml
-    */
+     * @param array<mixed> $allowedHtml
+     */
     public function __construct(bool $enabled = true, array $allowedHtml = [])
     {
         $this->enabled = $enabled;
 
         // 只有当明确指定了允许的 HTML 标签时，才初始化重型的 Purifier
-        if ($enabled && !empty($allowedHtml)) {
+        if ($enabled && ! empty($allowedHtml)) {
             $config = \HTMLPurifier_Config::createDefault();
             $config->set('Cache.SerializerPath', sys_get_temp_dir());
             $config->set('HTML.Allowed', implode(',', array_map(
-                fn($tag) => $tag . '[*]', // 允许标签及其属性，具体属性可更细致配置
+                fn ($tag) => $tag . '[*]', // 允许标签及其属性，具体属性可更细致配置
                 $allowedHtml
             )));
             // 允许常见协议
@@ -45,7 +51,7 @@ class XssFilterMiddleware
 
     public function handle(Request $request, callable $next): Response
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return $next($request);
         }
 
@@ -92,9 +98,9 @@ class XssFilterMiddleware
     }
 
     /**
-    * @param array<mixed> $files
-    * @return array<mixed>
-    */
+     * @param  array<mixed> $files
+     * @return array<mixed>
+     */
     private function filterFiles(array $files): array
     {
         $filteredFiles = [];
@@ -104,7 +110,7 @@ class XssFilterMiddleware
             } elseif ($file instanceof UploadedFile) {
                 // 清洗文件名
                 $sanitizedName = $this->sanitizeFileName($file->getClientOriginalName());
-                
+
                 // 只有当文件名发生变化时才重新创建对象，节省开销
                 if ($sanitizedName !== $file->getClientOriginalName()) {
                     $filteredFiles[$key] = new UploadedFile(
@@ -129,15 +135,15 @@ class XssFilterMiddleware
         // \p{L} 匹配任何语言的字母，\p{N} 匹配数字
         // 也可以简单地只过滤掉危险字符： / \ : * ? " < > |
         $fileName = preg_replace('/[^\p{L}\p{N}\.\-\_\(\)\s]/u', '', $fileName);
-        
+
         // 限制长度，防止文件名过长
         return mb_substr($fileName, 0, 255);
     }
 
     /**
-    * @param array<mixed> $data
-    * @return array<mixed>
-    */
+     * @param  array<mixed> $data
+     * @return array<mixed>
+     */
     private function filterArray(array $data): array
     {
         $clean = [];
@@ -160,7 +166,7 @@ class XssFilterMiddleware
     }
 
     /**
-     * 核心清洗逻辑
+     * 核心清洗逻辑.
      */
     private function sanitize(string $input): string
     {

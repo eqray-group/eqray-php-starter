@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Providers;
@@ -46,7 +39,7 @@ final class ResponseProvider implements ServiceProviderInterface
             ->set('response1' , Response::class)
             ->args(['', Response::HTTP_OK, []])
             ->public();
-		
+
         $services
             ->set('response2' , Response::class)
             ->class(Response::class)

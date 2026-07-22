@@ -3,21 +3,13 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: UserAction.php
- * @Date: 2025-12-17
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Attributes;
 
 use App\Middlewares\UserActionMiddleware;
-use Attribute;
 
 /**
  * @UserAction
@@ -27,22 +19,20 @@ use Attribute;
  * #[UserAction(type: 'login')]
  * #[UserAction(type: 'register')]
  */
-#[Attribute(Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_METHOD)]
 class UserAction implements MiddlewareProviderInterface
 {
     /**
-     * @param string|null $type 动作类型标识
+     * @param null|string $type 动作类型标识
      */
     public function __construct(
         public ?string $type = null
-    ) {
-    }
+    ) {}
 
     /**
-    * @return string|array<mixed>
-    
-    */
-    public function getMiddleware(): string|array
+     * @return array<mixed>|string
+     */
+    public function getMiddleware(): array|string
     {
         return UserActionMiddleware::class;
     }

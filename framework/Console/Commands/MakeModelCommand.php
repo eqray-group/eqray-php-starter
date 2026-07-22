@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Console\Commands;
@@ -24,7 +17,7 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * 创建模型命令
+ * 创建模型命令.
  *
  * 该命令用于通过命令行快速创建新的模型类文件。
  * 自动生成基于 ThinkPHP Model 的模型模板，包含常用配置项。
@@ -32,31 +25,27 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * 使用方法：
  *   php console make:model User
- *
- * @package Framework\Console\Commands
  */
 class MakeModelCommand extends Command
 {
     /**
-     * 命令名称
+     * 命令名称.
      *
      * @var string
      */
     protected static $defaultName = 'make:model';
 
     /**
-     * 命令描述
+     * 命令描述.
      *
      * @var string
      */
     protected static $defaultDescription = '创建一个新的模型类';
 
     /**
-     * 配置命令参数和选项
+     * 配置命令参数和选项.
      *
      * 设置命令名称、描述以及必需的模型名称参数。
-     *
-     * @return void
      */
     protected function configure(): void
     {
@@ -74,7 +63,7 @@ class MakeModelCommand extends Command
     }
 
     /**
-     * 执行命令
+     * 执行命令.
      *
      * 创建模型文件，包含以下步骤：
      * 1. 解析模型名称并构建文件路径
@@ -126,7 +115,7 @@ class MakeModelCommand extends Command
     }
 
     /**
-     * 生成模型类内容
+     * 生成模型类内容.
      *
      * 创建基于 ThinkPHP Model 的模型类模板。
      * 自动将驼峰类名转换为下划线复数形式的表名。

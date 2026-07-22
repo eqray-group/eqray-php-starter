@@ -3,25 +3,14 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Event;
 
 use Framework\Event\Attribute\EventListener;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use Framework\Utils\ReflectionTypes;
-use ReflectionClass;
-use ReflectionMethod;
 
 class ListenerScanner
 {
@@ -39,7 +28,7 @@ class ListenerScanner
     /**
      * 获取监听器（自动缓存 + 自动刷新）.
      * @return array<mixed>
- */
+     */
     public function getSubscribers(): array
     {
         // 开发环境建议禁用缓存（可选）
@@ -57,12 +46,12 @@ class ListenerScanner
 
         // 2. 缓存命中且指纹一致 → 直接返回
         if ($cached && is_array($cached) && ($cached['fingerprint'] ?? null) === $currentFingerprint) {
-            //app('log')->info('[Event Scan] Subscribers loaded from cache (fingerprint match).');
+            // app('log')->info('[Event Scan] Subscribers loaded from cache (fingerprint match).');
             return $cached['subscribers'] ?? [];
         }
 
         // 3. 缓存未命中 或 指纹不一致 → 重新扫描
-        //app('log')->info('[Event Expired] Listener files changed or cache expired. Rescanning...');
+        // app('log')->info('[Event Expired] Listener files changed or cache expired. Rescanning...');
         $result = $this->scanAndBuild();
 
         // 4. 更新缓存
@@ -75,9 +64,9 @@ class ListenerScanner
     }
 
     /**
-     * 核心扫描逻辑：支持 Interface 和 Attributes
+     * 核心扫描逻辑：支持 Interface 和 Attributes.
      * @return array<mixed>
- */
+     */
     private function scanAndBuild(): array
     {
         if (! is_dir($this->listenerDir)) {
@@ -85,10 +74,10 @@ class ListenerScanner
         }
 
         $subscribers = [];
-        
+
         // 1. 改为递归扫描，支持子目录
-        $dirIterator = new RecursiveDirectoryIterator($this->listenerDir);
-        $iterator = new RecursiveIteratorIterator($dirIterator);
+        $dirIterator = new \RecursiveDirectoryIterator($this->listenerDir);
+        $iterator    = new \RecursiveIteratorIterator($dirIterator);
 
         foreach ($iterator as $file) {
             if ($file->getExtension() !== 'php') {
@@ -98,14 +87,14 @@ class ListenerScanner
             // 假设命名空间符合 PSR-4 规范，这里简单推导（实际项目中建议用 composer classmap 或 symfony finder）
             // 这里为了演示，假设文件名即类名，且都在 App\Listeners 下
             // 更好的方式是解析文件内容获取 namespace
-            $className = $this->getClassFromFile($file->getPathname()); 
-            
-            if (!$className || !class_exists($className)) {
+            $className = $this->getClassFromFile($file->getPathname());
+
+            if (! $className || ! class_exists($className)) {
                 continue;
             }
 
-            $ref = new ReflectionClass($className);
-            if (!$ref->isInstantiable()) {
+            $ref = new \ReflectionClass($className);
+            if (! $ref->isInstantiable()) {
                 continue;
             }
 
@@ -116,11 +105,11 @@ class ListenerScanner
             }
 
             // 方式 B: 扫描 #[EventListener] 注解
-            foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
                 $attributes = $method->getAttributes(EventListener::class);
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
-                    
+
                     // 尝试推断事件类型
                     $eventClass = $instance->event;
                     if ($eventClass === null) {
@@ -128,7 +117,7 @@ class ListenerScanner
                         $params = $method->getParameters();
                         if (isset($params[0])) {
                             $namedType = ReflectionTypes::asNamed($params[0]->getType());
-                            if ($namedType !== null && !$namedType->isBuiltin()) {
+                            if ($namedType !== null && ! $namedType->isBuiltin()) {
                                 $eventClass = $namedType->getName();
                             }
                         }
@@ -151,20 +140,18 @@ class ListenerScanner
     }
 
     /**
-     * 辅助方法：简单的从文件路径推断类名 (根据你的项目结构调整)
+     * 辅助方法：简单的从文件路径推断类名 (根据你的项目结构调整).
      */
     private function getClassFromFile(string $path): ?string
     {
         // 简单实现：读取文件内容找 namespace 和 class
         $content = file_get_contents($path);
-        if (preg_match('/namespace\s+(.+?);/', $content, $matchesNs) && 
-            preg_match('/class\s+(\w+)/', $content, $matchesClass)) {
+        if (preg_match('/namespace\s+(.+?);/', $content, $matchesNs)
+            && preg_match('/class\s+(\w+)/', $content, $matchesClass)) {
             return $matchesNs[1] . '\\' . $matchesClass[1];
         }
         return null;
     }
-	 
-
 
     /**
      * 生成监听器目录的指纹（基于文件修改时间）.

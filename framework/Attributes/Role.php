@@ -3,21 +3,13 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: Role.php
- * @Date: 2025-12-17
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Attributes;
 
 use App\Middlewares\RoleMiddleware;
-use Attribute;
 
 /**
  * @Role
@@ -27,7 +19,7 @@ use Attribute;
  * #[Role(['admin'])] // 仅管理员可访问
  * #[Role(['admin', 'editor'])] // 管理员和编辑可访问
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Role implements MiddlewareProviderInterface
 {
     /**
@@ -35,17 +27,14 @@ class Role implements MiddlewareProviderInterface
      */
     public function __construct(
         public array $roles = []
-    ) {
-    }
+    ) {}
 
     /**
-     * 绑定中间件
-
-     * @return string|array<mixed>
-    
-
+     * 绑定中间件.
+     *
+     * @return array<mixed>|string
      */
-    public function getMiddleware(): string|array
+    public function getMiddleware(): array|string
     {
         return RoleMiddleware::class;
     }

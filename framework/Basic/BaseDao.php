@@ -3,24 +3,14 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: BaseDao.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Basic;
 
 use Framework\DI\Injectable;
 use Framework\ORM\Adapter\ORMAdapterFactory;
-use RuntimeException;
-use Throwable;
-use Framework\Database\DatabaseFactory;
 
 /**
  * @method count(array<mixed> $where = [], bool $search = true)
@@ -69,15 +59,13 @@ abstract class BaseDao
     public function __construct(?string $mode = null, object|string|null $modelClass = null)
     {
         $this->inject();
-		
-		
 
         // 1. 获取 ORM 模式
         if ($mode == null) {
             $mode = config('database.engine', 'thinkORM') ?? env('ORM_DRIVER');
         }
 
-		$db = app('db');
+        $db = app('db');
 
         $this->mode = $mode;
 
@@ -86,29 +74,21 @@ abstract class BaseDao
 
         // 3. 创建适配器
         $this->instance = ORMAdapterFactory::createAdapter($mode, $modelClass);
-        #dump($this->instance);
-        //dump("created model: " . get_class($this->instance));
+        # dump($this->instance);
+        // dump("created model: " . get_class($this->instance));
         $this->initialize();
-    }
-
-    /**
-     * 获取底层 ORM 适配器实例.
-     */
-    public function getAdapter(): mixed
-    {
-        return $this->instance;
     }
 
     /**
      * 动态代理调用 —— 将所有方法转发给 ORM Adapter.
      *
-     * @throws RuntimeException
-     * @param array<mixed> $arguments
- */
+     * @param  array<mixed>      $arguments
+     * @throws \RuntimeException
+     */
     public function __call(string $name, array $arguments): mixed
     {
         if (! $this->instance) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 sprintf(
                     '[DAO ERROR] %s 未初始化 ORM 适配器',
                     static::class
@@ -118,7 +98,7 @@ abstract class BaseDao
 
         // 检查适配器是否支持该方法
         if (! method_exists($this->instance, $name)) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 sprintf(
                     "[DAO ERROR] 方法不存在: %s::%s()\nAdapter: %s\nModel: %s",
                     static::class,
@@ -131,8 +111,8 @@ abstract class BaseDao
 
         try {
             return $this->instance->{$name}(...$arguments);
-        } catch (Throwable $e) {
-            throw new RuntimeException(
+        } catch (\Throwable $e) {
+            throw new \RuntimeException(
                 sprintf(
                     "[DAO ERROR] 调用 %s::%s() 时发生异常\nAdapter: %s\nModel: %s\nMessage: %s",
                     static::class,
@@ -147,21 +127,27 @@ abstract class BaseDao
         }
     }
 
+    /**
+     * 获取底层 ORM 适配器实例.
+     */
+    public function getAdapter(): mixed
+    {
+        return $this->instance;
+    }
+
     public function getModel(): mixed
     {
         if (method_exists($this->instance, 'getModel')) {
             return $this->instance->getModel();
         }
 
-        throw new RuntimeException('当前 ORM 适配器不支持 getModel()');
+        throw new \RuntimeException('当前 ORM 适配器不支持 getModel()');
     }
 
     /**
      * 子类可根据需要覆盖 lifecycle.
      */
-    protected function initialize(): void
-    {
-    }
+    protected function initialize(): void {}
 
     /**
      * 获取当前模型类名.

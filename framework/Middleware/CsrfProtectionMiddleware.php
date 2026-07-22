@@ -3,52 +3,44 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-12-13
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
-
 
 namespace Framework\Middleware;
 
-use Framework\Security\CsrfTokenManager;
 use Framework\Basic\BaseJsonResponse;
+use Framework\Security\CsrfTokenManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CsrfProtectionMiddleware
 {
     /**
-    * @param array<mixed> $except
-    */
+     * @param array<mixed> $except
+     */
     public function __construct(
         private CsrfTokenManager $tokenManager,
 
         /**
          * CSRF Token 参数名
          * - 表单提交：_token
-         * - SPA/AJAX：Header X-CSRF-TOKEN / X-XSRF-TOKEN
+         * - SPA/AJAX：Header X-CSRF-TOKEN / X-XSRF-TOKEN.
          */
         private string $tokenName = '_token',
 
         /**
-         * 不进行 CSRF 校验的路径（支持通配符）
+         * 不进行 CSRF 校验的路径（支持通配符）.
          */
         private array $except = [],
 
         /**
-         * 校验失败时的错误提示
+         * 校验失败时的错误提示.
          */
         private string $errorMessage = 'Invalid CSRF token.',
 
         /**
-         * ❗❗❗ 重要说明 ❗❗❗
+         * ❗❗❗ 重要说明 ❗❗❗.
          *
          * 在 SPA / AJAX 场景下：
          * - CSRF Token 必须是「会话级别稳定值」
@@ -91,44 +83,43 @@ class CsrfProtectionMiddleware
         }
 
         /**
-         * CSRF Token 获取优先级说明：
+         * CSRF Token 获取优先级说明：.
          *
          * 1. 表单字段（传统表单）
          * 2. Header: X-CSRF-TOKEN（推荐）
          * 3. Header: X-XSRF-TOKEN（兼容）
          * 4. Cookie: XSRF-TOKEN（兜底，不推荐）
          */
-        $token =
-            $request->request->get($this->tokenName)
+        $token
+            = $request->request->get($this->tokenName)
             ?? $request->headers->get('X-CSRF-TOKEN')
             ?? $request->headers->get('X-XSRF-TOKEN')
             ?? $request->cookies->get('XSRF-TOKEN');
 
         if (! is_string($token) || ! $this->tokenManager->isTokenValid('default', $token)) {
-
-            /**
+            /*
              * ❗ 校验失败时，不要删除 Session 中的 CSRF Token
              * 删除 Token 会导致并发请求全部失败
              */
 
             if ($this->isAjaxRequest($request)) {
-				return BaseJsonResponse::fail(
-					$this->errorMessage ?: 'CSRF token mismatch.',
-					419
-				);
+                return BaseJsonResponse::fail(
+                    $this->errorMessage ?: 'CSRF token mismatch.',
+                    419
+                );
             }
 
-			return new Response(
-				view('errors/csrf_error.html.twig', [
-					'status_code' => 403,
-					'status_text' => 'Forbidden',
-					'message'     => $this->errorMessage ?: 'CSRF token mismatch.',
-				]),
-				403
-			);
+            return new Response(
+                view('errors/csrf_error.html.twig', [
+                    'status_code' => 403,
+                    'status_text' => 'Forbidden',
+                    'message'     => $this->errorMessage ?: 'CSRF token mismatch.',
+                ]),
+                403
+            );
         }
 
-        /**
+        /*
          * ❗ 校验成功后：
          * 在 SPA 场景下【绝对不要】删除 CSRF Token
          *

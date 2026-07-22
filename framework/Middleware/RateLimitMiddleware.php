@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -36,7 +29,7 @@ class RateLimitMiddleware
     /**
      * [MODIFIED] 构造函数现在接收 \Redis 实例，而不是 $cacheDir.
      * @param array<mixed> $config
- */
+     */
     public function __construct(private array $config, object $redis)
     {
         $this->maxRequests = $config['maxRequests'] ?? $this->maxRequests;

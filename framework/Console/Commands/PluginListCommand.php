@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: PluginListCommand.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Console\Commands;
@@ -24,40 +17,34 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * 插件列表命令
+ * 插件列表命令.
  *
  * 列出所有已发现和已安装的插件。
  *
  * 使用方法：
  *   php novaphp plugin:list
- *
- * @package Framework\Console\Commands
  */
 class PluginListCommand extends Command
 {
     /**
-     * 命令名称
+     * 命令名称.
      *
      * @var string
      */
     protected static $defaultName = 'plugin:list';
 
     /**
-     * 配置命令
+     * 配置命令.
      */
     protected function configure(): void
     {
         $this->setName(self::$defaultName)
-             ->setDescription('列出所有插件')
-             ->setHelp('此命令列出所有已发现和已安装的插件，包括其状态、版本等信息。');
+            ->setDescription('列出所有插件')
+            ->setHelp('此命令列出所有已发现和已安装的插件，包括其状态、版本等信息。');
     }
 
     /**
-     * 执行命令
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return int
+     * 执行命令.
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -65,12 +52,12 @@ class PluginListCommand extends Command
 
         // 加载插件配置
         $configFile = BASE_PATH . '/config/plugin/plugins.php';
-        if (!file_exists($configFile)) {
+        if (! file_exists($configFile)) {
             $io->error('插件配置文件不存在: ' . $configFile);
             return Command::FAILURE;
         }
 
-        $config = require $configFile;
+        $config  = require $configFile;
         $manager = new PluginManager($config);
         $manager->discover();
 
@@ -86,8 +73,8 @@ class PluginListCommand extends Command
         $rows = [];
         foreach ($manifests as $name => $manifest) {
             $isInstalled = isset($installed[$name]);
-            $isEnabled = $installed[$name]['enabled'] ?? false;
-            $version = $installed[$name]['version'] ?? $manifest->version;
+            $isEnabled   = $installed[$name]['enabled'] ?? false;
+            $version     = $installed[$name]['version'] ?? $manifest->version;
 
             $status = '未安装';
             if ($isInstalled) {
@@ -107,7 +94,7 @@ class PluginListCommand extends Command
 
         $table = new Table($output);
         $table->setHeaders(['名称', '标题', '版本', '状态', '作者'])
-              ->setRows($rows);
+            ->setRows($rows);
         $table->render();
 
         $io->newLine();

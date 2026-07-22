@@ -3,48 +3,33 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: Migration.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Plugin\Migration;
 
 use Framework\Database\DatabaseFactory;
-use Framework\Core\App;
-use ReflectionClass;
 
 /**
- * 插件迁移基类
+ * 插件迁移基类.
  *
  * 所有插件迁移文件应继承此类。
- *
- * @package Framework\Plugin\Migration
  */
 abstract class Migration
 {
     /**
-     * 数据库工厂实例
-     *
-     * @var DatabaseFactory
+     * 数据库工厂实例.
      */
     protected DatabaseFactory $db;
 
     /**
-     * 迁移文件名
-     *
-     * @var string|null
+     * 迁移文件名.
      */
     protected ?string $filename = null;
 
     /**
-     * 构造函数
+     * 构造函数.
      */
     public function __construct()
     {
@@ -52,37 +37,29 @@ abstract class Migration
     }
 
     /**
-     * 执行迁移
+     * 执行迁移.
      *
      * 创建数据库表、索引等。
-     *
-     * @return void
      */
     abstract public function up(): void;
 
     /**
-     * 回滚迁移
+     * 回滚迁移.
      *
      * 删除数据库表、索引等。
-     *
-     * @return void
      */
     abstract public function down(): void;
 
     /**
-     * 获取迁移名称
-     *
-     * @return string
+     * 获取迁移名称.
      */
     public function getName(): string
     {
-        return (new ReflectionClass($this))->getShortName();
+        return (new \ReflectionClass($this))->getShortName();
     }
 
     /**
-     * 获取迁移文件路径
-     *
-     * @return string|null
+     * 获取迁移文件路径.
      */
     public function getFilePath(): ?string
     {
@@ -90,10 +67,7 @@ abstract class Migration
     }
 
     /**
-     * 设置迁移文件路径
-     *
-     * @param string $path
-     * @return self
+     * 设置迁移文件路径.
      */
     public function setFilePath(string $path): self
     {
@@ -102,11 +76,9 @@ abstract class Migration
     }
 
     /**
-     * 获取 Schema 构建器
+     * 获取 Schema 构建器.
      *
      * 根据当前 ORM 引擎返回对应的 Schema 构建器。
-     *
-     * @return mixed
      */
     protected function schema(): mixed
     {
@@ -123,11 +95,10 @@ abstract class Migration
     }
 
     /**
-     * 创建表
+     * 创建表.
      *
-     * @param string $table 表名
+     * @param string   $table    表名
      * @param callable $callback 回调函数
-     * @return void
      */
     protected function createTable(string $table, callable $callback): void
     {
@@ -149,10 +120,9 @@ abstract class Migration
     }
 
     /**
-     * 删除表
+     * 删除表.
      *
      * @param string $table 表名
-     * @return void
      */
     protected function dropTable(string $table): void
     {
@@ -167,10 +137,9 @@ abstract class Migration
     }
 
     /**
-     * 检查表是否存在
+     * 检查表是否存在.
      *
      * @param string $table 表名
-     * @return bool
      */
     protected function tableExists(string $table): bool
     {
@@ -183,14 +152,13 @@ abstract class Migration
 
         // ThinkORM 方式
         $result = $this->db->select("SHOW TABLES LIKE '{$table}'");
-        return !empty($result);
+        return ! empty($result);
     }
 
     /**
-     * 执行原始 SQL
+     * 执行原始 SQL.
      *
      * @param string $sql SQL 语句
-     * @return mixed
      */
     protected function statement(string $sql): mixed
     {

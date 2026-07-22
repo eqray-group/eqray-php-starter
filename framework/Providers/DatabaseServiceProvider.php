@@ -3,23 +3,15 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Providers;
 
 use Framework\Container\ServiceProviderInterface;
 use Framework\Database\DatabaseFactory;
-//use Psr\Log\LoggerInterface;
-use Framework\Log\LoggerService;
+// use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -33,13 +25,13 @@ final class DatabaseServiceProvider implements ServiceProviderInterface
 
         $dbConfig = require BASE_PATH . '/config/database.php';
         $ormType  = $dbConfig['engine'] ?? 'thinkORM';
-		
+
         // 注册 DatabaseFactory ，引入log服务
         $services->set(DatabaseFactory::class)
             ->args([
                 $dbConfig,
                 $ormType,
-                service('log') //->nullOnInvalid(),
+                service('log'), // ->nullOnInvalid(),
             ])
             ->public();
 
@@ -48,7 +40,7 @@ final class DatabaseServiceProvider implements ServiceProviderInterface
             ->args([
                 $dbConfig,
                 $ormType,
-                service('log'), //service(LoggerInterface::class)->nullOnInvalid(),
+                service('log'), // service(LoggerInterface::class)->nullOnInvalid(),
             ])
             ->public();
     }

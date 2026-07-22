@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Event;
@@ -33,9 +26,9 @@ class Dispatcher implements EventDispatcherInterface
     /**
      * 添加监听器.
      *
-     * @param string                $eventClass 事件类名
+     * @param string                       $eventClass 事件类名
      * @param array<mixed>|callable|string $listener   回调、[对象, 方法]、类名
-     * @param int                   $priority   优先级，数值越大越先执行
+     * @param int                          $priority   优先级，数值越大越先执行
      */
     public function addListener(string $eventClass, array|callable|string $listener, int $priority = 0): void
     {
@@ -103,10 +96,8 @@ class Dispatcher implements EventDispatcherInterface
 
     /**
      * 获取某个事件的所有监听器（按优先级合并后返回）.
-
+     *
      * @return iterable<mixed>
-    
-
      */
     public function getListenersForEvent(object $event): iterable
     {
@@ -137,7 +128,7 @@ class Dispatcher implements EventDispatcherInterface
     /**
      * 将不同格式的订阅配置标准化为统一结构.
      *
-     * @param array<mixed> $config 原始配置
+     * @param  array<mixed>                                     $config 原始配置
      * @return array<int, array{method: string, priority: int}>
      */
     private function normalizeSubscriptions(array $config): array
@@ -187,9 +178,8 @@ class Dispatcher implements EventDispatcherInterface
      *  - 'ClassName::method'
      *  - 'ServiceName'（自动从容器获取）
      *  - 闭包/匿名函数.
-
-     * @param array<mixed>|callable|string  $listener
-
+     *
+     * @param array<mixed>|callable|string $listener
      */
     private function resolveListener(array|callable|string $listener): ?callable
     {

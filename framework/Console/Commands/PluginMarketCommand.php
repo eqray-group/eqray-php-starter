@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: PluginMarketCommand.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Console\Commands;
@@ -26,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * 插件市场命令
+ * 插件市场命令.
  *
  * 从远程市场搜索和安装插件。
  *
@@ -35,13 +28,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *   php novaphp plugin:market detail blog
  *   php novaphp plugin:market install blog
  *   php novaphp plugin:market install blog --plugin-version=1.2.0
- *
- * @package Framework\Console\Commands
  */
 class PluginMarketCommand extends Command
 {
     /**
-     * 命令名称
+     * 命令名称.
      *
      * @var string
      */
@@ -49,64 +40,52 @@ class PluginMarketCommand extends Command
 
     /**
      * 市场服务
-     *
-     * @var PluginMarketService|null
      */
     private ?PluginMarketService $marketService = null;
 
     /**
-     * 配置命令
+     * 配置命令.
      */
     protected function configure(): void
     {
         $this->setName(self::$defaultName)
-             ->setDescription('插件市场操作')
-             ->setHelp('从远程市场搜索、查看和安装插件。')
-             ->addArgument('action', InputArgument::REQUIRED, '操作: search, detail, install, markets')
-             ->addArgument('name', InputArgument::OPTIONAL, '插件名称')
-             ->addOption('plugin-version', null, InputOption::VALUE_OPTIONAL, '指定插件版本')
-             ->addOption('page', 'p', InputOption::VALUE_OPTIONAL, '页码', 1)
-             ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, '每页数量', 20)
-             ->addOption('market', 'm', InputOption::VALUE_OPTIONAL, '指定市场地址');
+            ->setDescription('插件市场操作')
+            ->setHelp('从远程市场搜索、查看和安装插件。')
+            ->addArgument('action', InputArgument::REQUIRED, '操作: search, detail, install, markets')
+            ->addArgument('name', InputArgument::OPTIONAL, '插件名称')
+            ->addOption('plugin-version', null, InputOption::VALUE_OPTIONAL, '指定插件版本')
+            ->addOption('page', 'p', InputOption::VALUE_OPTIONAL, '页码', 1)
+            ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, '每页数量', 20)
+            ->addOption('market', 'm', InputOption::VALUE_OPTIONAL, '指定市场地址');
     }
 
     /**
-     * 执行命令
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return int
+     * 执行命令.
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
+        $io     = new SymfonyStyle($input, $output);
         $action = $input->getArgument('action');
-        $name = $input->getArgument('name');
+        $name   = $input->getArgument('name');
 
         $this->marketService = new PluginMarketService();
 
         return match ($action) {
-            'search' => $this->search($input, $output, $io, $name ?? ''),
-            'detail' => $this->detail($input, $output, $io, $name),
+            'search'  => $this->search($input, $output, $io, $name ?? ''),
+            'detail'  => $this->detail($input, $output, $io, $name),
             'install' => $this->install($input, $output, $io, $name),
             'markets' => $this->listMarkets($output, $io),
-            default => $this->showHelp($io, $action),
+            default   => $this->showHelp($io, $action),
         };
     }
 
     /**
-     * 搜索插件
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @param SymfonyStyle $io
-     * @param string $keyword
-     * @return int
+     * 搜索插件.
      */
     private function search(InputInterface $input, OutputInterface $output, SymfonyStyle $io, string $keyword): int
     {
-        $page = (int) $input->getOption('page');
-        $limit = (int) $input->getOption('limit');
+        $page   = (int) $input->getOption('page');
+        $limit  = (int) $input->getOption('limit');
         $market = $input->getOption('market');
 
         $io->title("搜索插件: {$keyword}");
@@ -114,7 +93,7 @@ class PluginMarketCommand extends Command
         try {
             $result = $this->marketService->search($keyword, $page, $limit, $market);
 
-            if (!isset($result['data']) || empty($result['data']['list'])) {
+            if (! isset($result['data']) || empty($result['data']['list'])) {
                 $io->note('未找到匹配的插件');
                 return Command::SUCCESS;
             }
@@ -127,8 +106,8 @@ class PluginMarketCommand extends Command
                     $plugin['name'],
                     $plugin['title'],
                     $plugin['latest_version'] ?? '-',
-                    $plugin['author'] ?? '-',
-                    $plugin['downloads'] ?? 0,
+                    $plugin['author']         ?? '-',
+                    $plugin['downloads']      ?? 0,
                 ]);
             }
 
@@ -140,7 +119,6 @@ class PluginMarketCommand extends Command
                 $result['data']['total'] ?? 0,
                 $page
             ));
-
         } catch (\Throwable $e) {
             $io->error($e->getMessage());
             return Command::FAILURE;
@@ -150,13 +128,7 @@ class PluginMarketCommand extends Command
     }
 
     /**
-     * 获取插件详情
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @param SymfonyStyle $io
-     * @param string|null $name
-     * @return int
+     * 获取插件详情.
      */
     private function detail(InputInterface $input, OutputInterface $output, SymfonyStyle $io, ?string $name): int
     {
@@ -172,7 +144,7 @@ class PluginMarketCommand extends Command
         try {
             $result = $this->marketService->detail($name, $market);
 
-            if (!isset($result['data'])) {
+            if (! isset($result['data'])) {
                 $io->error('插件不存在');
                 return Command::FAILURE;
             }
@@ -181,16 +153,16 @@ class PluginMarketCommand extends Command
 
             $io->definitionList(
                 ['名称' => $plugin['name']],
-                ['标题' => $plugin['title']],
+                ['标题'     => $plugin['title']],
                 ['最新版本' => $plugin['latest_version'] ?? '-'],
-                ['作者' => $plugin['author'] ?? '-'],
-                ['描述' => $plugin['description'] ?? '-'],
-                ['下载量' => $plugin['downloads'] ?? 0],
-                ['评分' => $plugin['rating'] ?? '-']
+                ['作者'     => $plugin['author'] ?? '-'],
+                ['描述'     => $plugin['description'] ?? '-'],
+                ['下载量'   => $plugin['downloads'] ?? 0],
+                ['评分'     => $plugin['rating'] ?? '-']
             );
 
             // 显示版本列表
-            if (isset($plugin['versions']) && !empty($plugin['versions'])) {
+            if (isset($plugin['versions']) && ! empty($plugin['versions'])) {
                 $io->newLine();
                 $io->section('可用版本');
 
@@ -198,7 +170,6 @@ class PluginMarketCommand extends Command
                     $io->text("- {$version['version']} ({$version['released_at']})");
                 }
             }
-
         } catch (\Throwable $e) {
             $io->error($e->getMessage());
             return Command::FAILURE;
@@ -208,13 +179,7 @@ class PluginMarketCommand extends Command
     }
 
     /**
-     * 从市场安装插件
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @param SymfonyStyle $io
-     * @param string|null $name
-     * @return int
+     * 从市场安装插件.
      */
     private function install(InputInterface $input, OutputInterface $output, SymfonyStyle $io, ?string $name): int
     {
@@ -224,7 +189,7 @@ class PluginMarketCommand extends Command
         }
 
         $version = $input->getOption('plugin-version') ?? 'latest';
-        $market = $input->getOption('market');
+        $market  = $input->getOption('market');
 
         $io->title("从市场安装插件: {$name}");
 
@@ -232,7 +197,7 @@ class PluginMarketCommand extends Command
             // 获取插件详情
             $detail = $this->marketService->detail($name, $market);
 
-            if (!isset($detail['data'])) {
+            if (! isset($detail['data'])) {
                 $io->error('插件不存在');
                 return Command::FAILURE;
             }
@@ -247,7 +212,7 @@ class PluginMarketCommand extends Command
                 $io->text("版本: {$version} (最新)");
             }
 
-            if (!$io->confirm('确定要安装此插件吗？', true)) {
+            if (! $io->confirm('确定要安装此插件吗？', true)) {
                 $io->text('取消安装');
                 return Command::SUCCESS;
             }
@@ -263,7 +228,6 @@ class PluginMarketCommand extends Command
                 $io->error($result['message']);
                 return Command::FAILURE;
             }
-
         } catch (\Throwable $e) {
             $io->error($e->getMessage());
             return Command::FAILURE;
@@ -273,11 +237,7 @@ class PluginMarketCommand extends Command
     }
 
     /**
-     * 列出所有市场
-     *
-     * @param OutputInterface $output
-     * @param SymfonyStyle $io
-     * @return int
+     * 列出所有市场.
      */
     private function listMarkets(OutputInterface $output, SymfonyStyle $io): int
     {
@@ -302,11 +262,7 @@ class PluginMarketCommand extends Command
     }
 
     /**
-     * 显示帮助
-     *
-     * @param SymfonyStyle $io
-     * @param string $action
-     * @return int
+     * 显示帮助.
      */
     private function showHelp(SymfonyStyle $io, string $action): int
     {

@@ -3,20 +3,11 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: Middlewares.php
- * @Date: 2025-12-18
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Attributes;
-
-use Attribute;
 
 /**
  * @Middlewares
@@ -26,7 +17,7 @@ use Attribute;
  * 示例：
  * #[Middlewares([CorsMiddleware::class, RateLimitMiddleware::class])]
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Middlewares implements MiddlewareProviderInterface
 {
     /**
@@ -34,17 +25,14 @@ class Middlewares implements MiddlewareProviderInterface
      */
     public function __construct(
         public array $middlewares = []
-    ) {
-    }
+    ) {}
 
     /**
-     * 直接返回中间件数组
-
-     * @return string|array<mixed>
-    
-
+     * 直接返回中间件数组.
+     *
+     * @return array<mixed>|string
      */
-    public function getMiddleware(): string|array
+    public function getMiddleware(): array|string
     {
         return $this->middlewares;
     }

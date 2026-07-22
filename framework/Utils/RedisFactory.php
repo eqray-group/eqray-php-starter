@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
@@ -63,8 +56,8 @@ class RedisFactory
     // ========== 连接管理 ==========
 
     /**
-    * @param array<mixed> $configList
-    */
+     * @param array<mixed> $configList
+     */
     public static function createRedisClient(array $configList): \Redis
     {
         self::$configList = $configList;
@@ -102,8 +95,8 @@ class RedisFactory
     }
 
     /**
-    * @param array<mixed>|string  $key
-    */
+     * @param array<mixed>|string $key
+     */
     public static function del(array|string $key): int
     {
         return self::exec(fn (\Redis $r) => $r->del($key));
@@ -135,8 +128,8 @@ class RedisFactory
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public static function hGetAll(string $hash): array
     {
         return self::exec(fn (\Redis $r) => $r->hGetAll($hash));
@@ -234,7 +227,7 @@ class RedisFactory
     /**
      * 事务封装.
      * @return array<mixed>
- */
+     */
     public static function transaction(callable $callback): array
     {
         return self::exec(function (\Redis $r) use ($callback) {
@@ -275,9 +268,9 @@ class RedisFactory
 
     /**
      * 通用执行器（带重试与故障转移）.
-     
+     *
      * @return mixed
-*/
+     */
     private static function exec(callable $fn)
     {
         $attempt = 0;

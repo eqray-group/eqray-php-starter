@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Security;
@@ -29,22 +22,16 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  * - 刷新 CSRF 令牌
  * - 验证令牌有效性（使用时序安全比较）
  * - 移除令牌
- *
- * @package Framework\Security
  */
 class CsrfTokenManager
 {
     /**
      * Session 存储实例，用于持久化 CSRF 令牌.
-     *
-     * @var SessionInterface
      */
     private SessionInterface $session;
 
     /**
      * 令牌存储的命名空间，用于区分不同用途的令牌.
-     *
-     * @var string
      */
     private string $namespace;
 
@@ -102,7 +89,6 @@ class CsrfTokenManager
         return $token;
     }
 
-
     /**
      * 验证 CSRF 令牌的有效性.
      *
@@ -129,8 +115,6 @@ class CsrfTokenManager
      * 从 Session 中删除指定 ID 的令牌，通常在一次请求完成后调用。
      *
      * @param string $tokenId 令牌标识符，默认为 'default'
-     *
-     * @return void
      */
     public function removeToken(string $tokenId = 'default'): void
     {

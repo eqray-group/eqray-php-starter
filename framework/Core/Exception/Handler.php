@@ -3,21 +3,13 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Core\Exception;
 
 use Framework\Config\ConfigService;
-use Psr\Log\LoggerInterface;
 
 class Handler
 {
@@ -40,7 +32,6 @@ class Handler
      */
     public function report(\Throwable $e): void
     {
-        
         $logger = app('log');
         // 你可以根据异常类型选择 error、critical 等级别
         $logger->error('Uncaught Exception', [

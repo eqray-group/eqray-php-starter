@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: MiddlewareDispatcher.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -45,7 +38,7 @@ class MiddlewareDispatcher
         CorsMiddleware::class,
         CsrfTokenGenerateMiddleware::class,
         LoginRateLimitMiddleware::class,    // 敏感认证接口限流（登录/刷新/验证码）
-		RateLimitMiddleware::class,
+        RateLimitMiddleware::class,
         // CircuitBreakerMiddleware::class, // ⚠️ 不作为全局中间件：单一全局熔断器会因少量 500/异常
         //                                  // 触发后让整站返回 503，且会吞掉真实错误。
         //                                  // 如需熔断请按下游依赖（支付/外部API）单独挂载并分 serviceName。
@@ -61,43 +54,11 @@ class MiddlewareDispatcher
     /** @var array<mixed> */
     private array $appMiddleware = [];
 
-
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
         // 初始化加载应用层中间件（项目启动时仅加载一次，提升性能）
         $this->loadAppMiddleware();
-    }
-
-    /**
-     * 从config/middlewares.php加载应用层中间件
-     * 做基础校验，避免配置文件错误
-     */
-    private function loadAppMiddleware(): void
-    {
-        // 加载配置文件，兼容配置不存在的情况
-        $appMiddlewareConfig = config('middlewares', []);
-        if (!is_array($appMiddlewareConfig)) {
-            throw new \RuntimeException("config/middlewares.php must return an array of middleware class names");
-        }
-
-        // 拍平配置中的数组（支持嵌套）+ 基础校验
-        $flattenedConfig = $this->flattenArray($appMiddlewareConfig);
-        foreach ($flattenedConfig as $middlewareClass) {
-            if (empty($middlewareClass)) {
-                continue;
-            }
-            if (!class_exists($middlewareClass)) {
-                throw new \RuntimeException(sprintf(
-                    "App Middleware class '%s' not found in config/middlewares.php",
-                    $middlewareClass
-                ));
-            }
-            $this->appMiddleware[] = $middlewareClass;
-        }
-
-        // 去重应用层中间件
-        $this->appMiddleware = array_values(array_unique($this->appMiddleware));
     }
 
     /**
@@ -108,8 +69,8 @@ class MiddlewareDispatcher
     {
         // 1. 获取路由中间件（UrlMatcher已填充_request属性）
         $rawRouteMiddleware = $request->attributes->get('_middleware', []);
-        $routeInfo = $request->attributes->get('_route');
-        $currentRouteName = is_string($routeInfo) ? $routeInfo : (is_array($routeInfo) ? json_encode($routeInfo) : 'unknown_route');
+        $routeInfo          = $request->attributes->get('_route');
+        $currentRouteName   = is_string($routeInfo) ? $routeInfo : (is_array($routeInfo) ? json_encode($routeInfo) : 'unknown_route');
 
         // 2. 拍平路由中间件 + 严格校验类是否存在
         $flattenedRouteMiddleware = $this->flattenArray($rawRouteMiddleware);
@@ -117,7 +78,7 @@ class MiddlewareDispatcher
             if (empty($middlewareClass)) {
                 continue;
             }
-            if (!class_exists($middlewareClass)) {
+            if (! class_exists($middlewareClass)) {
                 throw new \RuntimeException(sprintf(
                     "Middleware class '%s' not found. Defined in route: '%s'. Please check your Route Attributes or Annotations.",
                     $middlewareClass,
@@ -127,20 +88,20 @@ class MiddlewareDispatcher
         }
 
         // 3. 路由中间件去重：排除全局/应用层已存在的，避免重复执行
-        $excludeMiddleware = array_merge($this->globalMiddleware, $this->appMiddleware);
+        $excludeMiddleware     = array_merge($this->globalMiddleware, $this->appMiddleware);
         $uniqueRouteMiddleware = array_values(array_diff($flattenedRouteMiddleware, $excludeMiddleware));
 
         // 3.1 权限中间件依赖登录上下文：仅有 Permission 时自动补 Auth
-        $hasAuthInGlobal = in_array(AuthMiddleware::class, $this->globalMiddleware, true);
-        $hasAuthInApp = in_array(AuthMiddleware::class, $this->appMiddleware, true);
-        $hasAuthInRoute = in_array(AuthMiddleware::class, $uniqueRouteMiddleware, true);
+        $hasAuthInGlobal      = in_array(AuthMiddleware::class, $this->globalMiddleware, true);
+        $hasAuthInApp         = in_array(AuthMiddleware::class, $this->appMiddleware, true);
+        $hasAuthInRoute       = in_array(AuthMiddleware::class, $uniqueRouteMiddleware, true);
         $hasPermissionInRoute = in_array(PermissionMiddleware::class, $uniqueRouteMiddleware, true);
 
         if (
             $hasPermissionInRoute
-            && !$hasAuthInGlobal
-            && !$hasAuthInApp
-            && !$hasAuthInRoute
+            && ! $hasAuthInGlobal
+            && ! $hasAuthInApp
+            && ! $hasAuthInRoute
         ) {
             array_unshift($uniqueRouteMiddleware, AuthMiddleware::class);
             $hasAuthInRoute = true;
@@ -156,7 +117,7 @@ class MiddlewareDispatcher
 
         // 5. 自动注入AuthMiddleware：如果请求需要认证但未配置，则加到路由中间件最前
         $needsAuth = $request->attributes->get('_auth', false);
-        if ($needsAuth && !$hasAuthInGlobal && !$hasAuthInApp && !$hasAuthInRoute) {
+        if ($needsAuth && ! $hasAuthInGlobal && ! $hasAuthInApp && ! $hasAuthInRoute) {
             array_unshift($uniqueRouteMiddleware, AuthMiddleware::class);
         }
 
@@ -166,8 +127,8 @@ class MiddlewareDispatcher
             $this->appMiddleware,
             $uniqueRouteMiddleware
         );
-		
-		#dump($allMiddleware);
+
+        # dump($allMiddleware);
 
         // 7. 构建洋葱模型（反向包装，保证执行顺序为数组正序）
         $middlewareChain = $destination;
@@ -177,7 +138,7 @@ class MiddlewareDispatcher
             }
             // 容器解析中间件（支持构造函数依赖注入）
             $middleware = $this->container->get($middlewareClass);
-            if (!method_exists($middleware, 'handle')) {
+            if (! method_exists($middleware, 'handle')) {
                 throw new \RuntimeException(sprintf(
                     "Middleware class '%s' must implement a public 'handle' method",
                     $middlewareClass
@@ -194,13 +155,44 @@ class MiddlewareDispatcher
     }
 
     /**
+     * 从config/middlewares.php加载应用层中间件
+     * 做基础校验，避免配置文件错误.
+     */
+    private function loadAppMiddleware(): void
+    {
+        // 加载配置文件，兼容配置不存在的情况
+        $appMiddlewareConfig = config('middlewares', []);
+        if (! is_array($appMiddlewareConfig)) {
+            throw new \RuntimeException('config/middlewares.php must return an array of middleware class names');
+        }
+
+        // 拍平配置中的数组（支持嵌套）+ 基础校验
+        $flattenedConfig = $this->flattenArray($appMiddlewareConfig);
+        foreach ($flattenedConfig as $middlewareClass) {
+            if (empty($middlewareClass)) {
+                continue;
+            }
+            if (! class_exists($middlewareClass)) {
+                throw new \RuntimeException(sprintf(
+                    "App Middleware class '%s' not found in config/middlewares.php",
+                    $middlewareClass
+                ));
+            }
+            $this->appMiddleware[] = $middlewareClass;
+        }
+
+        // 去重应用层中间件
+        $this->appMiddleware = array_values(array_unique($this->appMiddleware));
+    }
+
+    /**
      * 保证 AuthMiddleware 在 PermissionMiddleware 之前执行。
-     * @param array<mixed> $middleware
- * @return array<mixed>
- */
+     * @param  array<mixed> $middleware
+     * @return array<mixed>
+     */
     private function ensureAuthBeforePermission(array $middleware): array
     {
-        $authIndex = array_search(AuthMiddleware::class, $middleware, true);
+        $authIndex       = array_search(AuthMiddleware::class, $middleware, true);
         $permissionIndex = array_search(PermissionMiddleware::class, $middleware, true);
 
         if ($authIndex === false || $permissionIndex === false || $authIndex < $permissionIndex) {
@@ -215,9 +207,9 @@ class MiddlewareDispatcher
 
     /**
      * 将多维数组递归“拍平”成一维数组.
-     * @param array<mixed> $array
- * @return array<mixed>
- */
+     * @param  array<mixed> $array
+     * @return array<mixed>
+     */
     private function flattenArray(array $array): array
     {
         $result = [];

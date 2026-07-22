@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Console\Commands;
@@ -24,38 +17,34 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * 创建中间件命令
+ * 创建中间件命令.
  *
  * 该命令用于通过命令行快速创建新的中间件类文件。
  * 自动生成包含标准 handle 方法的中间件模板，支持请求前后处理逻辑。
  *
  * 使用方法：
  *   php console make:middleware Auth
- *
- * @package Framework\Console\Commands
  */
 class MakeMiddlewareCommand extends Command
 {
     /**
-     * 命令名称
+     * 命令名称.
      *
      * @var string
      */
     protected static $defaultName = 'make:middleware';
 
     /**
-     * 命令描述
+     * 命令描述.
      *
      * @var string
      */
     protected static $defaultDescription = '创建一个新的中间件类';
 
     /**
-     * 配置命令参数和选项
+     * 配置命令参数和选项.
      *
      * 设置命令名称、描述以及必需的中间件名称参数。
-     *
-     * @return void
      */
     protected function configure(): void
     {
@@ -71,7 +60,7 @@ class MakeMiddlewareCommand extends Command
     }
 
     /**
-     * 执行命令
+     * 执行命令.
      *
      * 创建中间件文件，包含以下步骤：
      * 1. 解析中间件名称并构建文件路径
@@ -123,7 +112,7 @@ class MakeMiddlewareCommand extends Command
     }
 
     /**
-     * 生成中间件类内容
+     * 生成中间件类内容.
      *
      * 创建包含标准 handle 方法的中间件类模板。
      * 模板支持在请求处理前后执行自定义逻辑。

@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: CorsMiddleware.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -20,24 +13,22 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * CorsMiddleware - 跨域资源共享中间件
+ * CorsMiddleware - 跨域资源共享中间件.
  *
  * 处理跨域请求，支持预检请求和实际请求的 CORS 头设置。
  * 支持配置化的域名白名单和请求头控制。
- *
- * @package Framework\Middleware
  */
 class CorsMiddleware implements MiddlewareInterface
 {
     /**
      * 允许的来源域名
-     * 支持配置为数组形式的白名单，或 '*' 表示允许所有来源
+     * 支持配置为数组形式的白名单，或 '*' 表示允许所有来源.
      * @var array<mixed>|string
      */
     protected array|string $allowOrigin = '*';
 
     /**
-     * 允许的请求方法
+     * 允许的请求方法.
      * @var array<mixed> */
     protected array $allowMethods = [
         'GET',
@@ -49,7 +40,7 @@ class CorsMiddleware implements MiddlewareInterface
     ];
 
     /**
-     * 允许的请求头
+     * 允许的请求头.
      * @var array<mixed> */
     protected array $allowHeaders = [
         'X-Requested-With',
@@ -64,26 +55,24 @@ class CorsMiddleware implements MiddlewareInterface
     ];
 
     /**
-     * 允许携带凭证（如 Cookie）
-     * @var bool
+     * 允许携带凭证（如 Cookie）.
      */
     protected bool $allowCredentials = true;
 
     /**
-     * 预检请求缓存时间（秒）
-     * @var int
+     * 预检请求缓存时间（秒）.
      */
     protected int $maxAge = 86400;
 
     /**
-     * 暴露给客户端的响应头
+     * 暴露给客户端的响应头.
      * @var array<mixed> */
     protected array $exposeHeaders = [];
 
     /**
      * @param array<mixed>|string $allowOrigin      允许的来源：显式白名单数组（推荐），默认空数组（同源部署）。
-     *                                        开启凭证时禁止 '*'（见 addCorsHeaders 的安全保护）。
-     * @param bool         $allowCredentials 是否允许携带凭证（Cookie）。
+     *                                              开启凭证时禁止 '*'（见 addCorsHeaders 的安全保护）。
+     * @param bool                $allowCredentials 是否允许携带凭证（Cookie）
      */
     public function __construct(
         array|string $allowOrigin = [],
@@ -98,8 +87,8 @@ class CorsMiddleware implements MiddlewareInterface
      *
      * 对预检请求返回 CORS 头，对实际请求在响应中添加 CORS 头。
      *
-     * @param Request $request HTTP 请求对象
-     * @param callable $next 下一个中间件或处理器
+     * @param  Request  $request HTTP 请求对象
+     * @param  callable $next    下一个中间件或处理器
      * @return Response HTTP 响应对象
      */
     public function handle(Request $request, callable $next): Response
@@ -120,11 +109,83 @@ class CorsMiddleware implements MiddlewareInterface
     }
 
     /**
+     * 设置允许的来源.
+     *
+     * @param  array<mixed>|string $allowOrigin 允许的来源
+     * @return static              当前实例
+     */
+    public function setAllowOrigin(array|string $allowOrigin): static
+    {
+        $this->allowOrigin = $allowOrigin;
+        return $this;
+    }
+
+    /**
+     * 设置允许的方法.
+     *
+     * @param  array<mixed> $allowMethods 允许的方法列表
+     * @return static       当前实例
+     */
+    public function setAllowMethods(array $allowMethods): static
+    {
+        $this->allowMethods = $allowMethods;
+        return $this;
+    }
+
+    /**
+     * 设置允许的请求头.
+     *
+     * @param  array<mixed> $allowHeaders 允许的请求头列表
+     * @return static       当前实例
+     */
+    public function setAllowHeaders(array $allowHeaders): static
+    {
+        $this->allowHeaders = $allowHeaders;
+        return $this;
+    }
+
+    /**
+     * 设置是否允许凭证
+     *
+     * @param  bool   $allowCredentials 是否允许凭证
+     * @return static 当前实例
+     */
+    public function setAllowCredentials(bool $allowCredentials): static
+    {
+        $this->allowCredentials = $allowCredentials;
+        return $this;
+    }
+
+    /**
+     * 设置预检缓存时间.
+     *
+     * @param  int    $maxAge 缓存时间（秒）
+     * @return static 当前实例
+     */
+    public function setMaxAge(int $maxAge): static
+    {
+        $this->maxAge = $maxAge;
+        return $this;
+    }
+
+    /**
+     * 设置暴露的响应头.
+     *
+     * @param  array<mixed> $exposeHeaders 暴露的响应头列表
+     * @return static       当前实例
+     */
+    public function setExposeHeaders(array $exposeHeaders): static
+    {
+        $this->exposeHeaders = $exposeHeaders;
+        return $this;
+    }
+
+    /**
      * 处理预检请求
      *
      * 对 OPTIONS 请求返回预检响应，包含 CORS 相关头信息。
      *
-     * @param Request $request HTTP 请求对象
+     * @param  Request  $request HTTP 请求对象
      * @return Response 预检响应
      */
     protected function handlePreflightRequest(Request $request): Response
@@ -162,19 +223,18 @@ class CorsMiddleware implements MiddlewareInterface
         }
 
         // 设置预检缓存时间
-        $response->headers->set('Access-Control-Max-Age', (string)$this->maxAge);
+        $response->headers->set('Access-Control-Max-Age', (string) $this->maxAge);
 
         return $response;
     }
 
     /**
-     * 添加 CORS 响应头
+     * 添加 CORS 响应头.
      *
      * 为实际请求的响应添加 CORS 相关头信息。
      *
-     * @param Request $request HTTP 请求对象
+     * @param Request  $request  HTTP 请求对象
      * @param Response $response HTTP 响应对象
-     * @return void
      */
     protected function addCorsHeaders(Request $request, Response $response): void
     {
@@ -208,7 +268,7 @@ class CorsMiddleware implements MiddlewareInterface
         }
 
         // 设置暴露的响应头
-        if (!empty($this->exposeHeaders)) {
+        if (! empty($this->exposeHeaders)) {
             $response->headers->set(
                 'Access-Control-Expose-Headers',
                 implode(', ', $this->exposeHeaders)
@@ -217,19 +277,19 @@ class CorsMiddleware implements MiddlewareInterface
     }
 
     /**
-     * 获取允许的来源
+     * 获取允许的来源.
      *
      * 根据请求的 Origin 头和白名单配置，返回允许的来源值。
      *
-     * @param Request $request HTTP 请求对象
-     * @return string|null 允许的来源，或 null 表示不允许
+     * @param  Request     $request HTTP 请求对象
+     * @return null|string 允许的来源，或 null 表示不允许
      */
     protected function getAllowedOrigin(Request $request): ?string
     {
         $requestOrigin = $request->headers->get('Origin');
 
         // 如果没有 Origin 头，返回默认值
-        if (!$requestOrigin) {
+        if (! $requestOrigin) {
             return $this->allowOrigin === '*' ? '*' : null;
         }
 
@@ -254,14 +314,14 @@ class CorsMiddleware implements MiddlewareInterface
     }
 
     /**
-     * 匹配来源
+     * 匹配来源.
      *
      * 检查请求来源是否匹配允许的来源模式。
      * 支持通配符匹配，如 '*.example.com'。
      *
-     * @param string $requestOrigin 请求来源
-     * @param string $allowed 允许的来源模式
-     * @return bool 是否匹配
+     * @param  string $requestOrigin 请求来源
+     * @param  string $allowed       允许的来源模式
+     * @return bool   是否匹配
      */
     protected function matchOrigin(string $requestOrigin, string $allowed): bool
     {
@@ -274,84 +334,12 @@ class CorsMiddleware implements MiddlewareInterface
         if (str_starts_with($allowed, '*.')) {
             $domain = substr($allowed, 2); // 去掉 '*.'
             $parsed = parse_url($requestOrigin);
-            $host = $parsed['host'] ?? '';
+            $host   = $parsed['host'] ?? '';
 
             // 检查是否匹配主域名或子域名
             return $host === $domain || str_ends_with($host, '.' . $domain);
         }
 
         return false;
-    }
-
-    /**
-     * 设置允许的来源
-     *
-     * @param array<mixed>|string $allowOrigin 允许的来源
-     * @return static 当前实例
-     */
-    public function setAllowOrigin(array|string $allowOrigin): static
-    {
-        $this->allowOrigin = $allowOrigin;
-        return $this;
-    }
-
-    /**
-     * 设置允许的方法
-     *
-     * @param array<mixed> $allowMethods 允许的方法列表
-     * @return static 当前实例
-     */
-    public function setAllowMethods(array $allowMethods): static
-    {
-        $this->allowMethods = $allowMethods;
-        return $this;
-    }
-
-    /**
-     * 设置允许的请求头
-     *
-     * @param array<mixed> $allowHeaders 允许的请求头列表
-     * @return static 当前实例
-     */
-    public function setAllowHeaders(array $allowHeaders): static
-    {
-        $this->allowHeaders = $allowHeaders;
-        return $this;
-    }
-
-    /**
-     * 设置是否允许凭证
-     *
-     * @param bool $allowCredentials 是否允许凭证
-     * @return static 当前实例
-     */
-    public function setAllowCredentials(bool $allowCredentials): static
-    {
-        $this->allowCredentials = $allowCredentials;
-        return $this;
-    }
-
-    /**
-     * 设置预检缓存时间
-     *
-     * @param int $maxAge 缓存时间（秒）
-     * @return static 当前实例
-     */
-    public function setMaxAge(int $maxAge): static
-    {
-        $this->maxAge = $maxAge;
-        return $this;
-    }
-
-    /**
-     * 设置暴露的响应头
-     *
-     * @param array<mixed> $exposeHeaders 暴露的响应头列表
-     * @return static 当前实例
-     */
-    public function setExposeHeaders(array $exposeHeaders): static
-    {
-        $this->exposeHeaders = $exposeHeaders;
-        return $this;
     }
 }

@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Validation;
@@ -21,9 +14,9 @@ use think\Validate;
 class ThinkValidatorFactory
 {
     /**
-    * @param array<mixed> $rule
-    * @param array<mixed> $message
-    */
+     * @param array<mixed> $rule
+     * @param array<mixed> $message
+     */
     public function create(array $rule = [], array $message = []): Validate
     {
         // 可在此处统一配置全局规则/提示（如手机号、邮箱正则）

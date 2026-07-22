@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -29,15 +27,19 @@ use Symfony\Component\HttpFoundation\Response;
 class LoginRateLimitMiddleware implements MiddlewareInterface
 {
     private bool $enabled;
+
     /** @var array<mixed> */
     private array $paths;
+
     private int $ipMaxAttempts;
+
     private int $identityMaxAttempts;
+
     private int $period;
 
     /**
-    * @param array<mixed> $config
-    */
+     * @param array<mixed> $config
+     */
     public function __construct(private object $redis, array $config = [])
     {
         $this->enabled             = (bool) ($config['enabled'] ?? true);

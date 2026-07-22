@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Providers;
@@ -35,10 +28,9 @@ final class RequestProvider implements ServiceProviderInterface
         // 注册 RequestStack（用于在工厂中获取当前请求）
         $services->set(RequestStack::class);
 
-
         // 1. 注册 Request 服务（确保全局使用同一个请求实例）
-        $services->set(\Symfony\Component\HttpFoundation\Request::class)
-            ->factory([\Symfony\Component\HttpFoundation\Request::class, 'createFromGlobals'])->public(); // 通过工厂方法创建请求实例
+        $services->set(Request::class)
+            ->factory([Request::class, 'createFromGlobals'])->public(); // 通过工厂方法创建请求实例
 
         // 1. 注册 Request 服务（确保全局使用同一个请求实例）
         $services->set('request', Request::class)

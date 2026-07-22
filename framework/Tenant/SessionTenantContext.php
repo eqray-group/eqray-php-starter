@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: SessionTenantContext.php
- * @Date: 2026-03-19
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Tenant;
@@ -19,7 +12,7 @@ namespace Framework\Tenant;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
- * Session/Cookie 租户上下文管理器
+ * Session/Cookie 租户上下文管理器.
  *
  * 基于现有的 app('session') 服务，提供租户信息管理能力。
  * 兼容现有 Session 实现（Redis 存储），支持：
@@ -40,42 +33,40 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  *   ]
  * ]
  * ```
- *
- * @package Framework\Tenant
  */
 final class SessionTenantContext
 {
     /**
-     * Session 命名空间键名
+     * Session 命名空间键名.
      */
     private const SESSION_NAMESPACE = '_tenant';
 
     /**
-     * Session 中存储租户ID的键名
+     * Session 中存储租户ID的键名.
      */
     private const TENANT_ID_KEY = 'tenant_id';
 
     /**
-     * Session 中存储用户ID的键名
+     * Session 中存储用户ID的键名.
      */
     private const USER_ID_KEY = 'user_id';
 
     /**
-     * Session 中存储登录时间的键名
+     * Session 中存储登录时间的键名.
      */
     private const LOGIN_TIME_KEY = 'login_time';
 
     /**
-     * Session 中存储租户列表的键名
+     * Session 中存储租户列表的键名.
      */
     private const TENANTS_KEY = 'tenants';
 
     /**
-     * 获取 Session 实例
+     * 获取 Session 实例.
      *
      * 使用 app('session') 获取当前 Session
      *
-     * @return SessionInterface|null Session 实例
+     * @return null|SessionInterface Session 实例
      */
     public static function getSession(): ?SessionInterface
     {
@@ -92,12 +83,11 @@ final class SessionTenantContext
     }
 
     /**
-     * 设置租户信息到 Session
+     * 设置租户信息到 Session.
      *
-     * @param int $tenantId 租户ID
-     * @param int $userId 用户ID
-     * @param array<mixed> $tenants 用户可访问的租户列表（可选）
-     * @return void
+     * @param int          $tenantId 租户ID
+     * @param int          $userId   用户ID
+     * @param array<mixed> $tenants  用户可访问的租户列表（可选）
      */
     public static function setTenantSession(int $tenantId, int $userId, array $tenants = []): void
     {
@@ -107,17 +97,17 @@ final class SessionTenantContext
         }
 
         $session->set(self::SESSION_NAMESPACE, [
-            self::TENANT_ID_KEY => $tenantId,
-            self::USER_ID_KEY => $userId,
+            self::TENANT_ID_KEY  => $tenantId,
+            self::USER_ID_KEY    => $userId,
             self::LOGIN_TIME_KEY => time(),
-            self::TENANTS_KEY => $tenants,
+            self::TENANTS_KEY    => $tenants,
         ]);
     }
 
     /**
-     * 获取当前租户ID
+     * 获取当前租户ID.
      *
-     * @return int|null 租户ID，未设置返回 null
+     * @return null|int 租户ID，未设置返回 null
      */
     public static function getTenantId(): ?int
     {
@@ -131,9 +121,9 @@ final class SessionTenantContext
     }
 
     /**
-     * 获取当前用户ID
+     * 获取当前用户ID.
      *
-     * @return int|null 用户ID，未设置返回 null
+     * @return null|int 用户ID，未设置返回 null
      */
     public static function getUserId(): ?int
     {
@@ -147,9 +137,9 @@ final class SessionTenantContext
     }
 
     /**
-     * 获取登录时间
+     * 获取登录时间.
      *
-     * @return int|null 登录时间戳，未设置返回 null
+     * @return null|int 登录时间戳，未设置返回 null
      */
     public static function getLoginTime(): ?int
     {
@@ -163,7 +153,7 @@ final class SessionTenantContext
     }
 
     /**
-     * 获取用户可访问的租户列表
+     * 获取用户可访问的租户列表.
      *
      * @return array<mixed> 租户列表，未设置返回空数组
      */
@@ -179,9 +169,9 @@ final class SessionTenantContext
     }
 
     /**
-     * 切换当前租户
+     * 切换当前租户.
      *
-     * @param int $tenantId 新的租户ID
+     * @param  int  $tenantId 新的租户ID
      * @return bool 切换成功返回 true
      */
     public static function switchTenant(int $tenantId): bool
@@ -194,7 +184,7 @@ final class SessionTenantContext
         $data = $session->get(self::SESSION_NAMESPACE, []);
 
         // 检查用户是否有权限访问该租户
-        $tenants = $data[self::TENANTS_KEY] ?? [];
+        $tenants   = $data[self::TENANTS_KEY] ?? [];
         $hasAccess = false;
 
         foreach ($tenants as $tenant) {
@@ -208,7 +198,7 @@ final class SessionTenantContext
             }
         }
 
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             return false;
         }
 
@@ -220,10 +210,9 @@ final class SessionTenantContext
     }
 
     /**
-     * 更新租户列表
+     * 更新租户列表.
      *
      * @param array<mixed> $tenants 租户列表
-     * @return void
      */
     public static function updateTenants(array $tenants): void
     {
@@ -232,13 +221,13 @@ final class SessionTenantContext
             return;
         }
 
-        $data = $session->get(self::SESSION_NAMESPACE, []);
+        $data                    = $session->get(self::SESSION_NAMESPACE, []);
         $data[self::TENANTS_KEY] = $tenants;
         $session->set(self::SESSION_NAMESPACE, $data);
     }
 
     /**
-     * 检查 Session 中是否有租户信息
+     * 检查 Session 中是否有租户信息.
      *
      * @return bool 有租户信息返回 true
      */
@@ -248,9 +237,7 @@ final class SessionTenantContext
     }
 
     /**
-     * 清理租户 Session
-     *
-     * @return void
+     * 清理租户 Session.
      */
     public static function clearTenantSession(): void
     {
@@ -261,7 +248,7 @@ final class SessionTenantContext
     }
 
     /**
-     * 获取 Session 剩余有效时间
+     * 获取 Session 剩余有效时间.
      *
      * 基于 Redis TTL 计算
      *
@@ -276,9 +263,9 @@ final class SessionTenantContext
 
         // 尝试获取 Redis 中的 TTL
         try {
-            $redis = app('redis.client');
+            $redis     = app('redis.client');
             $sessionId = $session->getId();
-            $ttl = $redis->ttl('session:' . $sessionId);
+            $ttl       = $redis->ttl('session:' . $sessionId);
             return $ttl > 0 ? $ttl : 0;
         } catch (\Throwable $e) {
             // 无法获取 TTL，返回 0
@@ -289,7 +276,7 @@ final class SessionTenantContext
     /**
      * 检查 Session 是否即将过期
      *
-     * @param int $threshold 提前阈值（秒），默认 300 秒
+     * @param  int  $threshold 提前阈值（秒），默认 300 秒
      * @return bool 即将过期返回 true
      */
     public static function isSessionExpiringSoon(int $threshold = 300): bool
@@ -298,7 +285,7 @@ final class SessionTenantContext
     }
 
     /**
-     * 获取完整的租户 Session 数据
+     * 获取完整的租户 Session 数据.
      *
      * @return array<mixed> Session 数据，无 Session 返回空数组
      */
@@ -313,11 +300,10 @@ final class SessionTenantContext
     }
 
     /**
-     * 设置 Session 数据项
+     * 设置 Session 数据项.
      *
-     * @param string $key 键名
-     * @param mixed $value 值
-     * @return void
+     * @param string $key   键名
+     * @param mixed  $value 值
      */
     public static function setSessionData(string $key, mixed $value): void
     {
@@ -326,17 +312,17 @@ final class SessionTenantContext
             return;
         }
 
-        $data = $session->get(self::SESSION_NAMESPACE, []);
+        $data       = $session->get(self::SESSION_NAMESPACE, []);
         $data[$key] = $value;
         $session->set(self::SESSION_NAMESPACE, $data);
     }
 
     /**
-     * 获取 Session 数据项
+     * 获取 Session 数据项.
      *
-     * @param string $key 键名
-     * @param mixed $default 默认值
-     * @return mixed 值，不存在返回默认值
+     * @param  string $key     键名
+     * @param  mixed  $default 默认值
+     * @return mixed  值，不存在返回默认值
      */
     public static function getSessionData(string $key, mixed $default = null): mixed
     {
@@ -350,16 +336,14 @@ final class SessionTenantContext
     }
 
     /**
-     * 将 Session 租户信息同步到 TenantContext
+     * 将 Session 租户信息同步到 TenantContext.
      *
      * 用于在请求开始时将 Session 中的租户信息设置到 Request 属性
-     *
-     * @return void
      */
     public static function syncToTenantContext(): void
     {
         $tenantId = self::getTenantId();
-        $userId = self::getUserId();
+        $userId   = self::getUserId();
 
         if ($tenantId !== null) {
             TenantContext::setTenantId($tenantId);
@@ -386,7 +370,7 @@ final class SessionTenantContext
 
         // 重新设置数据，触发 Redis 更新 TTL
         $data = $session->get(self::SESSION_NAMESPACE, []);
-        if (!empty($data)) {
+        if (! empty($data)) {
             $session->set(self::SESSION_NAMESPACE, $data);
             return true;
         }

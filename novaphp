@@ -4,15 +4,15 @@
 declare(strict_types=1);
 
 /**
- * Fssphp CLI 入口文件
+ * eqrayphp CLI 入口文件
  *
- * @package Fssphp
- * @author  Fssphp Team
+ * @package eqrayphp
+ * @author  eqrayphp Team
  */
 
 // ✅ 修复：定义项目根目录常量（必须添加这行）
 define('BASE_PATH', __DIR__);
-define('FSSPHP_VERSION', '0.8.0');
+define('eqrayphp_VERSION', '0.8.0');
 
 require __DIR__ . '/vendor/autoload.php';
 

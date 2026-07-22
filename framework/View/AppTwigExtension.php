@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\View;
@@ -36,8 +29,8 @@ class AppTwigExtension extends AbstractExtension
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public function getGlobals(): array
     {
         return [
@@ -55,8 +48,8 @@ class AppTwigExtension extends AbstractExtension
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public function getFunctions(): array
     {
         return [
@@ -72,9 +65,9 @@ class AppTwigExtension extends AbstractExtension
     }
 
     /**
-    * @param array<mixed> $context
-    * @param array<mixed> $options
-    */
+     * @param array<mixed> $context
+     * @param array<mixed> $options
+     */
     public function formStart(array $context, array $options = []): string
     {
         $method     = $options['method'] ?? 'post';
@@ -121,8 +114,8 @@ class AppTwigExtension extends AbstractExtension
     }
 
     /**
-    * @param array<mixed> $params
-    */
+     * @param array<mixed> $params
+     */
     public function generateRoute(string $name, array $params = []): string
     {
         // TODO: 与你的路由系统集成

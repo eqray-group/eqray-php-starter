@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-12-25
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -44,11 +37,11 @@ class DebugMiddleware implements MiddlewareInterface
         // === 响应阶段 ===
         $responseDebugInfo  = '';
         $frameworkDebugInfo = '';
-        
+
         if ($this->debug) {
             // 检测是否为 Ajax 请求
-            $isAjax = $request->isXmlHttpRequest() || 
-                      str_contains($request->headers->get('Accept', ''), 'application/json');
+            $isAjax = $request->isXmlHttpRequest()
+                      || str_contains($request->headers->get('Accept', ''), 'application/json');
 
             // 如果是 Ajax 请求，直接返回，不注入调试信息
             if ($isAjax) {
@@ -64,7 +57,7 @@ class DebugMiddleware implements MiddlewareInterface
             $body = (string) $response->getContent();
 
             // 更可靠的 HTML 检测
-            $isHtml = false;
+            $isHtml      = false;
             $contentType = $response->headers->get('Content-Type', '');
             if (stripos($contentType, 'application/json') !== false) {
                 $isHtml = false;
@@ -103,7 +96,7 @@ class DebugMiddleware implements MiddlewareInterface
     protected function buildDebugPanel(string $requestInfo, string $responseInfo, string $frameworkInfo): string
     {
         // 内联CSS样式（新增开关按钮样式+折叠逻辑）
-        $styles = <<<CSS
+        $styles = <<<'CSS'
         <style>
             /* 调试面板开关按钮 */
             .debug-toggle-btn {
@@ -263,7 +256,7 @@ class DebugMiddleware implements MiddlewareInterface
         CSS;
 
         // Tab切换+折叠开关核心JS
-        $script = <<<JS
+        $script = <<<'JS'
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 // 元素获取
@@ -315,12 +308,12 @@ class DebugMiddleware implements MiddlewareInterface
         JS;
 
         // 构建各个Tab的内容
-        $tabs = [];
+        $tabs     = [];
         $contents = [];
-        
+
         // 请求信息Tab
         if ($requestInfo) {
-            $tabs[] = '<button class="debug-tab" data-target="debug-request">Request Info</button>';
+            $tabs[]     = '<button class="debug-tab" data-target="debug-request">Request Info</button>';
             $contents[] = <<<HTML
             <div id="debug-request" class="debug-tab-content">
                 <pre class="debug-pre">{$this->escapeHtml($requestInfo)}</pre>
@@ -330,7 +323,7 @@ class DebugMiddleware implements MiddlewareInterface
 
         // 框架信息Tab
         if ($frameworkInfo) {
-            $tabs[] = '<button class="debug-tab" data-target="debug-framework">Framework Runtime</button>';
+            $tabs[]     = '<button class="debug-tab" data-target="debug-framework">Framework Runtime</button>';
             $contents[] = <<<HTML
             <div id="debug-framework" class="debug-tab-content">
                 <pre class="debug-pre">{$this->escapeHtml($frameworkInfo)}</pre>
@@ -340,7 +333,7 @@ class DebugMiddleware implements MiddlewareInterface
 
         // 响应信息Tab
         if ($responseInfo) {
-            $tabs[] = '<button class="debug-tab" data-target="debug-response">Response Info</button>';
+            $tabs[]     = '<button class="debug-tab" data-target="debug-response">Response Info</button>';
             $contents[] = <<<HTML
             <div id="debug-response" class="debug-tab-content">
                 <pre class="debug-pre">{$this->escapeHtml($responseInfo)}</pre>
@@ -349,7 +342,7 @@ class DebugMiddleware implements MiddlewareInterface
         }
 
         // 拼接最终HTML（新增开关按钮+关闭按钮）
-        $debugHtml = $styles . <<<HTML
+        return $styles . <<<HTML
         <!-- 调试面板开关按钮 -->
         <button id="debug-toggle" class="debug-toggle-btn">🚀 Debug Panel</button>
 
@@ -367,12 +360,10 @@ class DebugMiddleware implements MiddlewareInterface
         </div>
         {$script}
         HTML;
-
-        return $debugHtml;
     }
 
     /**
-     * HTML转义辅助方法
+     * HTML转义辅助方法.
      */
     protected function escapeHtml(string $content): string
     {
@@ -380,16 +371,16 @@ class DebugMiddleware implements MiddlewareInterface
     }
 
     /**
-     * HTML拼接辅助方法
+     * HTML拼接辅助方法.
      * @param array<mixed> $parts
- */
+     */
     protected function joinHtml(array $parts): string
     {
         return implode("\n", $parts);
     }
 
     /**
-     * 收集并格式化框架运行时信息
+     * 收集并格式化框架运行时信息.
      */
     protected function dumpFrameworkInfo(): string
     {
@@ -439,7 +430,7 @@ class DebugMiddleware implements MiddlewareInterface
     }
 
     /**
-     * 打印请求信息
+     * 打印请求信息.
      */
     protected function dumpRequest(Request $request): string
     {
@@ -466,7 +457,7 @@ class DebugMiddleware implements MiddlewareInterface
     }
 
     /**
-     * 打印响应信息
+     * 打印响应信息.
      */
     protected function dumpResponse(Response $response): string
     {

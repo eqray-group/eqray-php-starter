@@ -3,18 +3,14 @@
 declare(strict_types=1);
 
 /**
- * @Filename: RedisConsumerService.php
- * @Date: 2026-06-02
- * @Developer: blue2004
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Queue;
 
 use Framework\Pool\PoolManager;
 use Predis\Client as PredisClient;
-use RuntimeException;
-use Throwable;
 use Workerman\Timer;
 use Workerman\Worker;
 
@@ -72,7 +68,7 @@ class RedisConsumerService
     /** @var bool 是否正在运行 */
     private bool $running = false;
 
-    /** @var int|null Workerman 定时器 ID */
+    /** @var null|int Workerman 定时器 ID */
     private ?int $timerId = null;
 
     /** @var array<string, int> 消息消费统计 */
@@ -85,35 +81,34 @@ class RedisConsumerService
     ];
 
     /**
-     * 构造函数
+     * 构造函数.
      *
      * @param array<string, mixed> $config 消费服务配置：
-     *   [
-     *     'queue'         => 'default',      // 队列名（Redis key 前缀为 queue:）
-     *     'pool_name'     => 'redis.default', // 连接池名称
-     *     'batch_size'    => 5,              // 每次批量消费数
-     *     'max_retries'   => 3,              // 最大重试次数
-     *     'poll_interval' => 0.5,            // 轮询间隔（秒）
-     *   ]
+     *                                     [
+     *                                     'queue'         => 'default',      // 队列名（Redis key 前缀为 queue:）
+     *                                     'pool_name'     => 'redis.default', // 连接池名称
+     *                                     'batch_size'    => 5,              // 每次批量消费数
+     *                                     'max_retries'   => 3,              // 最大重试次数
+     *                                     'poll_interval' => 0.5,            // 轮询间隔（秒）
+     *                                     ]
      */
     public function __construct(private readonly array $config = [])
     {
-        $queueName        = $config['queue']         ?? 'default';
-        $this->queue      = 'queue:' . $queueName;
-        $this->retryQueue = 'queue:' . $queueName . ':retry';
-        $this->deadQueue  = 'queue:' . $queueName . ':dead';
-        $this->poolName   = $config['pool_name']     ?? 'redis.default';
-        $this->batchSize  = (int) ($config['batch_size']    ?? 5);
-        $this->maxRetries = (int) ($config['max_retries']   ?? 3);
+        $queueName          = $config['queue']         ?? 'default';
+        $this->queue        = 'queue:' . $queueName;
+        $this->retryQueue   = 'queue:' . $queueName . ':retry';
+        $this->deadQueue    = 'queue:' . $queueName . ':dead';
+        $this->poolName     = $config['pool_name']     ?? 'redis.default';
+        $this->batchSize    = (int) ($config['batch_size']    ?? 5);
+        $this->maxRetries   = (int) ($config['max_retries']   ?? 3);
         $this->pollInterval = (float) ($config['poll_interval'] ?? 0.5);
     }
 
     /**
-     * 注册消息处理器
+     * 注册消息处理器.
      *
      * @param string                  $type    消息类型（对应消息体中的 type 字段）
      * @param MessageHandlerInterface $handler 处理器实例
-     * @return static
      */
     public function registerHandler(string $type, MessageHandlerInterface $handler): static
     {
@@ -122,10 +117,9 @@ class RedisConsumerService
     }
 
     /**
-     * 批量注册消息处理器
+     * 批量注册消息处理器.
      *
      * @param array<string, MessageHandlerInterface> $handlers
-     * @return static
      */
     public function registerHandlers(array $handlers): static
     {
@@ -136,12 +130,11 @@ class RedisConsumerService
     }
 
     /**
-     * 启动消费服务（绑定到 Workerman Worker）
+     * 启动消费服务（绑定到 Workerman Worker）.
      *
      * 在 Worker 的 onWorkerStart 回调中调用此方法。
      *
      * @param Worker $worker Workerman Worker 实例
-     * @return void
      */
     public function start(Worker $worker): void
     {
@@ -149,8 +142,8 @@ class RedisConsumerService
             return;
         }
 
-        if (!PoolManager::has($this->poolName)) {
-            throw new RuntimeException(sprintf(
+        if (! PoolManager::has($this->poolName)) {
+            throw new \RuntimeException(sprintf(
                 '[RedisConsumer] 连接池 [%s] 未注册，请在 onWorkerStart 中先初始化池。',
                 $this->poolName
             ));
@@ -187,9 +180,7 @@ class RedisConsumerService
     }
 
     /**
-     * 停止消费服务（在 Worker onWorkerStop 中调用）
-     *
-     * @return void
+     * 停止消费服务（在 Worker onWorkerStop 中调用）.
      */
     public function stop(): void
     {
@@ -204,35 +195,73 @@ class RedisConsumerService
     }
 
     /**
-     * 批量消费一批消息
+     * 向指定队列推入消息（静态工厂方法，便于业务层使用）.
+     *
+     * @param string               $queueName 队列名（不含 'queue:' 前缀）
+     * @param string               $type      消息类型
+     * @param array<string, mixed> $payload   消息内容
+     * @param string               $poolName  Redis 连接池名称
+     */
+    public static function dispatch(
+        string $queueName,
+        string $type,
+        array $payload,
+        string $poolName = 'redis.default'
+    ): void {
+        $envelope = [
+            'type'       => $type,
+            'payload'    => $payload,
+            '_retries'   => 0,
+            '_queued_at' => time(),
+        ];
+
+        $redis = PoolManager::borrow($poolName);
+
+        try {
+            $redis->rpush('queue:' . $queueName, [json_encode($envelope, JSON_UNESCAPED_UNICODE)]);
+        } finally {
+            PoolManager::release($poolName, $redis);
+        }
+    }
+
+    /**
+     * 获取消费统计信息.
+     *
+     * @return array<string, int>
+     */
+    public function getStats(): array
+    {
+        return $this->stats;
+    }
+
+    /**
+     * 批量消费一批消息.
      */
     private function consumeBatch(): void
     {
-        if (!$this->running) {
+        if (! $this->running) {
             return;
         }
 
-        
         $redis = null;
 
         try {
             $redis = PoolManager::borrow($this->poolName);
 
-            for ($i = 0; $i < $this->batchSize; $i++) {
+            for ($i = 0; $i < $this->batchSize; ++$i) {
                 // LPOP：非阻塞取出，无消息则退出本轮
                 $raw = $redis->lpop($this->queue);
                 if ($raw === null) {
                     break;
                 }
 
-                $this->stats['consumed']++;
+                ++$this->stats['consumed'];
                 $this->processMessage($redis, $raw);
             }
 
             // 处理重试队列（到期重试消息）
             $this->processRetryQueue($redis);
-
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->log(sprintf('[RedisConsumer] 批量消费异常：%s', $e->getMessage()));
         } finally {
             if ($redis !== null) {
@@ -242,10 +271,10 @@ class RedisConsumerService
     }
 
     /**
-     * 处理单条消息
+     * 处理单条消息.
      *
-     * @param PredisClient $redis  Redis 连接
-     * @param string       $raw    原始消息字符串
+     * @param PredisClient $redis Redis 连接
+     * @param string       $raw   原始消息字符串
      */
     private function processMessage(PredisClient $redis, string $raw): void
     {
@@ -255,7 +284,7 @@ class RedisConsumerService
             $envelope = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             $this->log(sprintf('[RedisConsumer] 消息 JSON 解析失败，已丢弃：%s', $raw));
-            $this->stats['failed']++;
+            ++$this->stats['failed'];
             return;
         }
 
@@ -263,17 +292,17 @@ class RedisConsumerService
         $payload = $envelope['payload'] ?? $envelope;
         $retries = (int) ($envelope['_retries'] ?? 0);
 
-        if (!isset($this->handlers[$type])) {
+        if (! isset($this->handlers[$type])) {
             $this->log(sprintf('[RedisConsumer] 未找到处理器 type=%s，消息已丢弃', $type));
-            $this->stats['failed']++;
+            ++$this->stats['failed'];
             return;
         }
 
         try {
             $this->handlers[$type]->handle($payload);
-            $this->stats['success']++;
-        } catch (Throwable $e) {
-            $this->stats['failed']++;
+            ++$this->stats['success'];
+        } catch (\Throwable $e) {
+            ++$this->stats['failed'];
             $this->log(sprintf(
                 '[RedisConsumer] 处理失败 type=%s retries=%d/%d：%s',
                 $type,
@@ -285,11 +314,11 @@ class RedisConsumerService
             if ($retries < $this->maxRetries) {
                 // 推入重试队列（延迟 backoff：指数退避）
                 $envelope['_retries']    = $retries + 1;
-                $envelope['_retry_at']   = time() + (int) (2 ** $retries * 5); // 5s, 10s, 20s
+                $envelope['_retry_at']   = time()   + (int) (2 ** $retries * 5); // 5s, 10s, 20s
                 $envelope['_last_error'] = $e->getMessage();
 
                 $redis->rpush($this->retryQueue, [json_encode($envelope, JSON_UNESCAPED_UNICODE)]);
-                $this->stats['retried']++;
+                ++$this->stats['retried'];
 
                 $this->log(sprintf(
                     '[RedisConsumer] 消息已推入重试队列，将在 %d 秒后重试（第 %d/%d 次）',
@@ -303,7 +332,7 @@ class RedisConsumerService
                 $envelope['_last_error'] = $e->getMessage();
 
                 $redis->rpush($this->deadQueue, [json_encode($envelope, JSON_UNESCAPED_UNICODE)]);
-                $this->stats['dead']++;
+                ++$this->stats['dead'];
 
                 $this->log(sprintf(
                     '[RedisConsumer] 消息已推入死信队列（已重试 %d 次）：type=%s',
@@ -315,9 +344,7 @@ class RedisConsumerService
     }
 
     /**
-     * 处理重试队列：将到期的消息重新推回主队列
-     *
-     * @param PredisClient $redis
+     * 处理重试队列：将到期的消息重新推回主队列.
      */
     private function processRetryQueue(PredisClient $redis): void
     {
@@ -333,7 +360,7 @@ class RedisConsumerService
         $toRequeue = [];
         $toKeep    = [];
 
-        for ($i = 0; $i < $scanLimit; $i++) {
+        for ($i = 0; $i < $scanLimit; ++$i) {
             $raw = $redis->lpop($this->retryQueue);
             if ($raw === null) {
                 break;
@@ -364,49 +391,7 @@ class RedisConsumerService
     }
 
     /**
-     * 向指定队列推入消息（静态工厂方法，便于业务层使用）
-     *
-     * @param string               $queueName  队列名（不含 'queue:' 前缀）
-     * @param string               $type       消息类型
-     * @param array<string, mixed> $payload    消息内容
-     * @param string               $poolName   Redis 连接池名称
-     * @return void
-     */
-    public static function dispatch(
-        string $queueName,
-        string $type,
-        array $payload,
-        string $poolName = 'redis.default'
-    ): void {
-        $envelope = [
-            'type'       => $type,
-            'payload'    => $payload,
-            '_retries'   => 0,
-            '_queued_at' => time(),
-        ];
-
-        
-        $redis = PoolManager::borrow($poolName);
-
-        try {
-            $redis->rpush('queue:' . $queueName, [json_encode($envelope, JSON_UNESCAPED_UNICODE)]);
-        } finally {
-            PoolManager::release($poolName, $redis);
-        }
-    }
-
-    /**
-     * 获取消费统计信息
-     *
-     * @return array<string, int>
-     */
-    public function getStats(): array
-    {
-        return $this->stats;
-    }
-
-    /**
-     * 写日志
+     * 写日志.
      */
     private function log(string $message): void
     {

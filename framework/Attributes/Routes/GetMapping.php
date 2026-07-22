@@ -3,23 +3,14 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: GetMapping.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Attributes\Routes;
 
-use Attribute;
-
 /**
- * GetMapping - GET 请求映射注解
+ * GetMapping - GET 请求映射注解.
  *
  * 用于将控制器方法映射为 GET 请求路由。
  * 继承 BaseMapping，固定 HTTP 方法为 GET。
@@ -27,18 +18,16 @@ use Attribute;
  * 示例：
  * #[GetMapping('/users')]
  * #[GetMapping('/users/{id}', auth: true)]
- *
- * @package Framework\Attributes\Routes
  */
-#[Attribute(Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_METHOD)]
 class GetMapping extends BaseMapping
 {
     /**
-     * 构造函数
+     * 构造函数.
      *
-     * @param string $path 路由路径
-     * @param bool|null $auth 是否需要认证
-     * @param array<mixed> $roles 允许访问的角色列表
+     * @param string       $path       路由路径
+     * @param null|bool    $auth       是否需要认证
+     * @param array<mixed> $roles      允许访问的角色列表
      * @param array<mixed> $middleware 中间件列表
      */
     public function __construct(

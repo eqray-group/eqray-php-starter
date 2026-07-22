@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
@@ -19,28 +12,24 @@ namespace Framework\Utils;
 class UUIDGenerator
 {
     /**
-     * 生成UUID
+     * 生成UUID.
      *
-     * @param string $format
-     * @param int    $length
-     *
-     * @return string|null
      * @throws \Exception
      */
     public static function generate(string $format = 'uuid', int $length = 36): ?string
     {
         if ($format === 'uuid') {
             return self::generateUUID();
-        } elseif ($format === 'custom') {
+        }
+        if ($format === 'custom') {
             return self::generateCustomUUID($length);
         }
         return null;
     }
 
     /**
-     * 生成标准格式UUID
+     * 生成标准格式UUID.
      *
-     * @return string
      * @throws \Exception
      */
     private static function generateUUID(): string
@@ -57,11 +46,10 @@ class UUIDGenerator
     }
 
     /**
-     * 自定义UUID
+     * 自定义UUID.
      *
      * @param mixed $length
      *
-     * @return string|null
      * @throws \Exception
      */
     private static function generateCustomUUID($length): ?string

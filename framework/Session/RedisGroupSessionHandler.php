@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Session;
@@ -33,57 +26,41 @@ use Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler
  * - spin_lock_wait (int)    : 自旋每次等待时间，单位微秒，默认 150000
  * - lock_ttl (int)          : 锁过期时间，单位毫秒，默认 30000
  * - group_prefix (string)   : 自定义分组前缀，会拼接到 prefix 前面
- *
- * @package Framework\Session
  */
 class RedisGroupSessionHandler extends RedisSessionHandler
 {
     /**
      * Redis 客户端实例.
-     *
-     * @var object
      */
     protected object $redis;
 
     /**
      * Session 本地 TTL（秒）.
-     *
-     * @var int
      */
     protected int $ttlLocal;
 
     /**
      * 是否启用分布式锁.
-     *
-     * @var bool
      */
     protected bool $locking = true;
 
     /**
      * 自旋锁等待时间（微秒）.
-     *
-     * @var int
      */
     protected int $spinLockWait = 150000; // 微秒
 
     /**
      * 锁过期时间（毫秒）.
-     *
-     * @var int
      */
     protected int $lockTtl = 30000;       // 毫秒
 
     /**
      * Session 键前缀.
-     *
-     * @var string
      */
     protected string $prefix = 'session:';
 
     /**
      * 分组前缀，用于多应用隔离.
-     *
-     * @var string
      */
     protected string $groupPrefix = '';
 
@@ -93,7 +70,7 @@ class RedisGroupSessionHandler extends RedisSessionHandler
      * 处理自定义配置选项，设置分组前缀和分布式锁参数，
      * 然后调用父类构造函数完成基础初始化。
      *
-     * @param object $redis   Redis 客户端实例（支持 setex、set、get、del、eval 等方法）
+     * @param object       $redis   Redis 客户端实例（支持 setex、set、get、del、eval 等方法）
      * @param array<mixed> $options 配置选项数组
      */
     public function __construct(object $redis, array $options = [])

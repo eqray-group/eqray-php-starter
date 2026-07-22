@@ -3,37 +3,26 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
 
+use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Crypt\RSA;
 use phpseclib3\Crypt\RSA\PrivateKey;
 use phpseclib3\Crypt\RSA\PublicKey;
-use phpseclib3\Crypt\PublicKeyLoader;
 
 /**
  * RSA秘钥服务
  *
- * @author Mr.April
  * @since  1.0
  */
 class RSAService
 {
-
     /**
-     * 生成秘钥对
-     *
-     * @param int $bits
+     * 生成秘钥对.
      *
      * @return array<mixed> */
     public static function generateKeys(int $bits = 2048): array
@@ -50,12 +39,7 @@ class RSAService
     }
 
     /**
-     * 签名
-     *
-     * @param string $data
-     * @param string $privatePem
-     *
-     * @return string
+     * 签名.
      */
     public static function sign(string $data, string $privatePem): string
     {
@@ -69,13 +53,7 @@ class RSAService
     }
 
     /**
-     * 验证签名
-     *
-     * @param string $data
-     * @param string $signature
-     * @param string $publicPem
-     *
-     * @return bool
+     * 验证签名.
      */
     public static function verify(string $data, string $signature, string $publicPem): bool
     {
@@ -89,12 +67,7 @@ class RSAService
     }
 
     /**
-     * 公钥加密
-     *
-     * @param string $data
-     * @param string $publicPem
-     *
-     * @return string
+     * 公钥加密.
      */
     public static function encrypt(string $data, string $publicPem): string
     {
@@ -105,12 +78,7 @@ class RSAService
     }
 
     /**
-     * 私钥解密
-     *
-     * @param string $cipherBase64
-     * @param string $privatePem
-     *
-     * @return string
+     * 私钥解密.
      */
     public static function decrypt(string $cipherBase64, string $privatePem): string
     {
@@ -122,19 +90,13 @@ class RSAService
         return $privateKey->decrypt($cipher);
     }
 
-
     /**
-     * 公钥掩码显示
-     *
-     * @param string $pem
-     * @param int    $keep
-     *
-     * @return string
+     * 公钥掩码显示.
      */
     public static function maskKey(string $pem, int $keep = 20): string
     {
         $clean = str_replace(
-            ["\r", "\n", "-----BEGIN PUBLIC KEY-----", "-----END PUBLIC KEY-----"],
+            ["\r", "\n", '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'],
             '',
             $pem
         );

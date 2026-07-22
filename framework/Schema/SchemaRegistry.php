@@ -1,18 +1,18 @@
 <?php
+
 declare(strict_types=1);
 
-namespace Framework\Schema;
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
-use Illuminate\Database\Eloquent\Model;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use ReflectionClass;
-use RuntimeException;
+namespace Framework\Schema;
 
 /**
  * ====================================================
  * SchemaRegistry: 常驻进程 ORM Schema 缓存
- * ====================================================
+ * ====================================================.
  */
 final class SchemaRegistry
 {
@@ -24,7 +24,7 @@ final class SchemaRegistry
      *       'indexes' => [],
      *       'audit'   => [],
      *   ]
-     * ]
+     * ].
      */
     /** @var array<mixed> */
     private static array $schemas = [];
@@ -33,11 +33,11 @@ final class SchemaRegistry
     private static bool $frozen = false;
 
     /**
-     * 注册表结构
+     * 注册表结构.
      *
-     * @param string $table      表名（逻辑表名，不带前缀）
-     * @param array<mixed> $columns    字段列表
-     * @param array<mixed> $indexes    索引信息
+     * @param string       $table        表名（逻辑表名，不带前缀）
+     * @param array<mixed> $columns      字段列表
+     * @param array<mixed> $indexes      索引信息
      * @param array<mixed> $auditColumns 审计字段
      */
     public static function register(
@@ -47,7 +47,7 @@ final class SchemaRegistry
         array $auditColumns = []
     ): void {
         if (self::$frozen) {
-            throw new RuntimeException("SchemaRegistry is frozen");
+            throw new \RuntimeException('SchemaRegistry is frozen');
         }
 
         self::$schemas[$table] = [
@@ -65,8 +65,8 @@ final class SchemaRegistry
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public static function getColumns(string $table): array
     {
         self::assertExists($table);
@@ -80,8 +80,8 @@ final class SchemaRegistry
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public static function getAuditColumns(string $table): array
     {
         self::assertExists($table);
@@ -89,7 +89,7 @@ final class SchemaRegistry
     }
 
     /**
-     * 返回所有已注册 schema
+     * 返回所有已注册 schema.
      *
      * @return array<mixed> */
     public static function all(): array
@@ -113,8 +113,8 @@ final class SchemaRegistry
 
     private static function assertExists(string $table): void
     {
-        if (!isset(self::$schemas[$table])) {
-            throw new RuntimeException("Schema not registered for table: {$table}");
+        if (! isset(self::$schemas[$table])) {
+            throw new \RuntimeException("Schema not registered for table: {$table}");
         }
     }
 }

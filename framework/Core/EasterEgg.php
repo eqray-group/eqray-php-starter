@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Core;
@@ -20,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * 框架彩蛋类
+ * 框架彩蛋类.
  *
  * 该类提供了一些隐藏的框架功能，用于展示框架版本信息和开发团队。
  * 这些彩蛋路由可以通过特定的URL访问触发。
@@ -28,13 +21,11 @@ use Symfony\Component\HttpFoundation\Response;
  * 彩蛋路由：
  * - /version (GET): 显示框架版本信息
  * - /team (GET): 显示开发团队信息
- *
- * @package Framework\Core
  */
 class EasterEgg
 {
     /**
-     * 支持的语言文案配置
+     * 支持的语言文案配置.
      *
      * 包含中文和英文两种语言的文案，根据客户端语言自动选择。
      *
@@ -66,7 +57,7 @@ class EasterEgg
     ];
 
     /**
-     * 开发团队名单配置
+     * 开发团队名单配置.
      *
      * 可以动态配置，用于展示开发团队信息。
      *
@@ -81,21 +72,21 @@ class EasterEgg
     ];
 
     /**
-     * 版本彩蛋路由路径
+     * 版本彩蛋路由路径.
      *
      * @var string
      */
     private static $path = '/version';
 
     /**
-     * 团队信息彩蛋路由路径
+     * 团队信息彩蛋路由路径.
      *
      * @var string
      */
     private static $TeamPath = '/team';
 
     /**
-     * 检查是否触发版本彩蛋
+     * 检查是否触发版本彩蛋.
      *
      * 判断请求路径是否为版本信息路由，且请求方法为GET。
      *
@@ -109,7 +100,7 @@ class EasterEgg
     }
 
     /**
-     * 检查是否触发团队名单彩蛋
+     * 检查是否触发团队名单彩蛋.
      *
      * 判断请求路径是否为团队信息路由，且请求方法为GET。
      *
@@ -123,7 +114,7 @@ class EasterEgg
     }
 
     /**
-     * 获取版本号页面响应
+     * 获取版本号页面响应.
      *
      * 生成包含框架版本信息的HTML响应页面。
      * 根据客户端语言自动选择对应语言的文案。
@@ -163,7 +154,7 @@ HTML;
     }
 
     /**
-     * 获取开发团队页面响应
+     * 获取开发团队页面响应.
      *
      * 生成包含开发团队信息的HTML响应页面。
      * 根据客户端语言自动选择对应语言的文案。
@@ -217,7 +208,7 @@ HTML;
     }
 
     /**
-     * 返回GET彩蛋的路由标记
+     * 返回GET彩蛋的路由标记.
      *
      * 生成版本彩蛋路由的标记信息，用于路由匹配。
      *
@@ -234,7 +225,7 @@ HTML;
     }
 
     /**
-     * 返回POST彩蛋的路由标记
+     * 返回POST彩蛋的路由标记.
      *
      * 生成团队彩蛋路由的标记信息，用于路由匹配。
      *

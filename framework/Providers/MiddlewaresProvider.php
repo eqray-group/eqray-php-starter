@@ -3,26 +3,19 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Providers;
 
 use Framework\Container\ServiceProviderInterface;
-use Framework\Middleware\ContextInitMiddleware;
 use Framework\Middleware\CircuitBreakerMiddleware;
+use Framework\Middleware\ContextInitMiddleware;
 use Framework\Middleware\CookieConsentMiddleware;
-use Framework\Middleware\CsrfTokenGenerateMiddleware;
 use Framework\Middleware\CorsMiddleware;
 use Framework\Middleware\CsrfProtectionMiddleware;
+use Framework\Middleware\CsrfTokenGenerateMiddleware;
 use Framework\Middleware\DebugMiddleware;
 use Framework\Middleware\IpBlockMiddleware;
 use Framework\Middleware\LoginRateLimitMiddleware;
@@ -58,22 +51,21 @@ final class MiddlewaresProvider implements ServiceProviderInterface
         $corsConfig = $middlewareConfig['cors'] ?? [];
         $services->set(CorsMiddleware::class)
             ->args([
-                $corsConfig['allowed_origins'] ?? [],
+                $corsConfig['allowed_origins']   ?? [],
                 $corsConfig['allow_credentials'] ?? true,
             ])
             ->autoconfigure()->public();
 
-		// ContextInitMiddleware
+        // ContextInitMiddleware
         $services->set(ContextInitMiddleware::class)
             ->autowire()
-            ->autoconfigure()->public();	
-			
-		// CSRF
+            ->autoconfigure()->public();
+
+        // CSRF
         $services->set(CsrfTokenGenerateMiddleware::class)
             ->autowire()
-			->autoconfigure()
+            ->autoconfigure()
             ->autoconfigure()->public();
-			
 
         // Cookie提示
         $services->set(CookieConsentMiddleware::class)
@@ -97,7 +89,7 @@ final class MiddlewaresProvider implements ServiceProviderInterface
             ->args([
                 '$enabled'      => true,
                 '$allowedHtml'  => [], // ['b', 'i', 'u', 'a', 'p', 'br', 'strong', 'em'], 按需调整
-				//'$enableSqlInjectionProtection' => true, //
+                // '$enableSqlInjectionProtection' => true, //
             ])
             ->autowire()
             ->public();

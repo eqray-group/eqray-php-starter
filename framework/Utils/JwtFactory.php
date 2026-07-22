@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
@@ -55,9 +48,9 @@ class JwtFactory
      * 返回一个包含 token 字符串和过期时间的数组，便于外部处理（如设置 Cookie）
      */
     /**
-    * @param array<mixed> $claims
-    * @return array<mixed>
-    */
+     * @param  array<mixed> $claims
+     * @return array<mixed>
+     */
     public function issue(array $claims = [], ?int $ttl = null): array
     {
         $now       = new \DateTimeImmutable('now', $this->timezone);
@@ -107,125 +100,93 @@ class JwtFactory
         ];
     }
 
-	// 最底层：parseRaw（只负责“这是不是我签的 JWT”）
-	protected function parseRaw(string $token): Plain
-	{
-		$token = trim($token);
+    // API 请求用：parseForAccess（最严格）
+    public function parseForAccess(string $token): Plain
+    {
+        $parsed = $this->parseRaw($token);
 
-		if (
-			substr_count($token, '.') !== 2 ||
-			! preg_match('/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/', $token)
-		) {
-			throw new \InvalidArgumentException('Invalid JWT format.');
-		}
+        // 1️⃣ 黑名单优先（防止并发 / 重放）
+        if ($this->isBlacklisted($parsed)) {
+            throw new \RuntimeException('Token has been revoked.');
+        }
 
-		$parsed = $this->config->parser()->parse($token);
+        // 2️⃣ exp 校验
+        $exp = $parsed->claims()->get('exp');
+        if (! $exp instanceof \DateTimeImmutable || $exp < new \DateTimeImmutable()) {
+            throw new \RuntimeException('Token expired.');
+        }
 
-		// 只校验签名是否合法
-		$ok = $this->config->validator()->validate(
-			$parsed,
-			new SignedWith($this->config->signer(), $this->config->verificationKey())
-		);
+        // 3️⃣ Redis 活跃校验：不仅要求 jti 仍活跃，且其绑定的 uid 必须与 token 声明的 uid 一致。
+        // 这可阻断「复用他人/自己的活跃 jti + 篡改 uid」的伪造提权攻击：即便签名密钥泄露，
+        // 攻击者也无法把任意 jti 冒用为另一个用户（如 super_admin）的身份。
+        $jti = $parsed->claims()->get('jti');
+        if (! $jti) {
+            throw new \RuntimeException('Token not active.');
+        }
 
-		if (! $ok) {
-			throw new \RuntimeException('JWT signature verification failed.');
-		}
+        $storedUid = app('redis.client')->get("login:token:{$jti}");
+        if ($storedUid === null || $storedUid === false) {
+            throw new \RuntimeException('Token not active.');
+        }
 
-		if (! $parsed instanceof Plain) {
-			throw new \RuntimeException('Invalid JWT token type.');
-		}
+        $claimUid = $parsed->claims()->get('uid');
+        if (! hash_equals((string) $storedUid, (string) $claimUid)) {
+            throw new \RuntimeException('Token identity mismatch.');
+        }
 
-		return $parsed;
-	}
+        // 4️⃣ issuer / audience / nbf / iat 校验
+        $clock = new SystemClock($this->timezone);
 
-	// API 请求用：parseForAccess（最严格）
-	public function parseForAccess(string $token): Plain
-	{
-		$parsed = $this->parseRaw($token);
+        $constraints = [
+            new IssuedBy($this->jwtConfig['issuer'] ?? null),
+            new LooseValidAt(
+                $clock,
+                new \DateInterval(
+                    'PT' . intval($this->jwtConfig['blacklist_grace_period'] ?? 0) . 'S'
+                )
+            ),
+        ];
 
-		// 1️⃣ 黑名单优先（防止并发 / 重放）
-		if ($this->isBlacklisted($parsed)) {
-			throw new \RuntimeException('Token has been revoked.');
-		}
+        // 签发时已设置 audience（permittedFor），此处补齐受众校验。
+        if (! empty($this->jwtConfig['audience'])) {
+            $constraints[] = new PermittedFor($this->jwtConfig['audience']);
+        }
 
-		// 2️⃣ exp 校验
-		$exp = $parsed->claims()->get('exp');
-		if (! $exp instanceof \DateTimeImmutable || $exp < new \DateTimeImmutable()) {
-			throw new \RuntimeException('Token expired.');
-		}
+        $this->config->validator()->assert($parsed, ...$constraints);
 
-		// 3️⃣ Redis 活跃校验：不仅要求 jti 仍活跃，且其绑定的 uid 必须与 token 声明的 uid 一致。
-		// 这可阻断「复用他人/自己的活跃 jti + 篡改 uid」的伪造提权攻击：即便签名密钥泄露，
-		// 攻击者也无法把任意 jti 冒用为另一个用户（如 super_admin）的身份。
-		$jti = $parsed->claims()->get('jti');
-		if (! $jti) {
-			throw new \RuntimeException('Token not active.');
-		}
+        return $parsed;
+    }
 
-		$storedUid = app('redis.client')->get("login:token:{$jti}");
-		if ($storedUid === null || $storedUid === false) {
-			throw new \RuntimeException('Token not active.');
-		}
+    // 刷新 / 注销用：parseForRefresh（允许过期）
+    public function parseForRefresh(string $token): Plain
+    {
+        $parsed = $this->parseRaw($token);
 
-		$claimUid = $parsed->claims()->get('uid');
-		if (! hash_equals((string) $storedUid, (string) $claimUid)) {
-			throw new \RuntimeException('Token identity mismatch.');
-		}
+        // refresh 场景：允许 exp 过期
+        // 但不允许被明确 revoke
+        if ($this->isBlacklisted($parsed)) {
+            throw new \RuntimeException('Token has been revoked.');
+        }
 
-		// 4️⃣ issuer / audience / nbf / iat 校验
-		$clock = new SystemClock($this->timezone);
+        // issuer / nbf 校验（防伪造）
+        $clock = new SystemClock($this->timezone);
 
-		$constraints = [
-			new IssuedBy($this->jwtConfig['issuer'] ?? null),
-			new LooseValidAt(
-				$clock,
-				new \DateInterval(
-					'PT' . intval($this->jwtConfig['blacklist_grace_period'] ?? 0) . 'S'
-				)
-			),
-		];
+        $this->config->validator()->assert(
+            $parsed,
+            new IssuedBy($this->jwtConfig['issuer'] ?? null),
+            new LooseValidAt(
+                $clock,
+                new \DateInterval('PT0S')
+            )
+        );
 
-		// 签发时已设置 audience（permittedFor），此处补齐受众校验。
-		if (! empty($this->jwtConfig['audience'])) {
-			$constraints[] = new PermittedFor($this->jwtConfig['audience']);
-		}
+        return $parsed;
+    }
 
-		$this->config->validator()->assert($parsed, ...$constraints);
-
-		return $parsed;
-	}
-
-	// 刷新 / 注销用：parseForRefresh（允许过期）
-	public function parseForRefresh(string $token): Plain
-	{
-		$parsed = $this->parseRaw($token);
-
-		// refresh 场景：允许 exp 过期
-		// 但不允许被明确 revoke
-		if ($this->isBlacklisted($parsed)) {
-			throw new \RuntimeException('Token has been revoked.');
-		}
-
-		// issuer / nbf 校验（防伪造）
-		$clock = new SystemClock($this->timezone);
-
-		$this->config->validator()->assert(
-			$parsed,
-			new IssuedBy($this->jwtConfig['issuer'] ?? null),
-			new LooseValidAt(
-				$clock,
-				new \DateInterval('PT0S')
-			)
-		);
-
-		return $parsed;
-	}
-
-	public function parse(string $token): Plain
-	{
-		return $this->parseForAccess($token);
-	}
-
+    public function parse(string $token): Plain
+    {
+        return $this->parseForAccess($token);
+    }
 
     /*
      * 刷新jwt token 可以弃用
@@ -298,62 +259,60 @@ class JwtFactory
             }
         }
     }
-	
-	/*
-	* 生成 Refresh Token
-	*/
-	public function issueRefreshToken(int $userId, int $ttl = 604800): string
-	{
-		$refreshToken = bin2hex(random_bytes(64));
-		$hash         = hash('sha256', $refreshToken);
 
-		$redis = app('redis.client');
+    /*
+    * 生成 Refresh Token
+    */
+    public function issueRefreshToken(int $userId, int $ttl = 604800): string
+    {
+        $refreshToken = bin2hex(random_bytes(64));
+        $hash         = hash('sha256', $refreshToken);
 
-		// refresh_token -> user_id
-		$redis->setex("refresh:token:{$hash}", $ttl, (string) $userId);
+        $redis = app('redis.client');
 
-		// user -> refresh tokens
-		$redis->sadd("user:refresh_tokens:{$userId}", $hash);
-		$redis->expire("user:refresh_tokens:{$userId}", $ttl);
+        // refresh_token -> user_id
+        $redis->setex("refresh:token:{$hash}", $ttl, (string) $userId);
 
-		return $refreshToken;
-	}
+        // user -> refresh tokens
+        $redis->sadd("user:refresh_tokens:{$userId}", $hash);
+        $redis->expire("user:refresh_tokens:{$userId}", $ttl);
 
-	/*
-	* 校验 Refresh Token
-	*/
-	public function validateRefreshToken(string $refreshToken): int
-	{
-		$hash  = hash('sha256', $refreshToken);
-		$redis = app('redis.client');
+        return $refreshToken;
+    }
 
-		$userId = $redis->get("refresh:token:{$hash}");
-		if (! $userId) {
-			throw new \RuntimeException('Invalid or expired refresh token');
-		}
+    /*
+    * 校验 Refresh Token
+    */
+    public function validateRefreshToken(string $refreshToken): int
+    {
+        $hash  = hash('sha256', $refreshToken);
+        $redis = app('redis.client');
 
-		return (int) $userId;
-	}
+        $userId = $redis->get("refresh:token:{$hash}");
+        if (! $userId) {
+            throw new \RuntimeException('Invalid or expired refresh token');
+        }
 
-	
-	public function rotateRefreshToken(string $oldRefreshToken): string
-	{
-		$hash  = hash('sha256', $oldRefreshToken);
-		$redis = app('redis.client');
+        return (int) $userId;
+    }
 
-		$userId = $redis->get("refresh:token:{$hash}");
-		if (! $userId) {
-			throw new \RuntimeException('Refresh token already used or expired');
-		}
+    public function rotateRefreshToken(string $oldRefreshToken): string
+    {
+        $hash  = hash('sha256', $oldRefreshToken);
+        $redis = app('redis.client');
 
-		// 1. 删除旧 token（用完即焚）
-		$redis->del("refresh:token:{$hash}");
-		$redis->srem("user:refresh_tokens:{$userId}", $hash);
+        $userId = $redis->get("refresh:token:{$hash}");
+        if (! $userId) {
+            throw new \RuntimeException('Refresh token already used or expired');
+        }
 
-		// 2. 生成新 token
-		return $this->issueRefreshToken((int) $userId);
-	}
+        // 1. 删除旧 token（用完即焚）
+        $redis->del("refresh:token:{$hash}");
+        $redis->srem("user:refresh_tokens:{$userId}", $hash);
 
+        // 2. 生成新 token
+        return $this->issueRefreshToken((int) $userId);
+    }
 
     public function revoke(string $token): void
     {
@@ -398,12 +357,43 @@ class JwtFactory
     }
 
     /**
-    * @return array<mixed>
-    */
+     * @return array<mixed>
+     */
     public function getPayload(string $token): array
     {
         $parsed = $this->parse($token);
         return $parsed->claims()->all();
+    }
+
+    // 最底层：parseRaw（只负责“这是不是我签的 JWT”）
+    protected function parseRaw(string $token): Plain
+    {
+        $token = trim($token);
+
+        if (
+            substr_count($token, '.') !== 2
+            || ! preg_match('/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/', $token)
+        ) {
+            throw new \InvalidArgumentException('Invalid JWT format.');
+        }
+
+        $parsed = $this->config->parser()->parse($token);
+
+        // 只校验签名是否合法
+        $ok = $this->config->validator()->validate(
+            $parsed,
+            new SignedWith($this->config->signer(), $this->config->verificationKey())
+        );
+
+        if (! $ok) {
+            throw new \RuntimeException('JWT signature verification failed.');
+        }
+
+        if (! $parsed instanceof Plain) {
+            throw new \RuntimeException('Invalid JWT token type.');
+        }
+
+        return $parsed;
     }
 
     protected function buildConfiguration(): Configuration
@@ -437,7 +427,6 @@ class JwtFactory
         $public  = InMemory::file($publicKeyPath);
 
         return Configuration::forAsymmetricSigner($signer, $private, $public);
-
         // 不会到达此处：上方 match 已通过 default 分支覆盖所有未知算法
     }
 

@@ -117,7 +117,7 @@
     <ElDialog
       v-if="loginWindowEnabled"
       v-model="welcomeDialogVisible"
-      title="FssAdmin"
+      title="eqrayadmin"
       width="750px"
 	  height="450px"
       align-center
@@ -127,7 +127,7 @@
         <ElTabPane label="PHP版本" name="php">
           <div class="welcome-dialog">
             <p class="welcome-dialog__intro">
-              FssAdmin PHP 版本，基于自研 Fssphp 框架，一个后台适配多个前端系统。
+              eqrayadmin PHP 版本，基于自研 eqrayphp 框架，一个后台适配多个前端系统。
             </p>
             <ul class="welcome-dialog__list">
               <li>
@@ -147,15 +147,15 @@
             </ul>
             <p class="welcome-dialog__footer">目前基础底座已开源，欢迎 Star：</p>
             <div class="welcome-dialog__links">
-              <a href="https://gitee.com/fsscms/FssAdmin" target="_blank" rel="noopener noreferrer">Gitee</a>
-              <a href="https://github.com/xuey490/FssAdmin" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <a href="https://gitee.com/fsscms/eqrayadmin" target="_blank" rel="noopener noreferrer">Gitee</a>
+              <a href="https://github.com/xuey490/eqrayadmin" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
           </div>
         </ElTabPane>
         <ElTabPane label="NestJs版本" name="nestjs">
           <div class="welcome-dialog">
             <p class="welcome-dialog__intro">
-              FssAdmin(NestJs)是一款基于NestJS + TypeScript6 + TypeORM1.0等 技术栈的全功能企业级后端管理系统。
+              eqrayadmin(NestJs)是一款基于NestJS + TypeScript6 + TypeORM1.0等 技术栈的全功能企业级后端管理系统。
             </p>
             <ul class="welcome-dialog__list">
               <li>
@@ -166,15 +166,15 @@
             </ul>
             <p class="welcome-dialog__footer">NestJs 版本已开源，欢迎关注：</p>
             <div class="welcome-dialog__links">
-              <a href="https://gitee.com/FssPHP_Team/fss-admin_nest" target="_blank" rel="noopener noreferrer">Gitee</a>
-              <a href="https://github.com/xuey490/FssAdmin_NestJs" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <a href="https://gitee.com/eqrayphp_Team/fss-admin_nest" target="_blank" rel="noopener noreferrer">Gitee</a>
+              <a href="https://github.com/xuey490/eqrayadmin_NestJs" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
           </div>
         </ElTabPane>
         <ElTabPane label="Python版本" name="python">
           <div class="welcome-dialog">
             <p class="welcome-dialog__intro">
-              FssAdmin Python 版本，基于 FastAPI + SQLAlchemy 异步架构，高性能 Python 全栈后台解决方案。
+              eqrayadmin Python 版本，基于 FastAPI + SQLAlchemy 异步架构，高性能 Python 全栈后台解决方案。
             </p>
             <ul class="welcome-dialog__list">
               <li>

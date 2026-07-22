@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\ORM\Trait;
@@ -24,11 +17,11 @@ trait ModelTrait
      * 时间段搜索器.
      *
      * @param Model $query
-     
+     *
      * @param mixed $value
-
+     *
      * @param mixed $data
-*/
+     */
     public function searchTimeAttr($query, $value, $data): void
     {
         if ($value) {
@@ -107,10 +100,9 @@ trait ModelTrait
      *
      * @param array<mixed>|string[] $where
      *
+     * @param  mixed $value
      * @return mixed
-     
-     * @param mixed $value
-*/
+     */
     public function getFieldValue($value, string $filed, ?string $valueKey = '', ?array $where = [])
     {
         $model = $this->where($filed, $value);

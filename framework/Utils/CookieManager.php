@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
@@ -21,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /*
-$response = app('response')->setContent('Hello FSSPHP!');
+$response = app('response')->setContent('Hello eqrayphp!');
 
 //app('cookie')->queueCookie('token', $this->tokenString, 3600);
 //app('cookie')->queueCookie('token111', 'oooooo', 3600);
@@ -40,98 +33,78 @@ return $response;
 */
 
 /**
- * Cookie 管理类
+ * Cookie 管理类.
  *
  * 提供完整的 Cookie 管理功能，包括 Cookie 的设置、获取、删除、
  * 队列管理等操作。支持 Cookie 值加密、签名验证，确保数据安全性。
  * 同时支持 Symfony Response 对象和原生 PHP setcookie 两种模式。
- *
- * @package Framework\Utils
  */
 class CookieManager
 {
     /**
-     * Cookie 配置数组
+     * Cookie 配置数组.
      *
      * @var array<mixed> */
     protected array $config;
 
     /**
-     * 加密密钥
-     *
-     * @var string
+     * 加密密钥.
      */
     protected string $secret;
 
     /**
-     * 加密算法
-     *
-     * @var string
+     * 加密算法.
      */
     protected string $cipher;
 
     /**
      * Cookie 作用域
-     *
-     * @var string
      */
     protected string $domain;
 
     /**
-     * Cookie 路径
-     *
-     * @var string
+     * Cookie 路径.
      */
     protected string $path;
 
     /**
-     * 默认过期时间（秒）
-     *
-     * @var int
+     * 默认过期时间（秒）.
      */
     protected int $expire;
 
     /**
-     * 是否仅 HTTPS 传输
-     *
-     * @var bool
+     * 是否仅 HTTPS 传输.
      */
     protected bool $secure;
 
     /**
-     * 是否仅 HTTP 访问（防止 XSS）
-     *
-     * @var bool
+     * 是否仅 HTTP 访问（防止 XSS）.
      */
     protected bool $httponly;
 
     /**
-     * SameSite 策略
-     *
-     * @var string
+     * SameSite 策略.
      */
     protected string $samesite;
 
     /**
-     * 是否启用加密
-     *
-     * @var bool
+     * 是否启用加密.
      */
     protected bool $encrypt;
 
     /**
-     * 待发送的 Cookie 队列
+     * 待发送的 Cookie 队列.
      *
      * @var array<mixed> */
     protected array $queuedCookies = [];
 
     /**
-     * 构造函数
+     * 构造函数.
      *
      * 从配置文件加载 Cookie 配置，包括加密密钥、算法、作用域、路径、
      * 过期时间、安全选项等。
      *
-     * @param string|null $configPath 配置文件路径，默认为 BASE_PATH/config/cookie.php
+     * @param null|string $configPath 配置文件路径，默认为 BASE_PATH/config/cookie.php
      *
      * @throws \RuntimeException 配置文件不存在或密钥长度不足时抛出异常
      */
@@ -165,14 +138,14 @@ class CookieManager
     // --------------------------------------
 
     /**
-     * 将 Cookie 添加到发送队列
+     * 将 Cookie 添加到发送队列.
      *
      * 将 Cookie 信息加入队列，等待统一发送。支持设置过期时间，
      * Cookie 值会经过编码处理（可选加密）。
      *
-     * @param string    $name   Cookie 名称
-     * @param string    $value  Cookie 值
-     * @param int|null  $expire 过期时间（秒），默认使用配置中的过期时间
+     * @param string   $name   Cookie 名称
+     * @param string   $value  Cookie 值
+     * @param null|int $expire 过期时间（秒），默认使用配置中的过期时间
      */
     public function queueCookie(string $name, string $value, ?int $expire = null): void
     {
@@ -183,7 +156,7 @@ class CookieManager
     }
 
     /**
-     * 将删除 Cookie 的指令加入队列
+     * 将删除 Cookie 的指令加入队列.
      *
      * 通过设置过期时间为过去时间来删除指定的 Cookie。
      *
@@ -199,12 +172,12 @@ class CookieManager
     }
 
     /**
-     * 发送队列中的所有 Cookie
+     * 发送队列中的所有 Cookie.
      *
      * 遍历队列中的 Cookie，根据是否提供 Response 对象决定使用 Symfony Cookie
      * 还是原生 setcookie 函数进行设置。发送后清空队列。
      *
-     * @param Response|null $response Symfony Response 对象，为空则使用原生 setcookie
+     * @param null|Response $response Symfony Response 对象，为空则使用原生 setcookie
      */
     public function sendQueuedCookies(?Response $response = null): void
     {
@@ -248,14 +221,14 @@ class CookieManager
     // --------------------------------------
 
     /**
-     * 直接在 Response 对象上设置 Cookie
+     * 直接在 Response 对象上设置 Cookie.
      *
      * 快捷方法，直接将 Cookie 添加到 Symfony Response 对象的头部。
      *
-     * @param Response  $response Symfony Response 对象
-     * @param string    $name     Cookie 名称
-     * @param string    $value    Cookie 值
-     * @param int|null  $expire   过期时间（秒），默认使用配置中的过期时间
+     * @param Response $response Symfony Response 对象
+     * @param string   $name     Cookie 名称
+     * @param string   $value    Cookie 值
+     * @param null|int $expire   过期时间（秒），默认使用配置中的过期时间
      */
     public function setResponseCookie(Response $response, string $name, string $value, ?int $expire = null): void
     {
@@ -275,7 +248,7 @@ class CookieManager
     }
 
     /**
-     * 在 Response 对象上删除 Cookie
+     * 在 Response 对象上删除 Cookie.
      *
      * 通过设置过期时间为过去时间来删除指定的 Cookie。
      *
@@ -310,7 +283,7 @@ class CookieManager
      * @param Request $request Symfony Request 对象
      * @param string  $name    Cookie 名称
      *
-     * @return string|null Cookie 值，不存在或验证失败返回 null
+     * @return null|string Cookie 值，不存在或验证失败返回 null
      */
     public function get(Request $request, string $name): ?string
     {
@@ -353,7 +326,7 @@ class CookieManager
      *
      * @param string $payload 编码后的 Cookie 值
      *
-     * @return string|null 解码后的原始值，验证失败返回 null
+     * @return null|string 解码后的原始值，验证失败返回 null
      */
     protected function decodePayload(string $payload): ?string
     {
@@ -438,7 +411,7 @@ class CookieManager
     // --------------------------------------
 
     /**
-     * 对数据生成 HMAC 签名
+     * 对数据生成 HMAC 签名.
      *
      * 使用 SHA256 算法和密钥对数据进行签名，确保数据完整性。
      *
@@ -452,7 +425,7 @@ class CookieManager
     }
 
     /**
-     * 验证签名
+     * 验证签名.
      *
      * 使用时序安全比较验证签名是否正确，防止时序攻击。
      *

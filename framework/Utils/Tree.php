@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
@@ -21,37 +14,33 @@ namespace Framework\Utils;
 */
 class Tree
 {
-
     /**
-     * 获取完整的树结构，包含祖先节点
+     * 获取完整的树结构，包含祖先节点.
      */
-    const INCLUDE_ANCESTORS = 1;
+    public const INCLUDE_ANCESTORS = 1;
 
     /**
-     * 获取部分树，不包含祖先节点
+     * 获取部分树，不包含祖先节点.
      */
-    const EXCLUDE_ANCESTORS = 0;
+    public const EXCLUDE_ANCESTORS = 0;
 
     /**
-     * 数据
+     * 数据.
      * @var array<mixed> */
     protected array $data = [];
 
     /**
-     * 哈希树
+     * 哈希树.
      * @var array<mixed> */
     protected array $hashTree = [];
 
     /**
-     * 父级字段名
-     *
-     * @var string
+     * 父级字段名.
      */
     protected string $pidName = 'pid';
 
     /**
-     * @param                  mixed $data
-     * @param string           $pid_name
+     * @param mixed $data
      */
     public function __construct($data, string $pid_name = 'pid')
     {
@@ -59,7 +48,7 @@ class Tree
         if (is_object($data) && method_exists($data, 'toArray')) {
             $this->data = $data->toArray();
         } else {
-            $this->data = (array)$data;
+            $this->data = (array) $data;
             $this->data = array_map(function ($item) {
                 if (is_object($item) && method_exists($item, 'toArray')) {
                     return $item->toArray();
@@ -71,15 +60,14 @@ class Tree
     }
 
     /**
-     * 获取子孙节点
+     * 获取子孙节点.
      * @param array<mixed> $include
-     * @param bool  $with_self
      * @return array<mixed> */
     public function getDescendant(array $include, bool $with_self = false): array
     {
         $items = [];
         foreach ($include as $id) {
-            if (!isset($this->hashTree[$id])) {
+            if (! isset($this->hashTree[$id])) {
                 return [];
             }
             if ($with_self) {
@@ -99,38 +87,18 @@ class Tree
     }
 
     /**
-     * 获取哈希树
-     * @param array<mixed> $data
-     * @return array<mixed> */
-    protected function getHashTree(array $data = []): array
-    {
-        $data = $data ?: $this->data;
-        $hash_tree = [];
-        foreach ($data as $item) {
-            $hash_tree[$item['id']] = $item;
-        }
-        foreach ($hash_tree as $index => $item) {
-            if ($item[$this->pidName] && isset($hash_tree[$item[$this->pidName]])) {
-                $hash_tree[$item[$this->pidName]]['children'][$hash_tree[$index]['id']] = &$hash_tree[$index];
-            }
-        }
-        return $hash_tree;
-    }
-
-    /**
-     * 获取树
-     * @param array<mixed> $include
-     * @param int $type
-     * @return array<mixed>|null
+     * 获取树.
+     * @param  array<mixed>      $include
+     * @return null|array<mixed>
      */
     public function getTree(array $include = [], int $type = 1): ?array
     {
         // $type === static::EXCLUDE_ANCESTORS
         if ($type === static::EXCLUDE_ANCESTORS) {
-            $items = [];
+            $items   = [];
             $include = array_unique($include);
             foreach ($include as $id) {
-                if (!isset($this->hashTree[$id])) {
+                if (! isset($this->hashTree[$id])) {
                     return [];
                 }
                 $items[] = $this->hashTree[$id];
@@ -140,26 +108,26 @@ class Tree
 
         // $type === static::INCLUDE_ANCESTORS
         $hash_tree = $this->hashTree;
-        $items = [];
+        $items     = [];
         if ($include) {
             $map = [];
             foreach ($include as $id) {
-                if (!isset($hash_tree[$id])) {
+                if (! isset($hash_tree[$id])) {
                     continue;
                 }
-                $item = $hash_tree[$id];
+                $item      = $hash_tree[$id];
                 $max_depth = 100;
                 while ($max_depth-- > 0 && $item[$this->pidName] && isset($hash_tree[$item[$this->pidName]])) {
                     $last_item = $item;
-                    $pid = $item[$this->pidName];
-                    $item = $hash_tree[$pid];
-                    $item_id = $item['id'];
+                    $pid       = $item[$this->pidName];
+                    $item      = $hash_tree[$pid];
+                    $item_id   = $item['id'];
                     if (empty($map[$item_id])) {
-                        $map[$item_id] = 1;
+                        $map[$item_id]               = 1;
                         $hash_tree[$pid]['children'] = [];
                     }
                     $hash_tree[$pid]['children'][$last_item['id']] = $last_item;
-                    $item = $hash_tree[$pid];
+                    $item                                          = $hash_tree[$pid];
                 }
                 $items[$item['id']] = $item;
             }
@@ -168,7 +136,7 @@ class Tree
         }
         $formatted_items = [];
         foreach ($items as $item) {
-            if (!$item[$this->pidName] || !isset($hash_tree[$item[$this->pidName]])) {
+            if (! $item[$this->pidName] || ! isset($hash_tree[$item[$this->pidName]])) {
                 $formatted_items[] = $item;
             }
         }
@@ -177,17 +145,17 @@ class Tree
     }
 
     /**
-     * 递归重建数组下标
+     * 递归重建数组下标.
      * @param mixed $array
      * @return array<mixed> */
     public static function arrayValues($array): array
     {
-        if (!$array) {
+        if (! $array) {
             return [];
         }
-        if (!isset($array['children'])) {
+        if (! isset($array['children'])) {
             $current = current($array);
-            if (!is_array($current)) {
+            if (! is_array($current)) {
                 return $array;
             }
             $tree = array_values($array);
@@ -203,4 +171,22 @@ class Tree
         return $array;
     }
 
+    /**
+     * 获取哈希树.
+     * @param array<mixed> $data
+     * @return array<mixed> */
+    protected function getHashTree(array $data = []): array
+    {
+        $data      = $data ?: $this->data;
+        $hash_tree = [];
+        foreach ($data as $item) {
+            $hash_tree[$item['id']] = $item;
+        }
+        foreach ($hash_tree as $index => $item) {
+            if ($item[$this->pidName] && isset($hash_tree[$item[$this->pidName]])) {
+                $hash_tree[$item[$this->pidName]]['children'][$hash_tree[$index]['id']] = &$hash_tree[$index];
+            }
+        }
+        return $hash_tree;
+    }
 }

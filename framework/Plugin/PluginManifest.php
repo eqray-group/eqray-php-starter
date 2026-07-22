@@ -3,47 +3,35 @@
 declare(strict_types=1);
 
 /**
- * This file is part of NovaFrame Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: PluginManifest.php
- * @Date: 2025-03-31
- * @Developer: NovaFrame Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Plugin;
 
-use InvalidArgumentException;
-use JsonException;
-
 /**
- * 插件清单解析器
+ * 插件清单解析器.
  *
  * 解析 plugin.json 文件，封装插件元数据。
- *
- * @package Framework\Plugin
  */
 class PluginManifest
 {
     /**
-     * 构造函数
+     * 构造函数.
      *
-     * @param string $name 插件名称（唯一标识符）
-     * @param string $title 插件显示标题
-     * @param string $version 插件版本
-     * @param string $description 插件描述
-     * @param string $author 插件作者
-     * @param string $namespace 插件命名空间
-     * @param string $path 插件目录路径
-     * @param array<mixed> $requires 运行环境要求（PHP版本、框架版本等）
+     * @param string       $name         插件名称（唯一标识符）
+     * @param string       $title        插件显示标题
+     * @param string       $version      插件版本
+     * @param string       $description  插件描述
+     * @param string       $author       插件作者
+     * @param string       $namespace    插件命名空间
+     * @param string       $path         插件目录路径
+     * @param array<mixed> $requires     运行环境要求（PHP版本、框架版本等）
      * @param array<mixed> $dependencies 插件依赖（其他插件）
-     * @param array<mixed> $hooks 生命周期钩子
-     * @param array<mixed> $routes 路由配置
-     * @param array<mixed> $autoload 自动加载配置
-     * @param array<mixed> $extra 额外配置
+     * @param array<mixed> $hooks        生命周期钩子
+     * @param array<mixed> $routes       路由配置
+     * @param array<mixed> $autoload     自动加载配置
+     * @param array<mixed> $extra        额外配置
      */
     public function __construct(
         public readonly string $name,
@@ -62,60 +50,58 @@ class PluginManifest
     ) {}
 
     /**
-     * 从 plugin.json 文件解析插件清单
+     * 从 plugin.json 文件解析插件清单.
      *
-     * @param string $jsonPath plugin.json 文件路径
-     * @return self
-     * @throws InvalidArgumentException 文件不存在或格式错误
+     * @param  string                    $jsonPath plugin.json 文件路径
+     * @throws \InvalidArgumentException 文件不存在或格式错误
      */
     public static function fromFile(string $jsonPath): self
     {
-        if (!file_exists($jsonPath)) {
-            throw new InvalidArgumentException("Plugin manifest file not found: {$jsonPath}");
+        if (! file_exists($jsonPath)) {
+            throw new \InvalidArgumentException("Plugin manifest file not found: {$jsonPath}");
         }
 
         $json = file_get_contents($jsonPath);
         if ($json === false) {
-            throw new InvalidArgumentException("Failed to read plugin manifest: {$jsonPath}");
+            throw new \InvalidArgumentException("Failed to read plugin manifest: {$jsonPath}");
         }
 
         try {
             $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $e) {
-            throw new InvalidArgumentException("Invalid JSON in plugin manifest: {$jsonPath} - " . $e->getMessage());
+        } catch (\JsonException $e) {
+            throw new \InvalidArgumentException("Invalid JSON in plugin manifest: {$jsonPath} - " . $e->getMessage());
         }
 
         return self::fromArray($data, dirname($jsonPath));
     }
 
     /**
-     * 从数组创建插件清单
+     * 从数组创建插件清单.
      *
-     * @param array<mixed> $data 插件数据
-     * @param string $path 插件目录路径
-     * @return self
-     * @throws InvalidArgumentException 缺少必需字段
+     * @param  array<mixed>              $data 插件数据
+     * @param  string                    $path 插件目录路径
+     * @throws \InvalidArgumentException 缺少必需字段
      */
     public static function fromArray(array $data, string $path): self
     {
         // 验证必需字段
         $required = ['name', 'version'];
         foreach ($required as $field) {
-            if (!isset($data[$field])) {
-                throw new InvalidArgumentException("Missing required field '{$field}' in plugin manifest");
+            if (! isset($data[$field])) {
+                throw new \InvalidArgumentException("Missing required field '{$field}' in plugin manifest");
             }
         }
 
         // 验证插件名称格式
         $name = $data['name'];
-        if (!preg_match('/^[a-z][a-z0-9_-]*$/i', $name)) {
-            throw new InvalidArgumentException("Invalid plugin name '{$name}': must start with a letter and contain only letters, numbers, underscores, and hyphens");
+        if (! preg_match('/^[a-z][a-z0-9_-]*$/i', $name)) {
+            throw new \InvalidArgumentException("Invalid plugin name '{$name}': must start with a letter and contain only letters, numbers, underscores, and hyphens");
         }
 
         // 验证版本号格式
         $version = $data['version'];
-        if (!preg_match('/^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$/', $version)) {
-            throw new InvalidArgumentException("Invalid version format '{$version}': expected semantic version (e.g., 1.0.0)");
+        if (! preg_match('/^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$/', $version)) {
+            throw new \InvalidArgumentException("Invalid version format '{$version}': expected semantic version (e.g., 1.0.0)");
         }
 
         return new self(
@@ -123,45 +109,43 @@ class PluginManifest
             title: $data['title'] ?? $name,
             version: $version,
             description: $data['description'] ?? '',
-            author: $data['author'] ?? 'Unknown',
-            namespace: $data['namespace'] ?? "Plugins\\{$name}",
+            author: $data['author']           ?? 'Unknown',
+            namespace: $data['namespace']     ?? "Plugins\\{$name}",
             path: realpath($path) ?: $path,
-            requires: $data['requires'] ?? [],
+            requires: $data['requires']         ?? [],
             dependencies: $data['dependencies'] ?? [],
-            hooks: $data['hooks'] ?? [],
-            routes: $data['routes'] ?? [],
-            autoload: $data['autoload'] ?? [],
-            extra: $data['extra'] ?? []
+            hooks: $data['hooks']               ?? [],
+            routes: $data['routes']             ?? [],
+            autoload: $data['autoload']         ?? [],
+            extra: $data['extra']               ?? []
         );
     }
 
     /**
-     * 转换为数组
+     * 转换为数组.
      *
      * @return array<mixed> */
     public function toArray(): array
     {
         return [
-            'name' => $this->name,
-            'title' => $this->title,
-            'version' => $this->version,
-            'description' => $this->description,
-            'author' => $this->author,
-            'namespace' => $this->namespace,
-            'path' => $this->path,
-            'requires' => $this->requires,
+            'name'         => $this->name,
+            'title'        => $this->title,
+            'version'      => $this->version,
+            'description'  => $this->description,
+            'author'       => $this->author,
+            'namespace'    => $this->namespace,
+            'path'         => $this->path,
+            'requires'     => $this->requires,
             'dependencies' => $this->dependencies,
-            'hooks' => $this->hooks,
-            'routes' => $this->routes,
-            'autoload' => $this->autoload,
-            'extra' => $this->extra,
+            'hooks'        => $this->hooks,
+            'routes'       => $this->routes,
+            'autoload'     => $this->autoload,
+            'extra'        => $this->extra,
         ];
     }
 
     /**
-     * 获取控制器目录
-     *
-     * @return string
+     * 获取控制器目录.
      */
     public function getControllerDir(): string
     {
@@ -169,9 +153,7 @@ class PluginManifest
     }
 
     /**
-     * 获取模型目录
-     *
-     * @return string
+     * 获取模型目录.
      */
     public function getModelDir(): string
     {
@@ -179,9 +161,7 @@ class PluginManifest
     }
 
     /**
-     * 获取服务目录
-     *
-     * @return string
+     * 获取服务目录.
      */
     public function getServiceDir(): string
     {
@@ -189,9 +169,7 @@ class PluginManifest
     }
 
     /**
-     * 获取迁移目录
-     *
-     * @return string
+     * 获取迁移目录.
      */
     public function getMigrationDir(): string
     {
@@ -199,9 +177,7 @@ class PluginManifest
     }
 
     /**
-     * 获取配置目录
-     *
-     * @return string
+     * 获取配置目录.
      */
     public function getConfigDir(): string
     {
@@ -209,9 +185,7 @@ class PluginManifest
     }
 
     /**
-     * 获取资源目录
-     *
-     * @return string
+     * 获取资源目录.
      */
     public function getResourceDir(): string
     {
@@ -219,9 +193,7 @@ class PluginManifest
     }
 
     /**
-     * 获取视图目录
-     *
-     * @return string
+     * 获取视图目录.
      */
     public function getViewDir(): string
     {
@@ -240,23 +212,23 @@ class PluginManifest
         // 检查 PHP 版本
         if (isset($this->requires['php'])) {
             $phpVersion = $this->requires['php'];
-            if (!$this->satisfiesVersion(PHP_VERSION, $phpVersion)) {
+            if (! $this->satisfiesVersion(PHP_VERSION, $phpVersion)) {
                 $errors[] = "PHP version mismatch: required {$phpVersion}, current " . PHP_VERSION;
             }
         }
 
         // 检查框架版本（如果定义了常量）
-        if (isset($this->requires['Fssphp']) && defined('FSSPHP_VERSION')) {
-            $frameworkVersion = $this->requires['Fssphp'];
-            if (!$this->satisfiesVersion(FSSPHP_VERSION, $frameworkVersion)) {
-                $errors[] = "Framework version mismatch: required {$frameworkVersion}, current " . FSSPHP_VERSION;
+        if (isset($this->requires['eqrayphp']) && defined('eqrayphp_VERSION')) {
+            $frameworkVersion = $this->requires['eqrayphp'];
+            if (! $this->satisfiesVersion(eqrayphp_VERSION, $frameworkVersion)) {
+                $errors[] = "Framework version mismatch: required {$frameworkVersion}, current " . eqrayphp_VERSION;
             }
         }
 
         // 检查扩展
         if (isset($this->requires['extensions'])) {
             foreach ($this->requires['extensions'] as $ext) {
-                if (!extension_loaded($ext)) {
+                if (! extension_loaded($ext)) {
                     $errors[] = "Required extension not loaded: {$ext}";
                 }
             }
@@ -264,16 +236,55 @@ class PluginManifest
 
         return [
             'satisfied' => empty($errors),
-            'errors' => $errors,
+            'errors'    => $errors,
         ];
+    }
+
+    /**
+     * 获取安装钩子类.
+     */
+    public function getInstallHook(): ?string
+    {
+        return $this->hooks['install'] ?? null;
+    }
+
+    /**
+     * 获取卸载钩子类.
+     */
+    public function getUninstallHook(): ?string
+    {
+        return $this->hooks['uninstall'] ?? null;
+    }
+
+    /**
+     * 获取启用钩子类.
+     */
+    public function getEnableHook(): ?string
+    {
+        return $this->hooks['enable'] ?? null;
+    }
+
+    /**
+     * 获取禁用钩子类.
+     */
+    public function getDisableHook(): ?string
+    {
+        return $this->hooks['disable'] ?? null;
+    }
+
+    /**
+     * 获取升级钩子类.
+     */
+    public function getUpgradeHook(): ?string
+    {
+        return $this->hooks['upgrade'] ?? null;
     }
 
     /**
      * 检查版本是否满足要求
      *
-     * @param string $version 当前版本
+     * @param string $version    当前版本
      * @param string $constraint 版本约束（如 ^1.0.0, >=1.0.0 <2.0.0）
-     * @return bool
      */
     private function satisfiesVersion(string $version, string $constraint): bool
     {
@@ -283,8 +294,8 @@ class PluginManifest
         // 处理 ^ 操作符（语义化版本兼容）
         if (str_starts_with($constraint, '^')) {
             $requiredVersion = substr($constraint, 1);
-            return version_compare($version, $requiredVersion, '>=') &&
-                   version_compare($version, $this->getNextMajorVersion($requiredVersion), '<');
+            return version_compare($version, $requiredVersion, '>=')
+                   && version_compare($version, $this->getNextMajorVersion($requiredVersion), '<');
         }
 
         // 处理 >= 操作符
@@ -312,65 +323,14 @@ class PluginManifest
     }
 
     /**
-     * 获取下一个主版本号
+     * 获取下一个主版本号.
      *
      * @param string $version 当前版本
-     * @return string
      */
     private function getNextMajorVersion(string $version): string
     {
         $parts = explode('.', $version);
-        $major = (int)($parts[0] ?? 0);
+        $major = (int) ($parts[0] ?? 0);
         return ($major + 1) . '.0.0';
-    }
-
-    /**
-     * 获取安装钩子类
-     *
-     * @return string|null
-     */
-    public function getInstallHook(): ?string
-    {
-        return $this->hooks['install'] ?? null;
-    }
-
-    /**
-     * 获取卸载钩子类
-     *
-     * @return string|null
-     */
-    public function getUninstallHook(): ?string
-    {
-        return $this->hooks['uninstall'] ?? null;
-    }
-
-    /**
-     * 获取启用钩子类
-     *
-     * @return string|null
-     */
-    public function getEnableHook(): ?string
-    {
-        return $this->hooks['enable'] ?? null;
-    }
-
-    /**
-     * 获取禁用钩子类
-     *
-     * @return string|null
-     */
-    public function getDisableHook(): ?string
-    {
-        return $this->hooks['disable'] ?? null;
-    }
-
-    /**
-     * 获取升级钩子类
-     *
-     * @return string|null
-     */
-    public function getUpgradeHook(): ?string
-    {
-        return $this->hooks['upgrade'] ?? null;
     }
 }

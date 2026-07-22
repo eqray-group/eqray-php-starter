@@ -2,13 +2,18 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace Framework\Basic\Scopes;
 
 use Framework\Basic\BaseLaORMModel;
+use Framework\Tenant\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
-use Framework\Tenant\TenantContext;
 
 /**
  * Laravel 模型租户隔离作用域
@@ -28,22 +33,20 @@ use Framework\Tenant\TenantContext;
  *        static::addGlobalScope(new LaTenantScope());
  *    }
  *
-* 为特定租户查询（超管使用）
-* User::forTenant(1001)->get();
-
-* 查询所有租户（保留作用域但忽略上下文）
-* User::allTenants()->get();
-* 模型结构变更后清理缓存
-* LaTenantScope::clearCache();
-* class User extends Model {
-*     protected string $tenantColumn = 'custom_tenant_id';
-* }
+ * 为特定租户查询（超管使用）
+ * User::forTenant(1001)->get();
+ *
+ * 查询所有租户（保留作用域但忽略上下文）
+ * User::allTenants()->get();
+ * 模型结构变更后清理缓存
+ * LaTenantScope::clearCache();
+ * class User extends Model {
+ *     protected string $tenantColumn = 'custom_tenant_id';
+ * }
  * 临时跳过租户隔离：
  * - Model::withoutTenancy()->get();           // 移除作用域
  * - Model::withIgnoreTenant(fn() => ...);     // 安全作用域方式
  * - TenantContext::withIgnore(fn() => ...);   // 直接使用上下文
- *
- * @package Framework\Basic\Scopes
  */
 // 基础使用（自动隔离）
 // User::all(); // SELECT * FROM users WHERE tenant_id = 1001
@@ -58,15 +61,15 @@ use Framework\Tenant\TenantContext;
 // User::withoutTenancy()->get();
 
 // 自定义租户字段的模型
-//class CustomModel extends Model {
+// class CustomModel extends Model {
 //    protected string $tenantColumn = 'company_id';
-//}
+// }
 
 class LaTenantScope implements Scope
 {
     /**
      * 已检查的模型字段缓存
-     * 避免重复检查模型是否有 tenant_id 字段
+     * 避免重复检查模型是否有 tenant_id 字段.
      *
      * @var array<class-string<Model>, bool>
      */
@@ -79,14 +82,13 @@ class LaTenantScope implements Scope
      * 如果当前处于"忽略租户"状态或租户ID为空，则不添加限制条件。
      * 只有模型表包含 tenant_id 字段时才会生效。
      *
-     * @param \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model> $builder Eloquent 查询构建器
-     * @param Model $model 模型实例
-     * @return void
+     * @param Builder<Model> $builder Eloquent 查询构建器
+     * @param Model          $model   模型实例
      */
     public function apply(Builder $builder, Model $model): void
     {
         // 如果当前处于"忽略租户"状态，直接放行
-        if (!TenantContext::shouldApplyTenant()) {
+        if (! TenantContext::shouldApplyTenant()) {
             return;
         }
 
@@ -98,11 +100,11 @@ class LaTenantScope implements Scope
 
         // 检查模型是否有 tenant_id 字段（使用缓存）
         $modelClass = get_class($model);
-        if (!isset(self::$checkedModels[$modelClass])) {
+        if (! isset(self::$checkedModels[$modelClass])) {
             self::$checkedModels[$modelClass] = $this->hasTenantColumn($model);
         }
 
-        if (!self::$checkedModels[$modelClass]) {
+        if (! self::$checkedModels[$modelClass]) {
             return;
         }
 
@@ -114,10 +116,9 @@ class LaTenantScope implements Scope
     }
 
     /**
-     * 扩展查询构建器，增加租户相关方法
+     * 扩展查询构建器，增加租户相关方法.
      *
-     * @param \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model> $builder Eloquent 查询构建器
-     * @return void
+     * @param Builder<Model> $builder Eloquent 查询构建器
      */
     public function extend(Builder $builder): void
     {
@@ -144,19 +145,29 @@ class LaTenantScope implements Scope
     }
 
     /**
-     * 检查模型是否有租户字段
+     * 清理模型缓存.
+     *
+     * 在模型结构变更后调用，清除字段检查缓存
+     */
+    public static function clearCache(): void
+    {
+        self::$checkedModels = [];
+    }
+
+    /**
+     * 检查模型是否有租户字段.
      *
      * 优先通过 $fillable 快速判断，避免不必要的数据库查询。
      * 如果 $fillable 中没有声明 tenant_id，直接返回 false，
      * 防止向无 tenant_id 列的表添加租户过滤条件。
      *
-     * @param Model $model 模型实例
-     * @return bool 有租户字段返回 true
+     * @param  Model $model 模型实例
+     * @return bool  有租户字段返回 true
      */
     private function hasTenantColumn(Model $model): bool
     {
         // 优先通过 fillable 快速判断（无需查数据库）
-        if (!in_array('tenant_id', $model->getFillable(), true)) {
+        if (! in_array('tenant_id', $model->getFillable(), true)) {
             return false;
         }
 
@@ -174,11 +185,11 @@ class LaTenantScope implements Scope
     }
 
     /**
-     * 获取租户字段名
+     * 获取租户字段名.
      *
      * 支持模型通过 $tenantColumn 属性自定义字段名
      *
-     * @param Model $model 模型实例
+     * @param  Model  $model 模型实例
      * @return string 完整的字段名（如：users.tenant_id）
      */
     private function getTenantColumn(Model $model): string
@@ -189,17 +200,5 @@ class LaTenantScope implements Scope
         }
 
         return $model->qualifyColumn('tenant_id');
-    }
-
-    /**
-     * 清理模型缓存
-     *
-     * 在模型结构变更后调用，清除字段检查缓存
-     *
-     * @return void
-     */
-    public static function clearCache(): void
-    {
-        self::$checkedModels = [];
     }
 }

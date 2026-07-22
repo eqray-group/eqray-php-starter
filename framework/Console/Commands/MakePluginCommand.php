@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: MakePluginCommand.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Console\Commands;
@@ -24,62 +17,54 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * 创建插件骨架命令
+ * 创建插件骨架命令.
  *
  * 快速生成一个新插件的目录结构和基础文件。
  *
  * 使用方法：
  *   php novaphp make:plugin blog
- *
- * @package Framework\Console\Commands
  */
 class MakePluginCommand extends Command
 {
     /**
-     * 命令名称
+     * 命令名称.
      *
      * @var string
      */
     protected static $defaultName = 'make:plugin';
 
     /**
-     * 文件系统实例
-     *
-     * @var Filesystem
+     * 文件系统实例.
      */
     private Filesystem $filesystem;
 
     /**
-     * 配置命令
+     * 配置命令.
      */
     protected function configure(): void
     {
         $this->setName(self::$defaultName)
-             ->setDescription('创建插件骨架')
-             ->addArgument('name', InputArgument::REQUIRED, '插件名称')
-             ->setHelp('此命令创建一个新插件的目录结构和基础文件。');
+            ->setDescription('创建插件骨架')
+            ->addArgument('name', InputArgument::REQUIRED, '插件名称')
+            ->setHelp('此命令创建一个新插件的目录结构和基础文件。');
     }
 
     /**
-     * 执行命令
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return int
+     * 执行命令.
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
+        $io   = new SymfonyStyle($input, $output);
         $name = $input->getArgument('name');
 
         // 验证插件名称
-        if (!preg_match('/^[a-z][a-z0-9_-]*$/i', $name)) {
+        if (! preg_match('/^[a-z][a-z0-9_-]*$/i', $name)) {
             $io->error("无效的插件名称 '{$name}'：必须以字母开头，只能包含字母、数字、下划线和短横线");
             return Command::FAILURE;
         }
 
         $this->filesystem = new Filesystem();
-        $pluginDir = BASE_PATH . '/plugins/' . $name;
+        $pluginDir        = BASE_PATH . '/plugins/' . $name;
 
         // 检查插件是否已存在
         if ($this->filesystem->exists($pluginDir)) {
@@ -120,14 +105,13 @@ class MakePluginCommand extends Command
                 '插件目录: ' . $pluginDir,
                 '',
                 '下一步：',
-                "  1. 编辑 plugin.json 配置插件信息",
-                "  2. 在 Controllers 目录创建控制器",
-                "  3. 在 database/migrations 目录创建迁移文件",
+                '  1. 编辑 plugin.json 配置插件信息',
+                '  2. 在 Controllers 目录创建控制器',
+                '  3. 在 database/migrations 目录创建迁移文件',
                 "  4. 运行 php novaphp plugin:install {$name} 安装插件",
             ]);
-
         } catch (\Throwable $e) {
-            $io->error("创建插件失败: " . $e->getMessage());
+            $io->error('创建插件失败: ' . $e->getMessage());
             return Command::FAILURE;
         }
 
@@ -135,9 +119,7 @@ class MakePluginCommand extends Command
     }
 
     /**
-     * 创建目录结构
-     *
-     * @param string $pluginDir
+     * 创建目录结构.
      */
     private function createDirectoryStructure(string $pluginDir): void
     {
@@ -157,27 +139,24 @@ class MakePluginCommand extends Command
     }
 
     /**
-     * 创建插件清单文件
-     *
-     * @param string $pluginDir
-     * @param string $name
+     * 创建插件清单文件.
      */
     private function createPluginManifest(string $pluginDir, string $name): void
     {
         $className = $this->toClassName($name);
-        $content = [
-            'name' => $name,
-            'title' => $className . ' Plugin',
-            'version' => '1.0.0',
-            'description' => $className . ' plugin for Fssphp',
-            'author' => 'Your Name',
-            'namespace' => "Plugins\\{$className}",
-            'requires' => [
-                'php' => '^8.3',
-                'Fssphp' => '^0.8.0',
+        $content   = [
+            'name'        => $name,
+            'title'       => $className . ' Plugin',
+            'version'     => '1.0.0',
+            'description' => $className . ' plugin for eqrayphp',
+            'author'      => 'Your Name',
+            'namespace'   => "Plugins\\{$className}",
+            'requires'    => [
+                'php'    => '^8.3',
+                'eqrayphp' => '^0.8.0',
             ],
             'dependencies' => [],
-            'autoload' => [
+            'autoload'     => [
                 'psr-4' => [
                     "Plugins\\{$className}\\" => '',
                 ],
@@ -192,14 +171,11 @@ class MakePluginCommand extends Command
     }
 
     /**
-     * 创建基础控制器
-     *
-     * @param string $pluginDir
-     * @param string $name
+     * 创建基础控制器.
      */
     private function createBaseController(string $pluginDir, string $name): void
     {
-        $className = $this->toClassName($name);
+        $className         = $this->toClassName($name);
         $controllerContent = <<<PHP
 <?php
 
@@ -228,14 +204,11 @@ PHP;
     }
 
     /**
-     * 创建示例模型
-     *
-     * @param string $pluginDir
-     * @param string $name
+     * 创建示例模型.
      */
     private function createSampleModel(string $pluginDir, string $name): void
     {
-        $className = $this->toClassName($name);
+        $className    = $this->toClassName($name);
         $modelContent = <<<PHP
 <?php
 
@@ -283,13 +256,10 @@ PHP;
 
     /**
      * 创建示例服务
-     *
-     * @param string $pluginDir
-     * @param string $name
      */
     private function createSampleService(string $pluginDir, string $name): void
     {
-        $className = $this->toClassName($name);
+        $className      = $this->toClassName($name);
         $serviceContent = <<<PHP
 <?php
 
@@ -324,10 +294,7 @@ PHP;
     }
 
     /**
-     * 将插件名称转换为类名格式
-     *
-     * @param string $name
-     * @return string
+     * 将插件名称转换为类名格式.
      */
     private function toClassName(string $name): string
     {

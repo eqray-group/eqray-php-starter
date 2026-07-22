@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Session;
@@ -29,22 +22,16 @@ namespace Framework\Session;
  * - 支持自定义存储路径和文件前缀
  * - 自动创建存储目录
  * - Session 垃圾回收机制
- *
- * @package Framework\Session
  */
 class FileSessionHandler implements \SessionHandlerInterface
 {
     /**
      * Session 文件存储路径.
-     *
-     * @var string
      */
     private string $savePath;
 
     /**
      * Session 文件名前缀.
-     *
-     * @var string
      */
     private string $setPrefix;
 
@@ -63,8 +50,6 @@ class FileSessionHandler implements \SessionHandlerInterface
      * 设置 Session 文件存储路径.
      *
      * @param string $savePath 存储目录的绝对路径
-     *
-     * @return void
      */
     public function setSavePath(string $savePath): void
     {
@@ -77,8 +62,6 @@ class FileSessionHandler implements \SessionHandlerInterface
      * 前缀用于区分不同应用或环境的 Session 文件。
      *
      * @param string $setPrefix 文件名前缀
-     *
-     * @return void
      */
     public function setPrefix(string $setPrefix): void
     {

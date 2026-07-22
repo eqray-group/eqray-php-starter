@@ -3,53 +3,34 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Utils;
 
 use ArrayAccess;
-use InvalidArgumentException;
-use stdClass;
-use Illuminate\Support\Collection;
 
 /**
- * 数组工具类
+ * 数组工具类.
  *
  * 提供丰富的数组操作方法，包括数组访问判断、元素增删、数组转换、
  * 排序、过滤、合并等常用操作，支持多维数组和关联数组的处理。
- *
- * @package Framework\Utils
  */
 class Arr
 {
-
     /**
      * 用于判断一个值是否可以被视为可访问的数组或实现了 ArrayAccess 接口的对象
-     *
-     * @param mixed $value
-     *
-     * @return bool
      */
     public static function accessible(mixed $value): bool
     {
-        return is_array($value) || $value instanceof ArrayAccess;
+        return is_array($value) || $value instanceof \ArrayAccess;
     }
 
     /**
-     * 数组中添加不存在的元素
+     * 数组中添加不存在的元素.
      *
      * @param array<mixed> $array
-     * @param string $key
-     * @param mixed  $value
      *
      * @return array<mixed> */
     public static function add(array $array, string $key, mixed $value): array
@@ -61,7 +42,7 @@ class Arr
     }
 
     /**
-     * 将数组折叠单个数组
+     * 将数组折叠单个数组.
      *
      * @param array<mixed> $array
      *
@@ -70,7 +51,7 @@ class Arr
     {
         $results = [];
         foreach ($array as $values) {
-            if (!is_array($values)) {
+            if (! is_array($values)) {
                 continue;
             }
             $results = array_merge($results, array_values($values));
@@ -79,7 +60,7 @@ class Arr
     }
 
     /**
-     * 交叉给定数组返回所有排序数组
+     * 交叉给定数组返回所有排序数组.
      *
      * @param array<mixed> ...$arrays
      *
@@ -114,17 +95,16 @@ class Arr
     }
 
     /**
-     * 扁平化一个多维数组
+     * 扁平化一个多维数组.
      *
      * @param array<mixed> $array
-     * @param string|null $prepend
      *
      * @return array<mixed> */
-    public static function dot(array $array, string|null $prepend = ''): array
+    public static function dot(array $array, ?string $prepend = ''): array
     {
         $results = [];
         foreach ($array as $key => $value) {
-            if (is_array($value) && !empty($value)) {
+            if (is_array($value) && ! empty($value)) {
                 $results = array_merge($results, static::dot($value, $prepend . $key . '.'));
             } else {
                 $results[$prepend . $key] = $value;
@@ -136,11 +116,11 @@ class Arr
     /**
      * 获取除指定键数组外的所有给定数组。
      *
-     * @param array<mixed> $array
-     * @param string|array<mixed> $keys
+     * @param array<mixed>        $array
+     * @param array<mixed>|string $keys
      *
      * @return array<mixed> */
-    public static function except(array $array, string|array $keys): array
+    public static function except(array $array, array|string $keys): array
     {
         static::forget($array, $keys);
 
@@ -148,7 +128,7 @@ class Arr
     }
 
     /**
-     * 移除指定的键名，支持多级键名的处理
+     * 移除指定的键名，支持多级键名的处理.
      *
      * @param array<mixed> $array
      * @param array<mixed> $keys
@@ -156,7 +136,7 @@ class Arr
     public static function forget(array &$array, array|string $keys): void
     {
         $original = &$array;
-        $keys     = (array)$keys;
+        $keys     = (array) $keys;
         if (count($keys) === 0) {
             return;
         }
@@ -181,16 +161,13 @@ class Arr
     }
 
     /**
-     * 确定给定的键名是否存在于提供的数组中
+     * 确定给定的键名是否存在于提供的数组中.
      *
      * @param array<mixed>|\ArrayAccess<mixed, mixed> $array
-     * @param string|int         $key
-     *
-     * @return bool
      */
-    public static function exists(array|ArrayAccess $array, string|int $key): bool
+    public static function exists(array|\ArrayAccess $array, int|string $key): bool
     {
-        if ($array instanceof ArrayAccess) {
+        if ($array instanceof \ArrayAccess) {
             return $array->offsetExists($key);
         }
         return array_key_exists($key, $array);
@@ -200,12 +177,10 @@ class Arr
      * 数组中第一个满足指定条件的元素。如果没有传入回调函数，则直接返回数组的第一个元素；如果传入了回调函数，则根据回调函数的条件来确定返回的元素。如果没有满足条件的元素，则返回指定的默认值
      *
      * @param array<mixed> $array
-     * @param callable|null $callback
-     * @param mixed         $default
      *
-     * @return mixed|null
+     * @return null|mixed
      */
-    public static function first(array $array, callable $callback = null, mixed $default = null): mixed
+    public static function first(array $array, ?callable $callback = null, mixed $default = null): mixed
     {
         if (is_null($callback)) {
             if (empty($array)) {
@@ -225,15 +200,14 @@ class Arr
     }
 
     /**
-     * 返回数组中最后一个满足指定条件的元素。如果没有传入回调函数，则直接返回数组的最后一个元素；如果传入了回调函数，则先将数组反转
+     * 返回数组中最后一个满足指定条件的元素。如果没有传入回调函数，则直接返回数组的最后一个元素；如果传入了回调函数，则先将数组反转.
      *
      * @param array<mixed> $array
-     * @param callable|null $callback
-     * @param               mixed $default
+     * @param mixed        $default
      *
-     * @return false|mixed|null
+     * @return null|false|mixed
      */
-    public static function last(array $array, callable $callback = null, $default = null): mixed
+    public static function last(array $array, ?callable $callback = null, $default = null): mixed
     {
         if (is_null($callback)) {
             return empty($array) ? $default : end($array);
@@ -244,17 +218,13 @@ class Arr
     }
 
     /**
-     * 根据指定的键名从数组中获取对应的值，支持使用 "dot" 符号来访问多维数组中的元素
+     * 根据指定的键名从数组中获取对应的值，支持使用 "dot" 符号来访问多维数组中的元素.
      *
-     * @param \ArrayAccess<mixed, mixed>|array<mixed> $array
-     * @param string|null        $key
-     * @param mixed              $default
-     *
-     * @return mixed
+     * @param array<mixed>|\ArrayAccess<mixed, mixed> $array
      */
-    public static function get(\ArrayAccess|array $array, string|null $key, mixed $default = null): mixed
+    public static function get(array|\ArrayAccess $array, ?string $key, mixed $default = null): mixed
     {
-        if (!static::accessible($array)) {
+        if (! static::accessible($array)) {
             return value($default);
         }
 
@@ -266,7 +236,7 @@ class Arr
             return $array[$key];
         }
 
-        if (!str_contains($key, '.')) {
+        if (! str_contains($key, '.')) {
             return $array[$key] ?? value($default);
         }
 
@@ -281,18 +251,16 @@ class Arr
     }
 
     /**
-     * 检测一个数组或单个数组
+     * 检测一个数组或单个数组.
      *
-     * @param \ArrayAccess<mixed, mixed>|array<mixed> $array
-     * @param array<mixed>|string       $keys
-     *
-     * @return bool
+     * @param array<mixed>|\ArrayAccess<mixed, mixed> $array
+     * @param array<mixed>|string                     $keys
      */
-    public static function has(\ArrayAccess|array $array, array|string $keys): bool
+    public static function has(array|\ArrayAccess $array, array|string $keys): bool
     {
-        $keys = (array)$keys;
+        $keys = (array) $keys;
 
-        if (!$array || $keys === []) {
+        if (! $array || $keys === []) {
             return false;
         }
 
@@ -316,11 +284,9 @@ class Arr
     }
 
     /**
-     * 检查数组是否关联
+     * 检查数组是否关联.
      *
      * @param array<mixed> $array
-     *
-     * @return bool
      */
     public static function isAssoc(array $array): bool
     {
@@ -329,28 +295,26 @@ class Arr
     }
 
     /**
-     * 数组中过滤出指定的键名对应的元素
+     * 数组中过滤出指定的键名对应的元素.
      *
-     * @param array<mixed> $array
+     * @param array<mixed>        $array
      * @param array<mixed>|string $keys
      *
      * @return array<mixed> */
     public static function only(array $array, array|string $keys): array
     {
-        return array_intersect_key($array, array_flip((array)$keys));
+        return array_intersect_key($array, array_flip((array) $keys));
     }
 
     /**
-     * 输入的数组中提取指定键名对应的值，并根据需要将提取的值组装成一个新的数组返回
+     * 输入的数组中提取指定键名对应的值，并根据需要将提取的值组装成一个新的数组返回.
      *
      * @param array<mixed> $array
-     * @param string      $value
-     * @param string|null $key
      *
      * @return array<mixed> */
     public static function pluck(array $array, string $value, ?string $key = null): array
     {
-        $results = [];
+        $results       = [];
         [$value, $key] = static::explodePluckParameters($value, $key);
         foreach ($array as $item) {
             $itemValue = data_get($item, $value);
@@ -359,7 +323,7 @@ class Arr
             } else {
                 $itemKey = data_get($item, $key);
                 if (is_object($itemKey) && method_exists($itemKey, '__toString')) {
-                    $itemKey = (string)$itemKey;
+                    $itemKey = (string) $itemKey;
                 }
                 $results[$itemKey] = $itemValue;
             }
@@ -369,25 +333,9 @@ class Arr
     }
 
     /**
-     * 将value key 进行分割返回数组value&key 集合
-     *
-     * @param string|array<mixed>          $value
-     * @param string|int|array<mixed>|null $key
-     *
-     * @return array<mixed> */
-    protected static function explodePluckParameters(string|array $value, string|int|array|null $key): array
-    {
-        $value = is_string($value) ? explode('.', $value) : $value;
-        $key   = is_null($key) || is_array($key) ? $key : explode('.', $key);
-        return [$value, $key];
-    }
-
-    /**
-     * 将值添加到数组开头
+     * 将值添加到数组开头.
      *
      * @param array<mixed> $array
-     * @param mixed       $value
-     * @param string|null $key
      *
      * @return array<mixed> */
     public static function prepend(array $array, mixed $value, ?string $key = null): array
@@ -401,13 +349,9 @@ class Arr
     }
 
     /**
-     * 从数组中取出一个值并删除它
+     * 从数组中取出一个值并删除它.
      *
      * @param array<mixed> $array
-     * @param string $key
-     * @param mixed  $default
-     *
-     * @return mixed
      */
     public static function pull(array &$array, string $key, mixed $default = null): mixed
     {
@@ -420,16 +364,13 @@ class Arr
      * 从数组中获取一个或多个随机值
      *
      * @param array<mixed> $array
-     * @param int|null $number
-     *
-     * @return mixed
      */
     public static function random(array $array, ?int $number = 1): mixed
     {
         $requested = is_null($number) ? 1 : $number;
         $count     = count($array);
         if ($requested > $count) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 "You requested {$requested} items, but there are only {$count} items available."
             );
         }
@@ -441,7 +382,7 @@ class Arr
         }
         $keys    = array_rand($array, $number);
         $results = [];
-        foreach ((array)$keys as $key) {
+        foreach ((array) $keys as $key) {
             $results[] = $array[$key];
         }
         return $results;
@@ -451,11 +392,9 @@ class Arr
      * 使用“点”表示法在数组中设置值
      *
      * @param array<mixed> $array
-     * @param string|int|null $key
-     * @param mixed           $value
      *
      * @return array<mixed> */
-    public static function set(array &$array, string|int|null $key, mixed $value): array
+    public static function set(array &$array, int|string|null $key, mixed $value): array
     {
         if (is_null($key)) {
             return $array = $value;
@@ -463,7 +402,7 @@ class Arr
         $keys = explode('.', $key);
         while (count($keys) > 1) {
             $currentKey = array_shift($keys);
-            if (!isset($array[$currentKey]) || !is_array($array[$currentKey])) {
+            if (! isset($array[$currentKey]) || ! is_array($array[$currentKey])) {
                 $array[$currentKey] = [];
             }
             $array = &$array[$currentKey];
@@ -473,10 +412,9 @@ class Arr
     }
 
     /**
-     * 使用可选的种子值随机洗牌数组
+     * 使用可选的种子值随机洗牌数组.
      *
      * @param array<mixed> $array
-     * @param int|null $seed
      *
      * @return array<mixed> */
     public static function shuffle(array $array, ?int $seed = null): array
@@ -493,7 +431,7 @@ class Arr
     }
 
     /**
-     * 递归排序数组
+     * 递归排序数组.
      *
      * @param array<mixed> $array
      *
@@ -514,11 +452,9 @@ class Arr
     }
 
     /**
-     * 将数组转换为查询字符串
+     * 将数组转换为查询字符串.
      *
      * @param array<mixed> $array
-     *
-     * @return string
      */
     public static function query(array $array): string
     {
@@ -526,10 +462,9 @@ class Arr
     }
 
     /**
-     * 使用给定的回调筛选数组
+     * 使用给定的回调筛选数组.
      *
      * @param array<mixed> $array
-     * @param callable $callback
      *
      * @return array<mixed> */
     public static function where(array $array, callable $callback): array
@@ -538,9 +473,7 @@ class Arr
     }
 
     /**
-     * 如果该值不是数组，则将其包装在数组中
-     *
-     * @param mixed $value
+     * 如果该值不是数组，则将其包装在数组中.
      *
      * @return array<mixed> */
     public static function wrap(mixed $value): array
@@ -554,38 +487,34 @@ class Arr
     /**
      * 多维数组转对象
      *
-     * @param object|array<mixed> $array
-     *
-     * @return \stdClass
+     * @param array<mixed>|object $array
      */
-    public static function arrayToObject(object|array $array): stdClass
+    public static function arrayToObject(array|object $array): \stdClass
     {
-        $object = new stdClass();
+        $object = new \stdClass();
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 if (isset($value[0])) { // 处理下标数组
-                    $object->$key = self::arrayToObject($value); // 递归处理子数组
+                    $object->{$key} = self::arrayToObject($value); // 递归处理子数组
                 } else {
-                    $object->$key = self::arrayToObject($value); // 处理关联数组
+                    $object->{$key} = self::arrayToObject($value); // 处理关联数组
                 }
             } else {
                 if (is_numeric($value)) {
-                    $object->$key = $value + 0; // 将字符串转换为数字类型
+                    $object->{$key} = $value + 0; // 将字符串转换为数字类型
                 } else {
-                    $object->$key = $value;
+                    $object->{$key} = $value;
                 }
-
             }
         }
         return $object;
     }
 
     /**
-     * 数组排序
+     * 数组排序.
      *
      * @param array<mixed> $items
-     * @param string $key
-     * @param bool   $reverse 排序方式
+     * @param bool         $reverse 排序方式
      *
      * @return array<mixed> */
     public static function sortItems(array $items, string $key, bool $reverse = false): array
@@ -605,27 +534,12 @@ class Arr
     }
 
     /**
-     * @param mixed $item
-     * @return mixed
-     */
-    private static function getValueByKey($item, string $key)
-    {
-        if (is_array($item) && array_key_exists($key, $item)) {
-            return $item[$key];
-        } elseif (is_object($item) && property_exists($item, $key)) {
-            return $item->$key;
-        }
-        return null;
-    }
-
-    /**
-     * 获取数组中指定的列
+     * 获取数组中指定的列.
      *
      * @param array<mixed> $source
-     * @param string|int $column
      *
      * @return array<mixed> */
-    public static function getArrayColumn(array $source, string|int $column): array
+    public static function getArrayColumn(array $source, int|string $column): array
     {
         $columnArr = [];
         foreach ($source as $item) {
@@ -635,7 +549,7 @@ class Arr
     }
 
     /**
-     * 批量获取数组中指定的列
+     * 批量获取数组中指定的列.
      *
      * @param array<mixed> $source
      * @param array<mixed> $columns
@@ -660,11 +574,11 @@ class Arr
     }
 
     /**
-     * 把二维数组中某列设置为key返回
+     * 把二维数组中某列设置为key返回.
      *
      * @param array<mixed> $array  输入数组
-     * @param string $field  要作为键的字段名
-     * @param bool   $unique 要做键的字段是否唯一(该字段与记录是否一一对应)
+     * @param string       $field  要作为键的字段名
+     * @param bool         $unique 要做键的字段是否唯一(该字段与记录是否一一对应)
      *
      * @return array<mixed> */
     public static function fieldAsKey(array $array, string $field, bool $unique = false): array
@@ -672,9 +586,9 @@ class Arr
         $result = [];
         foreach ($array as $item) {
             if (isset($item[$field])) {
-                if (!$unique && isset($result[$item[$field]])) {
+                if (! $unique && isset($result[$item[$field]])) {
                     $unique                  = true;
-                    $result[$item[$field]]   = [($result[$item[$field]])];
+                    $result[$item[$field]]   = [$result[$item[$field]]];
                     $result[$item[$field]][] = $item;
                 } elseif ($unique) {
                     $result[$item[$field]][] = $item;
@@ -687,7 +601,7 @@ class Arr
     }
 
     /**
-     * 数组转字符串去重复
+     * 数组转字符串去重复.
      *
      * @param array<mixed> $data
      *
@@ -702,7 +616,6 @@ class Arr
      * 获取数组中去重复过后的指定key值
      *
      * @param array<mixed> $list
-     * @param string $key
      *
      * @return array<mixed> */
     public static function getUniqueKey(array $list, string $key): array
@@ -711,11 +624,10 @@ class Arr
     }
 
     /**
-     * 合并二维数组，并且指定key去重, 第一个覆盖第二个
+     * 合并二维数组，并且指定key去重, 第一个覆盖第二个.
      *
      * @param array<mixed> $arr1
      * @param array<mixed> $arr2
-     * @param string $key
      *
      * @return array<mixed> */
     public static function mergeArray(array $arr1, array $arr2, string $key): array
@@ -733,10 +645,9 @@ class Arr
     }
 
     /**
-     * 相同键值的合并作为键生成新数组
+     * 相同键值的合并作为键生成新数组.
      *
      * @param array<mixed> $data
-     * @param string $field
      *
      * @return array<mixed> */
     public static function groupSameField(array $data, string $field): array
@@ -749,35 +660,33 @@ class Arr
     }
 
     /**
-     * 生成无限级树算法
+     * 生成无限级树算法.
      *
      * @param array<mixed> $arr         输入数组
-     * @param int|string $pid         根级的pid
-     * @param string     $column_name 列名,id|pid父id的名字|children子数组的键名
+     * @param int|string   $pid         根级的pid
+     * @param string       $column_name 列名,id|pid父id的名字|children子数组的键名
      *
      * @return array<mixed> $ret
      */
     public static function makeTree(array $arr, int|string $pid = 0, string $column_name = 'id|pid|children'): array
     {
-        list($idname, $pidname, $cldname) = explode('|', $column_name);
-        $ret = array();
+        [$idname, $pidname, $cldname] = explode('|', $column_name);
+        $ret                          = [];
         foreach ($arr as $k => $v) {
-            if ($v [$pidname] == $pid) {
-                $tmp = $arr [$k];
-                unset($arr [$k]);
-                $tmp [$cldname] = self::makeTree($arr, $v [$idname], $column_name);
-                $ret []         = $tmp;
+            if ($v[$pidname] == $pid) {
+                $tmp = $arr[$k];
+                unset($arr[$k]);
+                $tmp[$cldname] = self::makeTree($arr, $v[$idname], $column_name);
+                $ret[]         = $tmp;
             }
         }
         return $ret;
     }
 
     /**
-     * 二位数组按某个键值排序
+     * 二位数组按某个键值排序.
      *
      * @param array<mixed> $arr
-     * @param string $key
-     * @param int    $sort
      *
      * @return array<mixed> */
     public static function sortArray(array $arr, string $key, int $sort = SORT_ASC): array
@@ -787,14 +696,12 @@ class Arr
     }
 
     /**
-     * 数组中根据某一列中某个字段的值来查询这一列数据
+     * 数组中根据某一列中某个字段的值来查询这一列数据.
      *
      * @param array<mixed> $array
-     * @param string|int $column
-     * @param mixed      $value
      *
      * @return array<mixed> */
-    public static function getArrayByColumn(array $array, string|int $column, mixed $value): array
+    public static function getArrayByColumn(array $array, int|string $column, mixed $value): array
     {
         $result = [];
         foreach ($array as $key => $item) {
@@ -806,14 +713,13 @@ class Arr
     }
 
     /**
-     * 数组中根据key值获取value
+     * 数组中根据key值获取value.
      *
      * @param array<mixed> $array
-     * @param string|int $key
      *
      * @return mixed|string
      */
-    public static function findConfigValue(array $array, string|int $key): mixed
+    public static function findConfigValue(array $array, int|string $key): mixed
     {
         foreach ($array as $item) {
             if ($item['key'] === $key) {
@@ -827,9 +733,6 @@ class Arr
      * 数组中根据key值获取对应的值
      *
      * @param array<mixed> $array
-     * @param string $key
-     *
-     * @return mixed
      */
     public static function fetchConfigValue(array $array, string $key): mixed
     {
@@ -837,16 +740,16 @@ class Arr
     }
 
     /**
-     * 参数过滤处理
+     * 参数过滤处理.
      *
      * @param array<mixed>|object $params
-     * @param array<mixed> $rules 【'输入key','默认值','过滤值','重命名key'】
+     * @param array<mixed>        $rules  【'输入key','默认值','过滤值','重命名key'】
      *
      * @return array<mixed> */
     public static function paramsFilter(array|object $params, array $rules): array
     {
-        $params = is_object($params) ? (array)$params : $params;//兼容数组对象参数
-        
+        $params = is_object($params) ? (array) $params : $params; // 兼容数组对象参数
+
         $filteredParams = [];
         foreach ($rules as $rule) {
             $inputKey     = $rule[0] ?? null;
@@ -856,7 +759,7 @@ class Arr
             if (empty($inputKey)) {
                 continue;
             }
-            //优先传入参数
+            // 优先传入参数
             if (array_key_exists($inputKey, $params)) {
                 $paramValue = $params[$inputKey];
             } else {
@@ -864,16 +767,16 @@ class Arr
             }
 
             // 参数值过滤
-            if (isset($filterValue) && !empty($filterValue)) {
+            if (isset($filterValue) && ! empty($filterValue)) {
                 switch ($filterValue) {
                     case 'string':
-                        $paramValue = (string)$paramValue;
+                        $paramValue = (string) $paramValue;
                         break;
                     case 'int':
-                        $paramValue = (int)$paramValue;
+                        $paramValue = (int) $paramValue;
                         break;
                     case 'float':
-                        $paramValue = (float)$paramValue;
+                        $paramValue = (float) $paramValue;
                         break;
                     case 'bool':
                         $paramValue = filter_var($paramValue, FILTER_VALIDATE_BOOLEAN);
@@ -883,7 +786,7 @@ class Arr
                         if (is_callable($filterValue)) {
                             $paramValue = call_user_func($filterValue, $paramValue);
                         } else {
-                            throw new InvalidArgumentException("Invalid filter specified for param {$inputKey}.");
+                            throw new \InvalidArgumentException("Invalid filter specified for param {$inputKey}.");
                         }
                 }
             }
@@ -897,32 +800,30 @@ class Arr
     }
 
     /**
-    * @return array<mixed>
-    
-    * @param mixed $data
-
-    * @param mixed $separator
-*/
+     * @param mixed $data
+     *
+     * @param  mixed        $separator
+     * @return array<mixed>
+     */
     public static function normalize($data, $separator = ','): array
     {
         if (is_array($data)) {
             return $data;
-        } elseif (is_int($data) || is_string($data)) {
+        }
+        if (is_int($data) || is_string($data)) {
             // 如果是空字符串，直接返回空数组
             if ($data === '') {
                 return [];
             }
             return explode($separator, $data);
-        } else {
-            throw new InvalidArgumentException('Data must be a string or an array.');
         }
+        throw new \InvalidArgumentException('Data must be a string or an array.');
     }
 
     /**
-    * @return array<mixed>
-    
-    * @param mixed $array
-*/
+     * @param  mixed        $array
+     * @return array<mixed>
+     */
     public static function filterArray($array): array
     {
         return array_filter($array, function ($value) {
@@ -931,10 +832,10 @@ class Arr
     }
 
     /**
-    * @param array<mixed> $data
-    * @param array<mixed> $where
-    * @return array<mixed>
-    */
+     * @param  array<mixed> $data
+     * @param  array<mixed> $where
+     * @return array<mixed>
+     */
     public static function filterByWhere(array $data, array $where): array
     {
         if (empty($where)) {
@@ -943,7 +844,7 @@ class Arr
         $collection = collect($data);
         foreach ($where as $key => $condition) {
             // 处理格式1: [id => [1,2,3], name => 'test']
-            if (!is_int($key)) {
+            if (! is_int($key)) {
                 if (is_array($condition)) {
                     // 假设这是IN查询
                     $collection = $collection->whereIn($key, $condition);
@@ -963,7 +864,7 @@ class Arr
                     $collection = $collection->where($condition[0], $condition[1]);
                 } elseif ($count === 3) {
                     // 完整格式: ['id', 'in', [1,2,3]]
-                    list($field, $operator, $value) = $condition;
+                    [$field, $operator, $value] = $condition;
 
                     if ($operator === 'in') {
                         $collection = $collection->whereIn($field, $value);
@@ -977,6 +878,32 @@ class Arr
         return $collection->all();
     }
 
+    /**
+     * 将value key 进行分割返回数组value&key 集合.
+     *
+     * @param array<mixed>|string          $value
+     * @param null|array<mixed>|int|string $key
+     *
+     * @return array<mixed> */
+    protected static function explodePluckParameters(array|string $value, array|int|string|null $key): array
+    {
+        $value = is_string($value) ? explode('.', $value) : $value;
+        $key   = is_null($key) || is_array($key) ? $key : explode('.', $key);
+        return [$value, $key];
+    }
+
+    /**
+     * @param  mixed $item
+     * @return mixed
+     */
+    private static function getValueByKey($item, string $key)
+    {
+        if (is_array($item) && array_key_exists($key, $item)) {
+            return $item[$key];
+        }
+        if (is_object($item) && property_exists($item, $key)) {
+            return $item->{$key};
+        }
+        return null;
+    }
 }
-
-

@@ -1,8 +1,8 @@
-## <p align="center"> FSSADMIN 全栈后台管理系统</p>
+## <p align="center"> eqrayadmin 全栈后台管理系统</p>
 
 
 
-  <strong>FssAdmin 是一款开源企业级别的中后台管理系统，基于 Vue3、Vite、TypeScript、Pinia、Pinia持久化插件、Unocss 和 ElementPlus等前端最新技术栈。相较于其他比较流行的后台管理模板，更加简洁、快捷和容易理解，非常适合中小型项目、个人项目，企业级的OA,ERM,ERP,政务系统等开发。</strong>
+  <strong>eqrayadmin 是一款开源企业级别的中后台管理系统，基于 Vue3、Vite、TypeScript、Pinia、Pinia持久化插件、Unocss 和 ElementPlus等前端最新技术栈。相较于其他比较流行的后台管理模板，更加简洁、快捷和容易理解，非常适合中小型项目、个人项目，企业级的OA,ERM,ERP,政务系统等开发。</strong>
 
 
 
@@ -31,7 +31,7 @@
 
 ## 📖 项目简介
 
-**FSSADMIN** 是一个基于FSSPHP 的现代化全栈框架，采用 **Workerman** 常驻内存引擎驱动，支持 **多租户 SaaS 架构**。项目包含：
+**eqrayadmin** 是一个基于eqrayphp 的现代化全栈框架，采用 **Workerman** 常驻内存引擎驱动，支持 **多租户 SaaS 架构**。项目包含：
 
 - **后端框架**: 自研轻量级 PHP 框架 (framework/)
 - **前端应用**: 基于 Vue 3 + Element Plus 的管理后台 (web/)
@@ -184,7 +184,7 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/xuey490/FssAdmin.git
+git clone https://github.com/xuey490/eqrayadmin.git
 cd server
 
 # 2. 安装 PHP 依赖

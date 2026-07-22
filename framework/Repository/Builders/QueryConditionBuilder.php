@@ -1,38 +1,47 @@
 <?php
+
 declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace Framework\Repository\Builders;
 
 use Framework\Repository\Exceptions\DatabaseException;
+use think\Model;
 
 /**
  * 查询条件构建器
- * 负责处理所有查询条件的构建逻辑，解耦BaseRepository
+ * 负责处理所有查询条件的构建逻辑，解耦BaseRepository.
  */
 class QueryConditionBuilder
 {
     protected mixed $query;
+
     protected bool $isEloquent;
+
     protected bool $isModelClass;
 
     public function __construct(mixed $query, bool $isEloquent, bool $isModelClass)
     {
-        $this->query = $query;
-        $this->isEloquent = $isEloquent;
+        $this->query        = $query;
+        $this->isEloquent   = $isEloquent;
         $this->isModelClass = $isModelClass;
     }
 
     /**
-     * 构建完整的查询条件
+     * 构建完整的查询条件.
      * @param array<mixed> $criteria
- * @param array<mixed> $orderBy
- */
+     * @param array<mixed> $orderBy
+     */
     public function build(array $criteria, array $orderBy = []): mixed
     {
         try {
             // 预处理查询对象
             $this->prepareQuery();
-            
+
             // 依次处理各类条件
             $this->handleSelect($criteria);
             $this->handleDistinct($criteria);
@@ -53,11 +62,19 @@ class QueryConditionBuilder
     }
 
     /**
-     * 预处理查询对象，确保是正确的Builder实例
+     * 获取构建后的查询对象
+     */
+    public function getQuery(): mixed
+    {
+        return $this->query;
+    }
+
+    /**
+     * 预处理查询对象，确保是正确的Builder实例.
      */
     protected function prepareQuery(): void
     {
-        if (!$this->isModelClass) {
+        if (! $this->isModelClass) {
             return;
         }
 
@@ -66,31 +83,31 @@ class QueryConditionBuilder
                 $this->query = $this->query->newQuery();
             }
         } else {
-            if ($this->query instanceof \think\Model) {
+            if ($this->query instanceof Model) {
                 $this->query = $this->query->db();
             }
         }
     }
 
     /**
-     * 处理SELECT字段
+     * 处理SELECT字段.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleSelect(array &$criteria): void
     {
-        if (!empty($criteria['select'])) {
+        if (! empty($criteria['select'])) {
             $this->query->select($criteria['select']);
             unset($criteria['select']);
         }
     }
 
     /**
-     * 处理DISTINCT去重
+     * 处理DISTINCT去重.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleDistinct(array &$criteria): void
     {
-        if (!empty($criteria['distinct'])) {
+        if (! empty($criteria['distinct'])) {
             $this->query->distinct();
             unset($criteria['distinct']);
         }
@@ -99,10 +116,10 @@ class QueryConditionBuilder
     /**
      * 处理悲观锁
      * @param array<mixed> $criteria
- */
+     */
     protected function handleLock(array &$criteria): void
     {
-        if (!empty($criteria['lock'])) {
+        if (! empty($criteria['lock'])) {
             if ($this->isEloquent) {
                 $this->query->lockForUpdate();
             } else {
@@ -113,36 +130,36 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理JOIN操作
+     * 处理JOIN操作.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleJoins(array &$criteria): void
     {
         foreach (['join', 'leftJoin', 'rightJoin'] as $joinType) {
-            if (empty($criteria[$joinType]) || !is_array($criteria[$joinType])) {
+            if (empty($criteria[$joinType]) || ! is_array($criteria[$joinType])) {
                 continue;
             }
 
             foreach ($criteria[$joinType] as $join) {
-                $table = $join[0] ?? null;
-                $field1 = $join[1] ?? null;
+                $table    = $join[0] ?? null;
+                $field1   = $join[1] ?? null;
                 $operator = $join[2] ?? '=';
-                $field2 = $join[3] ?? null;
+                $field2   = $join[3] ?? null;
 
-                if (!$table || !$field1) {
+                if (! $table || ! $field1) {
                     continue;
                 }
 
                 // 自动补全等号
                 if ($field2 === null && isset($join[2])) {
-                    $field2 = $join[2];
+                    $field2   = $join[2];
                     $operator = '=';
                 }
 
-                if (!$this->isEloquent) {
-                    $this->query->$joinType($table, "{$field1} {$operator} {$field2}");
+                if (! $this->isEloquent) {
+                    $this->query->{$joinType}($table, "{$field1} {$operator} {$field2}");
                 } else {
-                    $this->query->$joinType($table, $field1, $operator, $field2);
+                    $this->query->{$joinType}($table, $field1, $operator, $field2);
                 }
             }
 
@@ -151,20 +168,20 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理NULL/NOT NULL条件
+     * 处理NULL/NOT NULL条件.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleNullConditions(array &$criteria): void
     {
-        if (!empty($criteria['whereNull'])) {
-            foreach ((array)$criteria['whereNull'] as $field) {
+        if (! empty($criteria['whereNull'])) {
+            foreach ((array) $criteria['whereNull'] as $field) {
                 $this->query->whereNull($field);
             }
             unset($criteria['whereNull']);
         }
 
-        if (!empty($criteria['whereNotNull'])) {
-            foreach ((array)$criteria['whereNotNull'] as $field) {
+        if (! empty($criteria['whereNotNull'])) {
+            foreach ((array) $criteria['whereNotNull'] as $field) {
                 $this->query->whereNotNull($field);
             }
             unset($criteria['whereNotNull']);
@@ -172,19 +189,19 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理IN/NOT IN条件
+     * 处理IN/NOT IN条件.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleInConditions(array &$criteria): void
     {
-        if (!empty($criteria['whereIn'])) {
+        if (! empty($criteria['whereIn'])) {
             foreach ($criteria['whereIn'] as $field => $values) {
                 $this->query->whereIn($field, $values);
             }
             unset($criteria['whereIn']);
         }
 
-        if (!empty($criteria['whereNotIn'])) {
+        if (! empty($criteria['whereNotIn'])) {
             foreach ($criteria['whereNotIn'] as $field => $values) {
                 $this->query->whereNotIn($field, $values);
             }
@@ -193,12 +210,12 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理GROUP BY
+     * 处理GROUP BY.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleGroupBy(array &$criteria): void
     {
-        if (!empty($criteria['groupBy'])) {
+        if (! empty($criteria['groupBy'])) {
             $groupBy = (array) $criteria['groupBy'];
             $this->query->groupBy(...$groupBy);
             unset($criteria['groupBy']);
@@ -206,12 +223,12 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理HAVING条件
+     * 处理HAVING条件.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleHaving(array &$criteria): void
     {
-        if (!empty($criteria['having']) && is_array($criteria['having'])) {
+        if (! empty($criteria['having']) && is_array($criteria['having'])) {
             foreach ($criteria['having'] as $cond) {
                 if (count($cond) === 3) {
                     $this->query->having($cond[0], $cond[1], $cond[2]);
@@ -222,19 +239,19 @@ class QueryConditionBuilder
             unset($criteria['having']);
         }
 
-        if (!empty($criteria['havingRaw'])) {
+        if (! empty($criteria['havingRaw'])) {
             $this->query->havingRaw($criteria['havingRaw']);
             unset($criteria['havingRaw']);
         }
     }
 
     /**
-     * 处理OR分组条件
+     * 处理OR分组条件.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleOrGroup(array &$criteria): void
     {
-        if (empty($criteria['or_group']) || !is_array($criteria['or_group'])) {
+        if (empty($criteria['or_group']) || ! is_array($criteria['or_group'])) {
             return;
         }
 
@@ -242,21 +259,21 @@ class QueryConditionBuilder
         $this->query->where(function ($subQuery) use ($orGroup) {
             $isFirst = true;
             foreach ($orGroup as $field => $value) {
-                $op = '=';
+                $op  = '=';
                 $val = $value;
 
                 if (is_array($value)) {
-                    $op = $value[0] ?? '=';
+                    $op  = $value[0] ?? '=';
                     $val = $value[1] ?? $value[0];
                 }
 
                 if ($this->isEloquent) {
-                    $isFirst 
-                        ? $subQuery->where($field, $op, $val) 
+                    $isFirst
+                        ? $subQuery->where($field, $op, $val)
                         : $subQuery->orWhere($field, $op, $val);
                 } else {
-                    $isFirst 
-                        ? $subQuery->where($field, $op, $val) 
+                    $isFirst
+                        ? $subQuery->where($field, $op, $val)
                         : $subQuery->whereOr($field, $op, $val);
                 }
 
@@ -268,9 +285,9 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理基础WHERE条件
+     * 处理基础WHERE条件.
      * @param array<mixed> $criteria
- */
+     */
     protected function handleWhereConditions(array &$criteria): void
     {
         foreach ($criteria as $field => $value) {
@@ -331,13 +348,13 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理数组形式的WHERE条件
+     * 处理数组形式的WHERE条件.
      * @param array<mixed> $value
- */
+     */
     protected function handleArrayWhereCondition(string $field, array $value): void
     {
         [$op, $val] = $value;
-        $op = strtolower($op);
+        $op         = strtolower($op);
 
         switch ($op) {
             case 'in':
@@ -376,9 +393,9 @@ class QueryConditionBuilder
     }
 
     /**
-     * 处理排序
+     * 处理排序.
      * @param array<mixed> $orderBy
- */
+     */
     protected function handleOrderBy(array $orderBy): void
     {
         foreach ($orderBy as $field => $direction) {
@@ -388,13 +405,5 @@ class QueryConditionBuilder
                 $this->query->order($field, $direction);
             }
         }
-    }
-
-    /**
-     * 获取构建后的查询对象
-     */
-    public function getQuery(): mixed
-    {
-        return $this->query;
     }
 }

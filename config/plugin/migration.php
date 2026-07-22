@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * 插件迁移数据表配置
  *
- * @package Fssphp\Plugin
+ * @package eqrayphp\Plugin
  */
 
 return [

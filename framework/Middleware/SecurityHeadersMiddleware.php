@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Middleware;
@@ -15,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * SecurityHeadersMiddleware - 统一注入安全响应头
+ * SecurityHeadersMiddleware - 统一注入安全响应头.
  *
  * 对用户访问完全无感，但能显著提升对 XSS、点击劫持、MIME 嗅探、
  * 信息泄露等攻击的防护：
@@ -29,11 +27,9 @@ use Symfony\Component\HttpFoundation\Response;
 class SecurityHeadersMiddleware implements MiddlewareInterface
 {
     /**
-    * @param array<mixed> $config
-    */
-    public function __construct(private array $config = [])
-    {
-    }
+     * @param array<mixed> $config
+     */
+    public function __construct(private array $config = []) {}
 
     public function handle(Request $request, callable $next): Response
     {

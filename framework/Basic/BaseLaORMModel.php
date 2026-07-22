@@ -3,30 +3,25 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: BaseLaORMModel.php
- * @Date: 2026-1-11
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Basic;
 
+use Framework\Basic\Casts\TimestampCast;
+use Framework\Basic\Traits\LaBelongsToTenant;
+use Framework\Schema\SchemaRegistry;
+use Framework\Utils\Snowflake;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes as LaSoftDeletes;
 use Illuminate\Support\Carbon;
-use Framework\Utils\Snowflake;
-use Framework\Basic\Traits\LaBelongsToTenant;
-use Framework\Basic\Casts\TimestampCast;
+use Illuminate\Support\Facades\Log;
 use think\facade\Cache;
-use Framework\Schema\SchemaRegistry;
 
 /**
- * BaseLaORMModel - Laravel Eloquent ORM 模型基类
+ * BaseLaORMModel - Laravel Eloquent ORM 模型基类.
  *
  * 提供以下核心功能：
  * - 雪花算法主键生成
@@ -50,113 +45,190 @@ use Framework\Schema\SchemaRegistry;
  * 从而消除 staticMethod.notFound / method.notFound / property.notFound 等噪音。
  * 这是类型信息的正确补充，并非运行时行为修改。
  *
- * @method static \Illuminate\Database\Eloquent\Builder<static> where($column, $operator = null, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> orWhere($column, $operator = null, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereIn($column, $values, $boolean = 'and', $not = false)
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereNotIn($column, $values, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereNull($column, $boolean = 'and', $not = false)
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereNotNull($column, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereBetween($column, array<int, mixed> $values, $boolean = 'and', $not = false)
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereDate($column, $operator, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereYear($column, $operator, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereMonth($column, $operator, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereDay($column, $operator, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereTime($column, $operator, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereColumn($first, $operator = null, $second = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereRaw($sql, $bindings = [], $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> orWhereRaw($sql, $bindings = [], $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereExists(\Closure $callback, $boolean = 'and', $not = false)
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereNotExists(\Closure $callback, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereHas($relation, ?\Closure $callback = null, $operator = '>=', $count = 1)
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereDoesntHave($relation, ?\Closure $callback = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static> orderBy($column, $direction = 'asc')
- * @method static \Illuminate\Database\Eloquent\Builder<static> orderByDesc($column)
- * @method static \Illuminate\Database\Eloquent\Builder<static> latest($column = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static> oldest($column = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static> inRandomOrder($seed = '')
- * @method static \Illuminate\Database\Eloquent\Builder<static> groupBy(...$groups)
- * @method static \Illuminate\Database\Eloquent\Builder<static> having($column, $operator = null, $value = null, $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> havingRaw($sql, $bindings = [], $boolean = 'and')
- * @method static \Illuminate\Database\Eloquent\Builder<static> join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
- * @method static \Illuminate\Database\Eloquent\Builder<static> leftJoin($table, $first, $operator = null, $second = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static> rightJoin($table, $first, $operator = null, $second = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static> crossJoin($table, $first = null, $operator = null, $second = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static> select($columns = ['*'])
- * @method static \Illuminate\Database\Eloquent\Builder<static> selectRaw($expression, $bindings = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static> distinct()
- * @method static \Illuminate\Database\Eloquent\Builder<static> from($table)
- * @method static \Illuminate\Database\Eloquent\Builder<static> withCount($relations)
- * @method static \Illuminate\Database\Eloquent\Builder<static> withSum($relations, $column)
- * @method static \Illuminate\Database\Eloquent\Builder<static> withAvg($relations, $column)
- * @method static \Illuminate\Database\Eloquent\Builder<static> withMax($relations, $column)
- * @method static \Illuminate\Database\Eloquent\Builder<static> withMin($relations, $column)
- * @method static \Illuminate\Database\Eloquent\Builder<static> withTrashed()
- * @method static \Illuminate\Database\Eloquent\Builder<static> onlyTrashed()
- * @method static \Illuminate\Database\Eloquent\Builder<static> withoutGlobalScope($scope)
- * @method static \Illuminate\Database\Eloquent\Builder<static> withoutGlobalScopes(?array<int, class-string> $scopes = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static> lockForUpdate()
- * @method static \Illuminate\Database\Eloquent\Builder<static> sharedLock()
- * @method static \Illuminate\Database\Eloquent\Builder<static> forPage($page, $perPage = 15)
- * @method static \Illuminate\Database\Eloquent\Builder<static> take($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static> skip($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static> offset($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static> limit($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static> forPageBeforeId($perPage = 15, $lastId = 0, $column = 'id', $direction = 'asc')
- * @method static \Illuminate\Database\Eloquent\Builder<static> forPageAfterId($perPage = 15, $lastId = 0, $column = 'id', $direction = 'asc')
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereKey($id)
- * @method static \Illuminate\Database\Eloquent\Builder<static> whereKeyNot($id)
- * @method static static|null find($id, $columns = ['*'])
- * @method static \Illuminate\Database\Eloquent\Collection<int, static> findMany($ids, $columns = ['*'])
- * @method static static findOrFail($id, $columns = ['*'])
- * @method static static findOrNew($id, $columns = ['*'])
- * @method static static|null first($columns = ['*'])
- * @method static static firstOrNew(array<string, mixed> $attributes = [], array<string, mixed> $values = [])
- * @method static static firstOrCreate(array<string, mixed> $attributes = [], array<string, mixed> $values = [])
- * @method static static updateOrCreate(array<string, mixed> $attributes, array<string, mixed> $values = [])
- * @method static static create(array<string, mixed> $attributes = [])
- * @method static int insert(array<int, array<string, mixed>> $values)
- * @method static int|string|null insertGetId(array<string, mixed> $values, $sequence = null)
- * @method static int count($columns = '*')
- * @method static mixed max($column)
- * @method static mixed min($column)
- * @method static numeric sum($column)
- * @method static numeric avg($column)
- * @method static bool exists()
- * @method static bool doesntExist()
- * @method static mixed value($column)
- * @method static \Illuminate\Support\Collection<int, mixed> pluck($column, $key = null)
- * @method static \Illuminate\Database\Eloquent\Collection<int, static> get($columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      where($column, $operator = null, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      orWhere($column, $operator = null, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereIn($column, $values, $boolean = 'and', $not = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereNotIn($column, $values, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereNull($column, $boolean = 'and', $not = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereNotNull($column, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereBetween($column, array<int, mixed> $values, $boolean = 'and', $not = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereDate($column, $operator, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereYear($column, $operator, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereMonth($column, $operator, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereDay($column, $operator, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereTime($column, $operator, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereColumn($first, $operator = null, $second = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereRaw($sql, $bindings = [], $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      orWhereRaw($sql, $bindings = [], $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereExists(\Closure $callback, $boolean = 'and', $not = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereNotExists(\Closure $callback, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereHas($relation, ?\Closure $callback = null, $operator = '>=', $count = 1)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereDoesntHave($relation, ?\Closure $callback = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      orderBy($column, $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      orderByDesc($column)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      latest($column = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      oldest($column = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      inRandomOrder($seed = '')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      groupBy(...$groups)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      having($column, $operator = null, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      havingRaw($sql, $bindings = [], $boolean = 'and')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      leftJoin($table, $first, $operator = null, $second = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      rightJoin($table, $first, $operator = null, $second = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      crossJoin($table, $first = null, $operator = null, $second = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      select($columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      selectRaw($expression, $bindings = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      distinct()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      from($table)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withCount($relations)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withSum($relations, $column)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withAvg($relations, $column)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withMax($relations, $column)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withMin($relations, $column)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withoutGlobalScope($scope)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      withoutGlobalScopes(?array<int, class-string> $scopes = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      lockForUpdate()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      sharedLock()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      forPage($page, $perPage = 15)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      take($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      skip($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      offset($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      limit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      forPageBeforeId($perPage = 15, $lastId = 0, $column = 'id', $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      forPageAfterId($perPage = 15, $lastId = 0, $column = 'id', $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereKey($id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>                      whereKeyNot($id)
+ * @method static static|null                                                        find($id, $columns = ['*'])
+ * @method static \Illuminate\Database\Eloquent\Collection<int, static>              findMany($ids, $columns = ['*'])
+ * @method static static                                                             findOrFail($id, $columns = ['*'])
+ * @method static static                                                             findOrNew($id, $columns = ['*'])
+ * @method static static|null                                                        first($columns = ['*'])
+ * @method static static                                                             firstOrNew(array<string, mixed> $attributes = [], array<string, mixed> $values = [])
+ * @method static static                                                             firstOrCreate(array<string, mixed> $attributes = [], array<string, mixed> $values = [])
+ * @method static static                                                             updateOrCreate(array<string, mixed> $attributes, array<string, mixed> $values = [])
+ * @method static static                                                             create(array<string, mixed> $attributes = [])
+ * @method static int                                                                insert(array<int, array<string, mixed>> $values)
+ * @method static int|string|null                                                    insertGetId(array<string, mixed> $values, $sequence = null)
+ * @method static int                                                                count($columns = '*')
+ * @method static mixed                                                              max($column)
+ * @method static mixed                                                              min($column)
+ * @method static numeric                                                            sum($column)
+ * @method static numeric                                                            avg($column)
+ * @method static bool                                                               exists()
+ * @method static bool                                                               doesntExist()
+ * @method static mixed                                                              value($column)
+ * @method static \Illuminate\Support\Collection<int, mixed>                         pluck($column, $key = null)
+ * @method static \Illuminate\Database\Eloquent\Collection<int, static>              get($columns = ['*'])
  * @method static \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, static> paginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null)
- * @method static \Illuminate\Contracts\Pagination\Paginator<int, static> simplePaginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null)
- * @method static \Illuminate\Database\Eloquent\Collection<int, static> all($columns = ['*'])
- * @method static string toSql()
- * @method static static|null firstWhere($column, $operator = null, $value = null)
+ * @method static \Illuminate\Contracts\Pagination\Paginator<int, static>            simplePaginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null)
+ * @method static \Illuminate\Database\Eloquent\Collection<int, static>              all($columns = ['*'])
+ * @method static string                                                             toSql()
+ * @method static static|null                                                        firstWhere($column, $operator = null, $value = null)
  *
- * @property mixed $id
- * @property bool $exists
- * @property bool $incrementing
- * @property bool $timestamps
- * @property bool $wasRecentlyCreated
- * @property int|string|null $tenant_id
- * @property int|string|null $created_by
- * @property int|string|null $updated_by
- * @property string|null $created_at
- * @property string|null $updated_at
- * @property string|null $deleted_at
- * @property string|null $create_time
- * @property string|null $update_time
- * @property string|null $delete_time
- * @property int|string|null $status
- * @property string|null $remark
- *
- * @package Framework\Basic
+ * @property mixed           $id
+ * @property bool            $exists
+ * @property bool            $incrementing
+ * @property bool            $timestamps
+ * @property bool            $wasRecentlyCreated
+ * @property null|int|string $tenant_id
+ * @property null|int|string $created_by
+ * @property null|int|string $updated_by
+ * @property null|string     $created_at
+ * @property null|string     $updated_at
+ * @property null|string     $deleted_at
+ * @property null|string     $create_time
+ * @property null|string     $update_time
+ * @property null|string     $delete_time
+ * @property null|int|string $status
+ * @property null|string     $remark
  */
 class BaseLaORMModel extends Model
 {
     use LaBelongsToTenant;
 
     /**
-     * 构造函数（final：确保所有子类通过 new static() 实例化时构造函数签名一致）
+     * 创建时间字段名（Laravel Eloquent 标准常量）
+     * 所有子模型统一使用 create_time.
+     */
+    public const CREATED_AT = 'create_time';
+
+    /**
+     * 更新时间字段名（Laravel Eloquent 标准常量）
+     * 所有子模型统一使用 update_time.
+     */
+    public const UPDATED_AT = 'update_time';
+
+    /**
+     * Schema 缓存最大数量.
+     */
+    private const MAX_SCHEMA_CACHE = 128;
+
+    // ================= 基础配置 =================
+
+    /**
+     * 是否自增主键（默认使用自增ID）
+     * 子类如需使用雪花ID：$incrementing = false、$keyType = 'string'，
+     * 并覆盖 resolvePkGenerateType() 返回 'snowflake'（勿在子类重复声明 $pkGenerateType 属性）.
+     * @var bool
+     */
+    public $incrementing = true;
+
+    /**
+     * 是否自动维护时间戳
+     * 子类可覆盖设为 false 以禁用所有时间相关功能.
+     * @var bool
+     */
+    public $timestamps = true;
+
+    /**
+     * 主键类型.
+     * @var string
+     */
+    protected $keyType = 'int';
+
+    /**
+     * 日期格式 - 数据库使用 datetime 类型.
+     * @var string
+     */
+    protected $dateFormat = 'Y-m-d H:i:s';
+
+    /**
+     * 主键生成策略
+     * 可选值: 'snowflake'（雪花ID）, 'auto'（自增）.
+     */
+    protected string $pkGenerateType = 'auto';
+
+    /**
+     * 创建时间字段名
+     * 子类可覆盖定义，设为 null 则不自动填充.
+     */
+    protected ?string $createdAtColumn = 'create_time';
+
+    /**
+     * 更新时间字段名
+     * 子类可覆盖定义，设为 null 则不自动填充.
+     */
+    protected ?string $updatedAtColumn = 'update_time';
+
+    /**
+     * 雪花算法实例（单例）.
+     */
+    private static ?Snowflake $snowflake = null;
+
+    /**
+     * 表字段缓存.
+     * @var array<mixed> */
+    private static array $tableColumns = [];
+
+    /**
+     * Schema 是否已冻结.
+     */
+    private static bool $schemaFrozen = false;
+
+    /**
+     * 构造函数（final：确保所有子类通过 new static() 实例化时构造函数签名一致）.
      *
      * @param array<mixed> $attributes
      */
@@ -175,14 +247,12 @@ class BaseLaORMModel extends Model
      * 派生的查询构造器方法都能解析到具体模型（Builder<static>），
      * 属于类型信息的正确补充，不改变运行时行为。
      *
-     * @return \Illuminate\Database\Eloquent\Builder<static>
+     * @return Builder<static>
      */
-    public function newQuery(): \Illuminate\Database\Eloquent\Builder
+    public function newQuery(): Builder
     {
-        /** @var \Illuminate\Database\Eloquent\Builder<static> $query */
-        $query = parent::newQuery();
-
-        return $query;
+        /** @var Builder<static> $query */
+        return parent::newQuery();
     }
 
     /**
@@ -192,110 +262,372 @@ class BaseLaORMModel extends Model
      * with(...)->find()/first() 在静态分析期被推断为基础 Model 而非具体模型。
      * 此处显式标注返回值类型，使链式查询能解析到具体模型。
      *
-     * @param array<int|string, mixed>|string $relations
-     * @return \Illuminate\Database\Eloquent\Builder<static>
+     * @param  array<int|string, mixed>|string $relations
+     * @return Builder<static>
      */
-    public static function with($relations): \Illuminate\Database\Eloquent\Builder
+    public static function with($relations): Builder
     {
-        /** @var \Illuminate\Database\Eloquent\Builder<static> $query */
+        /** @var Builder<static> $query */
         $query = static::query()->with($relations);
 
         return $query;
     }
 
-    // ================= 基础配置 =================
-
     /**
-     * 是否自增主键（默认使用自增ID）
-     * 子类如需使用雪花ID：$incrementing = false、$keyType = 'string'，
-     * 并覆盖 resolvePkGenerateType() 返回 'snowflake'（勿在子类重复声明 $pkGenerateType 属性）
-     * @var bool
+     * 统一日期字段入口.
+     *
+     * 合并父类日期字段、类属性 $dates 和子类扩展字段。
+     *
+     * @return array<mixed> 日期字段列表
      */
-    public $incrementing = true;
+    public function getDates(): array
+    {
+        return array_values(array_unique(array_merge(
+            parent::getDates(),
+            $this->dates ?? [],
+            $this->extraDates()
+        )));
+    }
+
+    // ================= 字段相关 =================
 
     /**
-     * 是否自动维护时间戳
-     * 子类可覆盖设为 false 以禁用所有时间相关功能
-     * @var bool
+     * 获取模型字段列表.
+     *
+     * 根据运行环境选择不同的获取方式：
+     * - Workerman 环境：使用 SchemaRegistry
+     * - 其他环境：使用数据库查询
+     *
+     * @return array<mixed> 字段列表
      */
-    public $timestamps = true;
+    public function getFields(): array
+    {
+        if (defined('WORKERMAN_ENV')) {
+            return SchemaRegistry::getColumns($this->getTable());
+        }
+        return $this->getTableColumns();
+    }
 
     /**
-     * 创建时间字段名（Laravel Eloquent 标准常量）
-     * 所有子模型统一使用 create_time
+     * 冻结 Schema.
+     *
+     * 冻结后禁止从数据库加载新的表结构。
+     * 适用于生产环境预加载场景。
      */
-    public const CREATED_AT = 'create_time';
+    public static function freezeSchema(): void
+    {
+        self::$schemaFrozen = true;
+    }
+
+    // ================= 动态字段控制 =================
 
     /**
-     * 更新时间字段名（Laravel Eloquent 标准常量）
-     * 所有子模型统一使用 update_time
+     * 动态隐藏字段.
+     *
+     * 兼容 ThinkPHP 风格的动态隐藏方法。
+     *
+     * @param  array<mixed> $fields 要隐藏的字段列表
+     * @return static       当前模型实例
      */
-    public const UPDATED_AT = 'update_time';
+    public function dynamicHidden(array $fields): static
+    {
+        $this->makeHidden($fields);
+        return $this;
+    }
 
     /**
-     * 主键类型
-     * @var string
+     * 动态显示字段.
+     *
+     * 兼容 ThinkPHP 风格的动态显示方法。
+     *
+     * @param  array<mixed> $fields 要显示的字段列表
+     * @return static       当前模型实例
      */
-    protected $keyType = 'int';
+    public function dynamicVisible(array $fields): static
+    {
+        $this->makeVisible($fields);
+        return $this;
+    }
+
+    // ================= TP 风格兼容 =================
 
     /**
-     * 日期格式 - 数据库使用 datetime 类型
-     * @var string
+     * 获取字段值
+     *
+     * 兼容 ThinkPHP 的 getData 方法。
+     * 自动将 Carbon 对象格式化为字符串。
+     *
+     * @param  string $field 字段名
+     * @return mixed  字段值
      */
-    protected $dateFormat = 'Y-m-d H:i:s';
+    public function getData(string $field): mixed
+    {
+        $value = $this->getAttribute($field);
+
+        if ($value instanceof Carbon) {
+            return $value->format('Y-m-d H:i:s');
+        }
+
+        return $value;
+    }
 
     /**
-     * 雪花算法实例（单例）
-     * @var Snowflake|null
+     * 设置字段值
+     *
+     * 兼容 ThinkPHP 的 set 方法。
+     *
+     * @param string $name  字段名
+     * @param mixed  $value 字段值
      */
-    private static ?Snowflake $snowflake = null;
+    public function set(string $name, mixed $value): void
+    {
+        $this->setAttribute($name, $value);
+    }
+
+    // ================= 表信息 =================
 
     /**
-     * 主键生成策略
-     * 可选值: 'snowflake'（雪花ID）, 'auto'（自增）
-     * @var string
+     * 获取表名.
+     *
+     * 支持三种方式指定表名：
+     * 1. $table 属性
+     * 2. $name 属性
+     * 3. 父类自动推断
+     *
+     * @return string 表名
      */
-    protected string $pkGenerateType = 'auto';
+    public function getTable(): string
+    {
+        if (! empty($this->table)) {
+            return $this->table;
+        }
+        if (property_exists($this, 'name') && ! empty($this->name)) {
+            return (string) $this->name;
+        }
+        return parent::getTable();
+    }
 
     /**
-     * 表字段缓存
-     * @var array<mixed> */
-    private static array $tableColumns = [];
-
-    /**
-     * Schema 缓存最大数量
+     * 获取模型定义的数据库表名（全称）.
+     *
+     * 静态方法，便于在不实例化模型的情况下获取表名。
+     *
+     * @return string 表名
      */
-    private const MAX_SCHEMA_CACHE = 128;
+    public static function getTableName(): string
+    {
+        $self = new static();
+
+        return $self->getTable();
+    }
 
     /**
-     * Schema 是否已冻结
-     * @var bool
+     * 获取模型对应表的字段列表.
+     *
+     * 复用静态缓存，性能最优。
+     *
+     * @return array<mixed> 字段列表
      */
-    private static bool $schemaFrozen = false;
+    public function getFields2(): array
+    {
+        try {
+            $table = $this->getTable();
+            if (! isset(self::$tableColumns[$table])) {
+                self::$tableColumns[$table] = $this->getConnection()->getSchemaBuilder()->getColumnListing($table);
+            }
+            return self::$tableColumns[$table];
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
 
     /**
-     * 创建时间字段名
-     * 子类可覆盖定义，设为 null 则不自动填充
-     * @var string|null
+     * 获取主键名称.
+     *
+     * 兼容 ThinkPHP 的 getPk 方法。
+     *
+     * @return string 主键名
      */
-    protected ?string $createdAtColumn = 'create_time';
+    public function getPk(): string
+    {
+        return $this->getKeyName();
+    }
 
     /**
-     * 更新时间字段名
-     * 子类可覆盖定义，设为 null 则不自动填充
-     * @var string|null
+     * 是否开启软删除.
+     *
+     * 检查当前模型是否使用了 SoftDeletes trait。
+     *
+     * @return bool 是否开启软删除
      */
-    protected ?string $updatedAtColumn = 'update_time';
+    public static function isSoftDeleteEnabled(): bool
+    {
+        return in_array(LaSoftDeletes::class, class_uses(static::class));
+    }
+
+    // ================= 删除后处理 =================
+
+    /**
+     * 删除后处理.
+     *
+     * 物理删除后执行清理逻辑（预留回收站功能）。
+     *
+     * @param Model $model 被删除的模型实例
+     */
+    public static function onAfterDelete(Model $model)
+    {
+        if (static::isSoftDeleteEnabled()) {
+            return;
+        }
+
+        // 回收站逻辑预留
+    }
+
+    /**
+     * 生成雪花ID.
+     *
+     * 公共静态方法，支持外部调用。
+     * 使用懒加载模式初始化雪花算法实例。
+     *
+     * @return string 雪花ID字符串
+     */
+    public static function generateSnowflakeID(): string
+    {
+        // 懒加载雪花算法实例，全局只初始化一次
+        if (self::$snowflake === null) {
+            self::$snowflake = self::createSnowflakeInstance();
+        }
+
+        // 生成雪花ID并转为字符串（避免精度丢失）
+        return (string) self::$snowflake->nextId();
+    }
+
+    /**
+     * 重置雪花算法实例.
+     *
+     * 供子类或特殊场景自定义雪花算法实例。
+     *
+     * @param null|Snowflake $snowflake 自定义的雪花算法实例，null 则重新创建
+     */
+    public static function resetSnowflakeInstance(?Snowflake $snowflake = null): void
+    {
+        if ($snowflake === null) {
+            self::$snowflake = self::createSnowflakeInstance();
+        } else {
+            self::$snowflake = $snowflake;
+        }
+    }
+
+    /**
+     * 获取表字段的详细结构信息.
+     *
+     * 基于 Schema，无原生 SQL 依赖。
+     *
+     * @return array<mixed> 格式：[字段名 => [type, nullable, default, ...]]
+     */
+    public function getFieldDetails(): array
+    {
+        try {
+            $table      = $this->getTable();
+            $connection = $this->getConnection();
+            $schema     = $connection->getSchemaBuilder();
+            $columns    = $schema->getColumns($table);
+
+            // 获取当前表的所有主键字段（复合主键也支持）
+            $primaryKeys = $this->getPrimaryKeys();
+
+            $fieldDetails = [];
+            foreach ($columns as $column) {
+                $fieldName = $column['name'] ?? '';
+                if (empty($fieldName)) {
+                    continue; // 过滤无效字段
+                }
+                $fieldDetails[$fieldName] = [
+                    'auto_increment' => $column['auto_increment'],
+                    'type_name'      => $column['type_name'] ?? 'unknown',
+                    'type'           => $column['type']           ?? 'unknown',
+                    'nullable'       => $column['nullable']   ?? null,
+                    'default'        => $column['default']     ?? null,
+                    'length'         => $column['length']       ?? null,
+                    'comment'        => $column['comment']     ?? null,
+                    'primary'        => in_array($fieldName, $primaryKeys),
+                ];
+            }
+
+            return $fieldDetails;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * 检查指定字段是否为目标类型.
+     *
+     * 基于 Schema，兼容性强。
+     *
+     * @param  string              $column      字段名
+     * @param  array<mixed>|string $targetTypes 目标类型（如 'varchar'、['int', 'bigint']）
+     * @return bool                是否匹配
+     */
+    public function isFieldType(string $column, array|string $targetTypes): bool
+    {
+        if (! is_array($targetTypes)) {
+            $targetTypes = [$targetTypes];
+        }
+
+        $fieldDetails = $this->getFieldDetails();
+        if (! isset($fieldDetails[$column])) {
+            return false;
+        }
+
+        // 忽略大小写，提升兼容性
+        $fieldType   = strtolower($fieldDetails[$column]['type']);
+        $targetTypes = array_map('strtolower', $targetTypes);
+
+        return in_array($fieldType, $targetTypes);
+    }
+
+    /**
+     * 获取表的主键字段.
+     *
+     * 独立方法，供关联使用。
+     * 支持复合主键。
+     *
+     * @return array<mixed> 主键字段列表
+     */
+    public function getPrimaryKeys(): array
+    {
+        try {
+            $table      = $this->getTable();
+            $connection = $this->getConnection();
+            $schema     = $connection->getSchemaBuilder();
+
+            // 获取主键信息（兼容所有 Laravel 版本和数据库驱动）
+            $indexes     = $schema->getIndexes($table);
+            $primaryKeys = [];
+
+            foreach ($indexes as $index) {
+                if ($index['primary']) {
+                    // 复合主键会返回多个字段，普通主键仅一个
+                    $primaryKeys = array_merge($primaryKeys, $index['columns']);
+                    break; // 主键索引唯一，找到后直接退出循环
+                }
+            }
+
+            return $primaryKeys;
+        } catch (\Exception $e) {
+            Log::error("获取主键失败：{$e->getMessage()}");
+            return [];
+        }
+    }
 
     // ================= 初始化 =================
 
     /**
-     * 初始化模型
+     * 初始化模型.
      *
      * 自动为所有日期字段注册 TimestampCast，
      * 不侵入 setAttribute / getAttribute 方法。
-     *
-     * @return void
      */
     protected function initializeBaseLaORMModel(): void
     {
@@ -305,11 +637,9 @@ class BaseLaORMModel extends Model
     }
 
     /**
-     * 初始化模型实例
+     * 初始化模型实例.
      *
      * Laravel 会在模型构造后自动调用此方法。
-     *
-     * @return void
      */
     protected function initialize(): void
     {
@@ -319,7 +649,7 @@ class BaseLaORMModel extends Model
     // ================= Model Boot =================
 
     /**
-     * 模型启动方法
+     * 模型启动方法.
      *
      * 注册以下模型事件：
      * - creating: 生成雪花ID、填充创建时间
@@ -327,8 +657,6 @@ class BaseLaORMModel extends Model
      * - deleted: 执行删除后处理
      *
      * 注意：软删除由 SoftDeletes trait 自行处理，不需要在此设置
-     *
-     * @return void
      */
     protected static function boot()
     {
@@ -366,14 +694,13 @@ class BaseLaORMModel extends Model
     }
 
     /**
-     * 填充时间戳字段
+     * 填充时间戳字段.
      *
      * 根据子模型定义的字段名自动填充创建时间或更新时间。
      * 支持同时填充 Laravel 风格（created_at/updated_at）和 ThinkPHP 风格（create_time/update_time）字段。
      *
-     * @param int $timestamp 当前时间戳
-     * @param bool $isCreate 是否为创建操作
-     * @return void
+     * @param int  $timestamp 当前时间戳
+     * @param bool $isCreate  是否为创建操作
      */
     protected function fillTimestampFields(int $timestamp, bool $isCreate): void
     {
@@ -398,7 +725,7 @@ class BaseLaORMModel extends Model
     // ================= 日期体系（核心优化） =================
 
     /**
-     * 子类可扩展日期字段
+     * 子类可扩展日期字段.
      *
      * 子类可覆盖此方法添加自定义的日期字段。
      *
@@ -410,28 +737,12 @@ class BaseLaORMModel extends Model
     }
 
     /**
-     * 统一日期字段入口
-     *
-     * 合并父类日期字段、类属性 $dates 和子类扩展字段。
-     *
-     * @return array<mixed> 日期字段列表
-     */
-    public function getDates(): array
-    {
-        return array_values(array_unique(array_merge(
-            parent::getDates(),
-            $this->dates ?? [],
-            $this->extraDates()
-        )));
-    }
-
-    /**
-     * 统一序列化格式
+     * 统一序列化格式.
      *
      * 将日期对象序列化为 'Y-m-d H:i:s' 格式字符串。
      *
-     * @param \DateTimeInterface $date 日期对象
-     * @return string 格式化后的日期字符串
+     * @param  \DateTimeInterface $date 日期对象
+     * @return string             格式化后的日期字符串
      */
     protected function serializeDate(\DateTimeInterface $date)
     {
@@ -441,12 +752,12 @@ class BaseLaORMModel extends Model
     // ================= 审计字段 =================
 
     /**
-     * 检查字段是否存在（带缓存）
+     * 检查字段是否存在（带缓存）.
      *
      * 使用 Schema 缓存避免重复查询数据库结构。
      *
-     * @param string $column 字段名
-     * @return bool 字段是否存在
+     * @param  string $column 字段名
+     * @return bool   字段是否存在
      */
     protected function hasColumnCached(string $column): bool
     {
@@ -460,7 +771,7 @@ class BaseLaORMModel extends Model
     }
 
     /**
-     * 获取表字段缓存
+     * 获取表字段缓存.
      *
      * 使用缓存系统存储表结构信息，提升性能。
      *
@@ -469,9 +780,9 @@ class BaseLaORMModel extends Model
     protected function getTableColumnsCached(): array
     {
         $connection = $this->getConnection();
-        $driver = $connection->getDriverName();
+        $driver     = $connection->getDriverName();
 
-        $table = $this->getTable();
+        $table    = $this->getTable();
         $cacheKey = 'schema:columns:' . $driver . ':' . $table;
 
         return Cache::remember($cacheKey, function () use ($table) {
@@ -481,31 +792,11 @@ class BaseLaORMModel extends Model
         });
     }
 
-    // ================= 字段相关 =================
-
     /**
-     * 获取模型字段列表
+     * 检查字段是否存在（SchemaRegistry 方式）.
      *
-     * 根据运行环境选择不同的获取方式：
-     * - Workerman 环境：使用 SchemaRegistry
-     * - 其他环境：使用数据库查询
-     *
-     * @return array<mixed> 字段列表
-     */
-    public function getFields(): array
-    {
-        if (defined('WORKERMAN_ENV')) {
-            return SchemaRegistry::getColumns($this->getTable());
-        } else {
-            return $this->getTableColumns();
-        }
-    }
-
-    /**
-     * 检查字段是否存在（SchemaRegistry 方式）
-     *
-     * @param string $column 字段名
-     * @return bool 字段是否存在
+     * @param  string $column 字段名
+     * @return bool   字段是否存在
      */
     protected function hasColumn(string $column): bool
     {
@@ -539,26 +830,26 @@ class BaseLaORMModel extends Model
     }
 
     /**
-     * 从数据库加载表字段
+     * 从数据库加载表字段.
      *
      * 直接查询数据库获取表结构信息。
      *
-     * @param string $table 表名
+     * @param  string       $table 表名
      * @return array<mixed> 字段列表
      */
     protected function loadTableColumnsFromDb(string $table): array
     {
         $connection = $this->getConnection();
-        $driver = $connection->getDriverName();
+        $driver     = $connection->getDriverName();
 
         if ($driver === 'mysql') {
             $prefix = $connection->getTablePrefix();
-            $rows = $connection->select(
+            $rows   = $connection->select(
                 'SHOW COLUMNS FROM `' . $prefix . $table . '`'
             );
 
             return array_map(
-                static fn($row) => $row->Field,
+                static fn ($row) => $row->Field,
                 $rows
             );
         }
@@ -569,12 +860,12 @@ class BaseLaORMModel extends Model
     }
 
     /**
-     * 缓存表字段
+     * 缓存表字段.
      *
      * 将字段列表存入内存缓存，使用 FIFO 策略控制缓存大小。
      *
-     * @param string $table 表名
-     * @param array<mixed> $columns 字段列表
+     * @param  string       $table   表名
+     * @param  array<mixed> $columns 字段列表
      * @return array<mixed> 字段列表
      */
     protected function rememberTableColumns(string $table, array $columns): array
@@ -586,189 +877,10 @@ class BaseLaORMModel extends Model
         return self::$tableColumns[$table] = $columns;
     }
 
-    /**
-     * 冻结 Schema
-     *
-     * 冻结后禁止从数据库加载新的表结构。
-     * 适用于生产环境预加载场景。
-     *
-     * @return void
-     */
-    public static function freezeSchema(): void
-    {
-        self::$schemaFrozen = true;
-    }
-
-    // ================= 动态字段控制 =================
-
-    /**
-     * 动态隐藏字段
-     *
-     * 兼容 ThinkPHP 风格的动态隐藏方法。
-     *
-     * @param array<mixed> $fields 要隐藏的字段列表
-     * @return static 当前模型实例
-     */
-    public function dynamicHidden(array $fields): static
-    {
-        $this->makeHidden($fields);
-        return $this;
-    }
-
-    /**
-     * 动态显示字段
-     *
-     * 兼容 ThinkPHP 风格的动态显示方法。
-     *
-     * @param array<mixed> $fields 要显示的字段列表
-     * @return static 当前模型实例
-     */
-    public function dynamicVisible(array $fields): static
-    {
-        $this->makeVisible($fields);
-        return $this;
-    }
-
-    // ================= TP 风格兼容 =================
-
-    /**
-     * 获取字段值
-     *
-     * 兼容 ThinkPHP 的 getData 方法。
-     * 自动将 Carbon 对象格式化为字符串。
-     *
-     * @param string $field 字段名
-     * @return mixed 字段值
-     */
-    public function getData(string $field): mixed
-    {
-        $value = $this->getAttribute($field);
-
-        if ($value instanceof Carbon) {
-            return $value->format('Y-m-d H:i:s');
-        }
-
-        return $value;
-    }
-
-    /**
-     * 设置字段值
-     *
-     * 兼容 ThinkPHP 的 set 方法。
-     *
-     * @param string $name 字段名
-     * @param mixed $value 字段值
-     * @return void
-     */
-    public function set(string $name, mixed $value): void
-    {
-        $this->setAttribute($name, $value);
-    }
-
-    // ================= 表信息 =================
-
-    /**
-     * 获取表名
-     *
-     * 支持三种方式指定表名：
-     * 1. $table 属性
-     * 2. $name 属性
-     * 3. 父类自动推断
-     *
-     * @return string 表名
-     */
-    public function getTable(): string
-    {
-        if (!empty($this->table)) {
-            return $this->table;
-        }
-        if (property_exists($this, 'name') && !empty($this->name)) {
-            return (string) $this->name;
-        }
-        return parent::getTable();
-    }
-
-    /**
-     * 获取模型定义的数据库表名（全称）
-     *
-     * 静态方法，便于在不实例化模型的情况下获取表名。
-     *
-     * @return string 表名
-     */
-    public static function getTableName(): string
-    {
-        $self = new static();
-
-        return $self->getTable();
-    }
-
-    /**
-     * 获取模型对应表的字段列表
-     *
-     * 复用静态缓存，性能最优。
-     *
-     * @return array<mixed> 字段列表
-     */
-    public function getFields2(): array
-    {
-        try {
-            $table = $this->getTable();
-            if (!isset(self::$tableColumns[$table])) {
-                self::$tableColumns[$table] = $this->getConnection()->getSchemaBuilder()->getColumnListing($table);
-            }
-            return self::$tableColumns[$table];
-        } catch (\Exception $e) {
-            return [];
-        }
-    }
-
-    /**
-     * 获取主键名称
-     *
-     * 兼容 ThinkPHP 的 getPk 方法。
-     *
-     * @return string 主键名
-     */
-    public function getPk(): string
-    {
-        return $this->getKeyName();
-    }
-
-    /**
-     * 是否开启软删除
-     *
-     * 检查当前模型是否使用了 SoftDeletes trait。
-     *
-     * @return bool 是否开启软删除
-     */
-    public static function isSoftDeleteEnabled(): bool
-    {
-        return in_array(LaSoftDeletes::class, class_uses(static::class));
-    }
-
-    // ================= 删除后处理 =================
-
-    /**
-     * 删除后处理
-     *
-     * 物理删除后执行清理逻辑（预留回收站功能）。
-     *
-     * @param Model $model 被删除的模型实例
-     * @return void
-     */
-    public static function onAfterDelete(Model $model)
-    {
-        if (static::isSoftDeleteEnabled()) {
-            return;
-        }
-
-        // 回收站逻辑预留
-    }
-
     // ================= 雪花算法部分优化 =================
 
     /**
-     * 解析主键生成策略（供子类覆盖，避免在子类重复声明 $pkGenerateType 导致父类闭包读不到）
+     * 解析主键生成策略（供子类覆盖，避免在子类重复声明 $pkGenerateType 导致父类闭包读不到）.
      *
      * @return string 'snowflake' | 'auto'
      */
@@ -778,167 +890,26 @@ class BaseLaORMModel extends Model
     }
 
     /**
-     * 生成雪花ID
-     *
-     * 公共静态方法，支持外部调用。
-     * 使用懒加载模式初始化雪花算法实例。
-     *
-     * @return string 雪花ID字符串
-     */
-    public static function generateSnowflakeID(): string
-    {
-        // 懒加载雪花算法实例，全局只初始化一次
-        if (self::$snowflake === null) {
-            self::$snowflake = self::createSnowflakeInstance();
-        }
-
-        // 生成雪花ID并转为字符串（避免精度丢失）
-        return (string) self::$snowflake->nextId();
-    }
-
-    /**
-     * 创建雪花算法实例
+     * 创建雪花算法实例.
      *
      * 从配置文件读取 worker_id 和 datacenter_id。
      * 配置建议在 config/app.php 中添加：
      * - 'snowflake_worker_id' => 0
      * - 'snowflake_datacenter_id' => 0
      *
-     * @return Snowflake 雪花算法实例
+     * @return Snowflake                 雪花算法实例
      * @throws \InvalidArgumentException 配置值超出范围时抛出
      */
     private static function createSnowflakeInstance(): Snowflake
     {
-        $workerId = (int) config('app.snowflake_worker_id', 0);
+        $workerId     = (int) config('app.snowflake_worker_id', 0);
         $dataCenterId = (int) config('app.snowflake_datacenter_id', 0);
 
         // 校验 worker_id 和 datacenter_id 范围（雪花算法标准：0-31）
         if ($workerId < 0 || $workerId > 31 || $dataCenterId < 0 || $dataCenterId > 31) {
-            throw new \InvalidArgumentException("雪花算法 WorkerId 和 DataCenterId 必须在 0-31 之间");
+            throw new \InvalidArgumentException('雪花算法 WorkerId 和 DataCenterId 必须在 0-31 之间');
         }
 
         return new Snowflake($workerId, $dataCenterId);
     }
-
-    /**
-     * 重置雪花算法实例
-     *
-     * 供子类或特殊场景自定义雪花算法实例。
-     *
-     * @param Snowflake|null $snowflake 自定义的雪花算法实例，null 则重新创建
-     * @return void
-     */
-    public static function resetSnowflakeInstance(?Snowflake $snowflake = null): void
-    {
-        if ($snowflake === null) {
-            self::$snowflake = self::createSnowflakeInstance();
-        } else {
-            self::$snowflake = $snowflake;
-        }
-    }
-
-    /**
-     * 获取表字段的详细结构信息
-     *
-     * 基于 Schema，无原生 SQL 依赖。
-     *
-     * @return array<mixed> 格式：[字段名 => [type, nullable, default, ...]]
-     */
-    public function getFieldDetails(): array
-    {
-        try {
-            $table = $this->getTable();
-            $connection = $this->getConnection();
-            $schema = $connection->getSchemaBuilder();
-            $columns = $schema->getColumns($table);
-
-            // 获取当前表的所有主键字段（复合主键也支持）
-            $primaryKeys = $this->getPrimaryKeys();
-
-            $fieldDetails = [];
-            foreach ($columns as $column) {
-                $fieldName = $column['name'] ?? '';
-                if (empty($fieldName)) {
-                    continue; // 过滤无效字段
-                }
-                $fieldDetails[$fieldName] = [
-                    'auto_increment' => $column['auto_increment'],
-                    'type_name' => $column['type_name'] ?? 'unknown',
-                    'type' => $column['type'] ?? 'unknown',
-                    'nullable' => $column['nullable'] ?? null,
-                    'default' => $column['default'] ?? null,
-                    'length' => $column['length'] ?? null,
-                    'comment' => $column['comment'] ?? null,
-                    'primary' => in_array($fieldName, $primaryKeys),
-                ];
-            }
-
-            return $fieldDetails;
-        } catch (\Exception $e) {
-            return [];
-        }
-    }
-
-    /**
-     * 检查指定字段是否为目标类型
-     *
-     * 基于 Schema，兼容性强。
-     *
-     * @param string $column 字段名
-     * @param string|array<mixed> $targetTypes 目标类型（如 'varchar'、['int', 'bigint']）
-     * @return bool 是否匹配
-     */
-    public function isFieldType(string $column, string|array $targetTypes): bool
-    {
-        if (!is_array($targetTypes)) {
-            $targetTypes = [$targetTypes];
-        }
-
-        $fieldDetails = $this->getFieldDetails();
-        if (!isset($fieldDetails[$column])) {
-            return false;
-        }
-
-        // 忽略大小写，提升兼容性
-        $fieldType = strtolower($fieldDetails[$column]['type']);
-        $targetTypes = array_map('strtolower', $targetTypes);
-
-        return in_array($fieldType, $targetTypes);
-    }
-
-    /**
-     * 获取表的主键字段
-     *
-     * 独立方法，供关联使用。
-     * 支持复合主键。
-     *
-     * @return array<mixed> 主键字段列表
-     */
-    public function getPrimaryKeys(): array
-    {
-        try {
-            $table = $this->getTable();
-            $connection = $this->getConnection();
-            $schema = $connection->getSchemaBuilder();
-
-            // 获取主键信息（兼容所有 Laravel 版本和数据库驱动）
-            $indexes = $schema->getIndexes($table);
-            $primaryKeys = [];
-
-            foreach ($indexes as $index) {
-                if ($index['primary']) {
-                    // 复合主键会返回多个字段，普通主键仅一个
-                    $primaryKeys = array_merge($primaryKeys, $index['columns']);
-                    break; // 主键索引唯一，找到后直接退出循环
-                }
-            }
-
-            return $primaryKeys;
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("获取主键失败：{$e->getMessage()}");
-            return [];
-        }
-    }
 }
-
-

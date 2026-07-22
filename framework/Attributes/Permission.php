@@ -2,9 +2,13 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace Framework\Attributes;
 
-use Attribute;
 use App\Middlewares\PermissionMiddleware;
 
 /**
@@ -18,34 +22,33 @@ use App\Middlewares\PermissionMiddleware;
  * #[Permission(['core:user:index', 'core:dept:index'], mode: 'OR')]  // 显式OR模式
  * #[Permission(['core:user:index', 'core:dept:index'], mode: 'AND')]  // AND模式
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Permission implements MiddlewareProviderInterface
 {
     /** @var array<mixed> */
     public array $slugs;
+
     public string $mode;
 
     /**
-     * @param string|array<string> $permissions 权限标识（字符串或数组）
-     * @param string $mode 匹配模式：'OR' (满足其一) 或 'AND' (必须全部满足)
+     * @param array<string>|string $permissions 权限标识（字符串或数组）
+     * @param string               $mode        匹配模式：'OR' (满足其一) 或 'AND' (必须全部满足)
      */
     public function __construct(
-        string|array $permissions,
+        array|string $permissions,
         string $mode = 'OR'
     ) {
         // 将字符串格式标准化为数组格式
         $this->slugs = is_string($permissions) ? [$permissions] : $permissions;
-        $this->mode = strtoupper($mode);
+        $this->mode  = strtoupper($mode);
     }
 
     /**
-     * 告诉 Loader：只要用了我这个注解，就请加载 PermissionMiddleware
-
-     * @return string|array<mixed>
-    
-
+     * 告诉 Loader：只要用了我这个注解，就请加载 PermissionMiddleware.
+     *
+     * @return array<mixed>|string
      */
-    public function getMiddleware(): string|array
+    public function getMiddleware(): array|string
     {
         return PermissionMiddleware::class;
     }

@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Console\Commands;
@@ -24,7 +17,7 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * 创建监听器命令
+ * 创建监听器命令.
  *
  * 该命令用于通过命令行快速创建新的事件监听器类文件。
  * 自动生成实现 ListenerInterface 接口的监听器类模板。
@@ -33,33 +26,29 @@ use Symfony\Component\Filesystem\Filesystem;
  * 使用方法：
  *   php console make:listener SendWelcomeEmail
  *   php console make:listener SendWelcomeEmail UserRegistered
- *
- * @package Framework\Console\Commands
  */
 class MakeListenerCommand extends Command
 {
     /**
-     * 命令名称
+     * 命令名称.
      *
      * @var string
      */
     protected static $defaultName = 'make:listener';
 
     /**
-     * 命令描述
+     * 命令描述.
      *
      * @var string
      */
     protected static $defaultDescription = '创建一个新的事件监听器类';
 
     /**
-     * 配置命令参数和选项
+     * 配置命令参数和选项.
      *
      * 设置命令名称、描述以及参数：
      * - name: 必需，监听器名称
      * - event: 可选，关联的事件类名称
-     *
-     * @return void
      */
     protected function configure(): void
     {
@@ -79,7 +68,7 @@ class MakeListenerCommand extends Command
     }
 
     /**
-     * 执行命令
+     * 执行命令.
      *
      * 创建监听器文件，包含以下步骤：
      * 1. 解析监听器名称和可选的事件名称
@@ -127,13 +116,13 @@ class MakeListenerCommand extends Command
     }
 
     /**
-     * 生成监听器类内容
+     * 生成监听器类内容.
      *
      * 创建实现 ListenerInterface 接口的监听器类模板。
      * 如果提供了事件名称，则生成类型提示的 handle 方法。
      *
      * @param string      $listenerName 监听器类名
-     * @param string|null $eventArg     可选的事件类名（不含 Event 后缀）
+     * @param null|string $eventArg     可选的事件类名（不含 Event 后缀）
      *
      * @return string 生成的监听器 PHP 代码
      */

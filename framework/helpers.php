@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: helpers.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 use Framework\Cache\ThinkCache;
@@ -21,7 +14,6 @@ use Framework\Event\Dispatcher;
 use Framework\Security\CsrfTokenManager;
 use Framework\Validation\ThinkValidatorFactory;
 use Ramsey\Uuid\Uuid;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use think\Validate;
 use Twig\Error\LoaderError;
@@ -34,9 +26,8 @@ if (! function_exists('validate')) {
      *
      * @param array<string, mixed>  $data    待验证数据
      * @param array<string, string> $message 字段错误信息映射
-
-     * @param  array<mixed>|string  $validate
-
+     *
+     * @param array<mixed>|string $validate
      */
     function validate(array $data, array|string $validate = '', array $message = [], bool $batch = false, bool $failException = true): bool
     {
@@ -139,7 +130,7 @@ if (! function_exists('app')) {
     /**
      * 获取容器或解析服务
      *
-     * @param array<string, mixed>|null $params 构造参数
+     * @param null|array<string, mixed> $params 构造参数
      */
     function app(?string $id = null, ?array $params = []): mixed
     {
@@ -258,23 +249,21 @@ if (! function_exists('env')) {
         }
 
         return match (strtolower((string) $value)) {
-            'true', '(true)'   => true,
-            'false', '(false)' => false,
-            'empty', '(empty)' => '',
-            'null', '(null)'   => null,
+            'true', '(true)'    => true,
+            'false', '(false)'  => false,
+            'empty', '(empty)'  => '',
+            'null', '(null)'    => null,
             default             => preg_match('/\A([\'"])(.*)\1\z/', (string) $value, $m) ? $m[2] : $value,
         };
     }
 }
 
-
 if (! function_exists('config')) {
     /**
-     * 配置项读取（支持点语法）
+     * 配置项读取（支持点语法）.
      */
     function config(?string $key = null, mixed $default = null): mixed
     {
-        
         $configService = Container::getInstance()->get('config');
 
         // 使用配置服务里的配置数组作为最终数据源
@@ -287,7 +276,7 @@ if (! function_exists('config')) {
 
         // 支持: config('app.env') / config('cache.stores.redis.host')
         $segments = explode('.', $key);
-        $value = $config;
+        $value    = $config;
 
         foreach ($segments as $segment) {
             if (! is_array($value) || ! array_key_exists($segment, $value)) {
@@ -448,11 +437,11 @@ if (! function_exists('get_cache_instance')) {
  */
 if (! function_exists('ThinkValidate')) {
     /**
-    * @param array<mixed> $data
-    * @param array<mixed> $rule
-    * @param array<mixed> $message
-    * @return array<mixed>
-    */
+     * @param  array<mixed> $data
+     * @param  array<mixed> $rule
+     * @param  array<mixed> $message
+     * @return array<mixed>
+     */
     function ThinkValidate(array $data, array $rule, array $message = []): array|true
     {
         $factory   = getService(ThinkValidatorFactory::class);
@@ -486,7 +475,7 @@ if (! function_exists('ThinkView')) {
 if (! function_exists('renders')) {
     /**
      * @param array<string, mixed> $data    模板变量
-     * @param array<string>|null   $exclude 排除的变量名
+     * @param null|array<string>   $exclude 排除的变量名
      */
     function renders(string $template, array $data = [], ?array $exclude = null): string
     {

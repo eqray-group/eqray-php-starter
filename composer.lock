@@ -5136,7 +5136,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "FssPHP Configuration loader library,supporting PHP/JSON/INI with caching (namespace Framework\\Config)",
+            "description": "eqrayphp Configuration loader library,supporting PHP/JSON/INI with caching (namespace Framework\\Config)",
             "support": {
                 "issues": "https://github.com/xuey490/config/issues",
                 "source": "https://github.com/xuey490/config/tree/1.0.4"
@@ -5172,7 +5172,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "FssPHP Database operation library,Integrate ThinkPHP and Illuminate Database to achieve seamless switching between the two. (namespace Framework\\Database)",
+            "description": "eqrayphp Database operation library,Integrate ThinkPHP and Illuminate Database to achieve seamless switching between the two. (namespace Framework\\Database)",
             "support": {
                 "issues": "https://github.com/xuey490/database/issues",
                 "source": "https://github.com/xuey490/database/tree/1.0.7"
@@ -5209,9 +5209,9 @@
                     "email": "xuey863toy@gmail.com"
                 }
             ],
-            "description": "A custom logging library for FssPHP Framework based on Monolog with file size rotation support.",
+            "description": "A custom logging library for eqrayphp Framework based on Monolog with file size rotation support.",
             "keywords": [
-                "fssphp",
+                "eqrayphp",
                 "log",
                 "logger",
                 "monolog",

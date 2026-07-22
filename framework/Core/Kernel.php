@@ -3,24 +3,14 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: Kernel.php
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Core;
 
-use ErrorException;
 use Framework\Core\Exception\Handler as ExceptionHandler;
-use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Throwable;
 
 class Kernel
 {
@@ -84,7 +74,7 @@ class Kernel
         // 1. 注册异常处理器
         $exceptionHandler = $this->container->get(ExceptionHandler::class);
 
-        set_exception_handler(function (Throwable $e) use ($exceptionHandler) {
+        set_exception_handler(function (\Throwable $e) use ($exceptionHandler) {
             $exceptionHandler->report($e);
             $exceptionHandler->render($e); // ->send();
             exit(1); // 异常后终止程序
@@ -96,14 +86,14 @@ class Kernel
             if (! (error_reporting() & $severity)) {
                 return false;
             }
-            throw new ErrorException($message, 0, $severity, $file, $line);
+            throw new \ErrorException($message, 0, $severity, $file, $line);
         });
 
         // 3. 注册致命错误处理器
         register_shutdown_function(function () use ($exceptionHandler) {
             $error = error_get_last();
             if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-                $e = new ErrorException(
+                $e = new \ErrorException(
                     $error['message'],
                     0,
                     $error['type'],

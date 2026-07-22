@@ -3,18 +3,14 @@
 declare(strict_types=1);
 
 /**
- * @Filename: PoolManager.php
- * @Date: 2026-06-02
- * @Developer: blue2004
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Pool;
 
-use RuntimeException;
-
 /**
- * 连接池管理器
+ * 连接池管理器.
  *
  * 统一管理 Redis 与 MySQL 连接池的生命周期：
  * - 注册命名池
@@ -42,11 +38,10 @@ class PoolManager
     private static array $pools = [];
 
     /**
-     * 注册一个命名连接池
+     * 注册一个命名连接池.
      *
      * @param string        $name 池名称（如 'redis.default', 'mysql.write'）
      * @param PoolInterface $pool 连接池实例
-     * @return void
      */
     public static function register(string $name, PoolInterface $pool): void
     {
@@ -54,10 +49,7 @@ class PoolManager
     }
 
     /**
-     * 检查指定名称的池是否已注册
-     *
-     * @param string $name
-     * @return bool
+     * 检查指定名称的池是否已注册.
      */
     public static function has(string $name): bool
     {
@@ -65,26 +57,24 @@ class PoolManager
     }
 
     /**
-     * 获取池实例
+     * 获取池实例.
      *
-     * @param string $name
-     * @return PoolInterface
-     * @throws RuntimeException 池未注册时抛出
+     * @throws \RuntimeException 池未注册时抛出
      */
     public static function get(string $name): PoolInterface
     {
-        if (!isset(self::$pools[$name])) {
-            throw new RuntimeException(sprintf('连接池 [%s] 未注册。', $name));
+        if (! isset(self::$pools[$name])) {
+            throw new \RuntimeException(sprintf('连接池 [%s] 未注册。', $name));
         }
         return self::$pools[$name];
     }
 
     /**
-     * 从指定池借出连接
+     * 从指定池借出连接.
      *
-     * @param string $name 池名称
-     * @return object 连接对象
-     * @throws RuntimeException
+     * @param  string            $name 池名称
+     * @return object            连接对象
+     * @throws \RuntimeException
      */
     public static function borrow(string $name): object
     {
@@ -92,11 +82,10 @@ class PoolManager
     }
 
     /**
-     * 归还连接到指定池
+     * 归还连接到指定池.
      *
      * @param string $name       池名称
      * @param object $connection 连接对象
-     * @return void
      */
     public static function release(string $name, object $connection): void
     {
@@ -106,7 +95,7 @@ class PoolManager
     }
 
     /**
-     * 获取所有池的统计信息
+     * 获取所有池的统计信息.
      *
      * @return array<string, array{idle: int, active: int, total: int, max: int}>
      */
@@ -120,9 +109,7 @@ class PoolManager
     }
 
     /**
-     * 关闭所有连接池（在 Worker onWorkerStop 或进程退出时调用）
-     *
-     * @return void
+     * 关闭所有连接池（在 Worker onWorkerStop 或进程退出时调用）.
      */
     public static function closeAll(): void
     {

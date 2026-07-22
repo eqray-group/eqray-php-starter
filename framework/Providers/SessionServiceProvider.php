@@ -3,20 +3,15 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Providers;
 
 // use Framework\Config\ConfigService;
+use Framework\Config\Cache\ConfigCache;
+use Framework\Config\ConfigService;
 use Framework\Container\ServiceProviderInterface;
 use Framework\Session\FileSessionHandler;
 use Framework\Session\RedisGroupSessionHandler;
@@ -40,9 +35,9 @@ final class SessionServiceProvider implements ServiceProviderInterface
     {
         $services = $configurator->services();
 
-		$cacheFile = BASE_PATH . '/storage/cache/config_cache.php';
-		$cache = new \Framework\Config\Cache\ConfigCache($cacheFile, 300);
-		$load = new \Framework\Config\ConfigService( BASE_PATH . '/config', $cache, null , ['routes.php', 'services.php']);
+        $cacheFile = BASE_PATH . '/storage/cache/config_cache.php';
+        $cache     = new ConfigCache($cacheFile, 300);
+        $load      = new ConfigService(BASE_PATH . '/config', $cache, null, ['routes.php', 'services.php']);
 
         // === 1. 加载配置 ===
         $redisConfig   = $load->get('redis');  // require \dirname(__DIR__, 2) . '/config/redis.php';

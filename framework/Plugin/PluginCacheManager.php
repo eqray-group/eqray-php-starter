@@ -3,32 +3,22 @@
 declare(strict_types=1);
 
 /**
- * This file is part of Fssphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: PluginCacheManager.php
- * @Date: 2025-03-31
- * @Developer: Fssphp Team
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Plugin;
 
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Routing\RouteCollection;
-use RuntimeException;
 
 /**
- * 插件缓存管理器
+ * 插件缓存管理器.
  *
  * 管理插件相关的缓存：
  * - 路由缓存
  * - 插件清单缓存
  * - 插件配置缓存
- *
- * @package Framework\Plugin
  */
 class PluginCacheManager
 {
@@ -38,38 +28,32 @@ class PluginCacheManager
     private const CACHE_PREFIX = 'plugin_';
 
     /**
-     * 路由缓存文件
+     * 路由缓存文件.
      */
     private const ROUTE_CACHE_FILE = BASE_PATH . '/storage/cache/routes.php';
 
     /**
-     * 插件缓存目录
+     * 插件缓存目录.
      */
     private const PLUGIN_CACHE_DIR = BASE_PATH . '/storage/cache/plugins';
 
     /**
-     * PSR-16 缓存实例
-     *
-     * @var CacheInterface|null
+     * PSR-16 缓存实例.
      */
     private ?CacheInterface $cache = null;
 
     /**
-     * 是否启用缓存
-     *
-     * @var bool
+     * 是否启用缓存.
      */
     private bool $cacheEnabled = true;
 
     /**
-     * 默认缓存有效期（秒）
-     *
-     * @var int
+     * 默认缓存有效期（秒）.
      */
     private int $defaultTtl = 3600;
 
     /**
-     * 构造函数
+     * 构造函数.
      */
     public function __construct()
     {
@@ -77,10 +61,7 @@ class PluginCacheManager
     }
 
     /**
-     * 设置缓存实例
-     *
-     * @param CacheInterface $cache
-     * @return self
+     * 设置缓存实例.
      */
     public function setCache(CacheInterface $cache): self
     {
@@ -89,10 +70,7 @@ class PluginCacheManager
     }
 
     /**
-     * 设置是否启用缓存
-     *
-     * @param bool $enabled
-     * @return self
+     * 设置是否启用缓存.
      */
     public function setCacheEnabled(bool $enabled): self
     {
@@ -102,9 +80,6 @@ class PluginCacheManager
 
     /**
      * 设置默认缓存有效期
-     *
-     * @param int $ttl
-     * @return self
      */
     public function setDefaultTtl(int $ttl): self
     {
@@ -113,26 +88,24 @@ class PluginCacheManager
     }
 
     /**
-     * 清除所有插件相关缓存
-     *
-     * @return bool
+     * 清除所有插件相关缓存.
      */
     public function clearAll(): bool
     {
         $success = true;
 
         // 清除路由缓存
-        if (!$this->clearRouteCache()) {
+        if (! $this->clearRouteCache()) {
             $success = false;
         }
 
         // 清除插件清单缓存
-        if (!$this->clearManifestCache()) {
+        if (! $this->clearManifestCache()) {
             $success = false;
         }
 
         // 清除插件配置缓存
-        if (!$this->clearConfigCache()) {
+        if (! $this->clearConfigCache()) {
             $success = false;
         }
 
@@ -153,9 +126,7 @@ class PluginCacheManager
     }
 
     /**
-     * 清除路由缓存
-     *
-     * @return bool
+     * 清除路由缓存.
      */
     public function clearRouteCache(): bool
     {
@@ -166,9 +137,7 @@ class PluginCacheManager
     }
 
     /**
-     * 清除插件清单缓存
-     *
-     * @return bool
+     * 清除插件清单缓存.
      */
     public function clearManifestCache(): bool
     {
@@ -190,10 +159,9 @@ class PluginCacheManager
     }
 
     /**
-     * 清除配置缓存
+     * 清除配置缓存.
      *
-     * @param string|null $pluginName 插件名称，null 清除全部
-     * @return bool
+     * @param null|string $pluginName 插件名称，null 清除全部
      */
     public function clearConfigCache(?string $pluginName = null): bool
     {
@@ -219,13 +187,11 @@ class PluginCacheManager
     }
 
     /**
-     * 获取缓存的路由集合
-     *
-     * @return RouteCollection|null
+     * 获取缓存的路由集合.
      */
     public function getCachedRoutes(): ?RouteCollection
     {
-        if (!file_exists(self::ROUTE_CACHE_FILE)) {
+        if (! file_exists(self::ROUTE_CACHE_FILE)) {
             return null;
         }
 
@@ -243,10 +209,7 @@ class PluginCacheManager
     }
 
     /**
-     * 缓存路由集合
-     *
-     * @param RouteCollection $routes
-     * @return bool
+     * 缓存路由集合.
      */
     public function cacheRoutes(RouteCollection $routes): bool
     {
@@ -261,9 +224,9 @@ class PluginCacheManager
     }
 
     /**
-     * 获取缓存的插件清单
+     * 获取缓存的插件清单.
      *
-     * @return array<mixed>|null
+     * @return null|array<mixed>
      */
     public function getCachedManifests(): ?array
     {
@@ -297,10 +260,9 @@ class PluginCacheManager
     }
 
     /**
-     * 缓存插件清单
+     * 缓存插件清单.
      *
      * @param array<mixed> $manifests
-     * @return bool
      */
     public function cacheManifests(array $manifests): bool
     {
@@ -323,9 +285,9 @@ class PluginCacheManager
     }
 
     /**
-     * 获取缓存的控制器目录
+     * 获取缓存的控制器目录.
      *
-     * @return array<mixed>|null
+     * @return null|array<mixed>
      */
     public function getCachedControllerDirs(): ?array
     {
@@ -344,10 +306,9 @@ class PluginCacheManager
     }
 
     /**
-     * 缓存控制器目录
+     * 缓存控制器目录.
      *
      * @param array<mixed> $dirs
-     * @return bool
      */
     public function cacheControllerDirs(array $dirs): bool
     {
@@ -363,10 +324,9 @@ class PluginCacheManager
     }
 
     /**
-     * 获取插件配置缓存
+     * 获取插件配置缓存.
      *
-     * @param string $pluginName
-     * @return array<mixed>|null
+     * @return null|array<mixed>
      */
     public function getCachedPluginConfig(string $pluginName): ?array
     {
@@ -399,11 +359,9 @@ class PluginCacheManager
     }
 
     /**
-     * 缓存插件配置
+     * 缓存插件配置.
      *
-     * @param string $pluginName
      * @param array<mixed> $config
-     * @return bool
      */
     public function cachePluginConfig(string $pluginName, array $config): bool
     {
@@ -427,33 +385,17 @@ class PluginCacheManager
     }
 
     /**
-     * 确保缓存目录存在
-     *
-     * @param string|null $dir
-     */
-    private function ensureCacheDirectory(?string $dir = null): void
-    {
-        $dir = $dir ?? self::PLUGIN_CACHE_DIR;
-
-        if (!is_dir($dir)) {
-            if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
-                throw new RuntimeException("无法创建缓存目录: {$dir}");
-            }
-        }
-    }
-
-    /**
-     * 获取缓存统计信息
+     * 获取缓存统计信息.
      *
      * @return array<mixed> */
     public function getStats(): array
     {
         $stats = [
-            'route_cache_exists' => file_exists(self::ROUTE_CACHE_FILE),
-            'route_cache_size' => 0,
+            'route_cache_exists'    => file_exists(self::ROUTE_CACHE_FILE),
+            'route_cache_size'      => 0,
             'manifest_cache_exists' => file_exists(self::PLUGIN_CACHE_DIR . '/manifests.php'),
-            'config_cache_count' => 0,
-            'config_cache_size' => 0,
+            'config_cache_count'    => 0,
+            'config_cache_size'     => 0,
         ];
 
         if ($stats['route_cache_exists']) {
@@ -462,7 +404,7 @@ class PluginCacheManager
 
         $configCacheDir = self::PLUGIN_CACHE_DIR . '/configs';
         if (is_dir($configCacheDir)) {
-            $files = glob($configCacheDir . '/*.php') ?: [];
+            $files                       = glob($configCacheDir . '/*.php') ?: [];
             $stats['config_cache_count'] = count($files);
             foreach ($files as $file) {
                 $stats['config_cache_size'] += filesize($file) ?: 0;
@@ -470,5 +412,19 @@ class PluginCacheManager
         }
 
         return $stats;
+    }
+
+    /**
+     * 确保缓存目录存在.
+     */
+    private function ensureCacheDirectory(?string $dir = null): void
+    {
+        $dir = $dir ?? self::PLUGIN_CACHE_DIR;
+
+        if (! is_dir($dir)) {
+            if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
+                throw new \RuntimeException("无法创建缓存目录: {$dir}");
+            }
+        }
     }
 }

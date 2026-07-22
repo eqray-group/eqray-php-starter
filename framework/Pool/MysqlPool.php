@@ -3,23 +3,16 @@
 declare(strict_types=1);
 
 /**
- * @Filename: MysqlPool.php
- * @Date: 2026-06-02
- * @Developer: blue2004
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Pool;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Database\Connection;
 use PDO;
-use PDOException;
-use RuntimeException;
-use SplStack;
 
 /**
- * MySQL 连接池
+ * MySQL 连接池.
  *
  * 基于 Illuminate\Database（Eloquent）的底层 PDO 连接实现。
  * 每个 Workerman Worker 进程独立持有一个池实例，连接不跨进程共享。
@@ -31,8 +24,8 @@ use SplStack;
  */
 class MysqlPool implements PoolInterface
 {
-    /** @var SplStack<PDO> 空闲 PDO 连接栈 */
-    private SplStack $idle;
+    /** @var \SplStack<\PDO> 空闲 PDO 连接栈 */
+    private \SplStack $idle;
 
     /** @var int 当前活跃（借出）连接数 */
     private int $active = 0;
@@ -59,22 +52,22 @@ class MysqlPool implements PoolInterface
     private bool $closed = false;
 
     /**
-     * 构造函数
+     * 构造函数.
      *
      * @param array<string, mixed> $config 连接池配置，示例：
-     *   [
-     *     'host'                 => '127.0.0.1',
-     *     'port'                 => 3306,
-     *     'database'             => 'fssoa',
-     *     'username'             => 'root',
-     *     'password'             => 'root',
-     *     'charset'              => 'utf8mb4',
-     *     'min_connections'      => 2,
-     *     'max_connections'      => 10,
-     *     'borrow_timeout'       => 3.0,
-     *     'retry_attempts'       => 3,
-     *     'reconnect_on_failure' => true,
-     *   ]
+     *                                     [
+     *                                     'host'                 => '127.0.0.1',
+     *                                     'port'                 => 3306,
+     *                                     'database'             => 'fssoa',
+     *                                     'username'             => 'root',
+     *                                     'password'             => 'root',
+     *                                     'charset'              => 'utf8mb4',
+     *                                     'min_connections'      => 2,
+     *                                     'max_connections'      => 10,
+     *                                     'borrow_timeout'       => 3.0,
+     *                                     'retry_attempts'       => 3,
+     *                                     'reconnect_on_failure' => true,
+     *                                     ]
      */
     public function __construct(private readonly array $config = [])
     {
@@ -93,58 +86,31 @@ class MysqlPool implements PoolInterface
             'charset'  => $config['charset']  ?? 'utf8mb4',
         ];
 
-        $this->idle = new SplStack();
+        $this->idle = new \SplStack();
         $this->warmup();
     }
 
-    /**
-     * 预热：建立最小连接数
-     */
-    private function warmup(): void
-    {
-        for ($i = 0; $i < $this->minConnections; $i++) {
-            try {
-                $this->idle->push($this->createConnection());
-            } catch (\Throwable $e) {
-                $this->log(sprintf(
-                    '[MysqlPool] 预热连接 #%d 失败：%s',
-                    $i + 1,
-                    $e->getMessage()
-                ));
-            }
-        }
-
-        $this->log(sprintf(
-            '[MysqlPool] 预热完成，空闲连接数：%d / %d',
-            $this->idle->count(),
-            $this->minConnections
-        ));
-    }
-
-    /**
-     * {@inheritDoc}
- */
     public function borrow(): object
     {
         if ($this->closed) {
-            throw new RuntimeException('MySQL 连接池已关闭，无法借出连接。');
+            throw new \RuntimeException('MySQL 连接池已关闭，无法借出连接。');
         }
 
         $deadline = microtime(true) + $this->borrowTimeout;
 
         while (true) {
             // 1. 优先取空闲连接
-            if (!$this->idle->isEmpty()) {
+            if (! $this->idle->isEmpty()) {
                 $pdo = $this->idle->pop();
                 if ($this->healthCheck($pdo)) {
-                    $this->active++;
+                    ++$this->active;
                     return $pdo;
                 }
                 // 不健康：尝试重连或丢弃
                 if ($this->reconnectOnFailure) {
                     try {
                         $pdo = $this->createConnection();
-                        $this->active++;
+                        ++$this->active;
                         return $pdo;
                     } catch (\Throwable $e) {
                         $this->log('[MysqlPool] 重连失败：' . $e->getMessage());
@@ -158,13 +124,13 @@ class MysqlPool implements PoolInterface
             $total = $this->active + $this->idle->count();
             if ($total < $this->maxConnections) {
                 $pdo = $this->createConnectionWithRetry();
-                $this->active++;
+                ++$this->active;
                 return $pdo;
             }
 
             // 3. 池已满，等待或超时
             if (microtime(true) >= $deadline) {
-                throw new RuntimeException(sprintf(
+                throw new \RuntimeException(sprintf(
                     'MySQL 连接池已耗尽（最大 %d），等待超时（%.1f 秒）。',
                     $this->maxConnections,
                     $this->borrowTimeout
@@ -175,12 +141,9 @@ class MysqlPool implements PoolInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
- */
     public function release(object $connection): void
     {
-        if (!$connection instanceof PDO) {
+        if (! $connection instanceof \PDO) {
             return;
         }
 
@@ -216,27 +179,23 @@ class MysqlPool implements PoolInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
- */
     public function healthCheck(object $connection): bool
     {
-        if (!$connection instanceof PDO) {
+        if (! $connection instanceof \PDO) {
             return false;
         }
 
         try {
             $connection->query('SELECT 1');
             return true;
-        } catch (PDOException) {
+        } catch (\PDOException) {
             return false;
         }
     }
 
     /**
-     * {@inheritDoc}
      * @return array<mixed>
- */
+     */
     public function stats(): array
     {
         return [
@@ -247,14 +206,11 @@ class MysqlPool implements PoolInterface
         ];
     }
 
-    /**
-     * {@inheritDoc}
- */
     public function close(): void
     {
         $this->closed = true;
 
-        while (!$this->idle->isEmpty()) {
+        while (! $this->idle->isEmpty()) {
             $this->idle->pop(); // PDO 无显式 close，置 null 即可
         }
 
@@ -262,16 +218,39 @@ class MysqlPool implements PoolInterface
     }
 
     /**
-     * 创建 PDO 连接（带重试）
-     *
-     * @return PDO
-     * @throws RuntimeException
+     * 预热：建立最小连接数.
      */
-    private function createConnectionWithRetry(): PDO
+    private function warmup(): void
+    {
+        for ($i = 0; $i < $this->minConnections; ++$i) {
+            try {
+                $this->idle->push($this->createConnection());
+            } catch (\Throwable $e) {
+                $this->log(sprintf(
+                    '[MysqlPool] 预热连接 #%d 失败：%s',
+                    $i + 1,
+                    $e->getMessage()
+                ));
+            }
+        }
+
+        $this->log(sprintf(
+            '[MysqlPool] 预热完成，空闲连接数：%d / %d',
+            $this->idle->count(),
+            $this->minConnections
+        ));
+    }
+
+    /**
+     * 创建 PDO 连接（带重试）.
+     *
+     * @throws \RuntimeException
+     */
+    private function createConnectionWithRetry(): \PDO
     {
         $lastException = null;
 
-        for ($attempt = 1; $attempt <= $this->retryAttempts; $attempt++) {
+        for ($attempt = 1; $attempt <= $this->retryAttempts; ++$attempt) {
             try {
                 return $this->createConnection();
             } catch (\Throwable $e) {
@@ -288,7 +267,7 @@ class MysqlPool implements PoolInterface
             }
         }
 
-        throw new RuntimeException(
+        throw new \RuntimeException(
             sprintf('MySQL 连接创建失败，已重试 %d 次：%s', $this->retryAttempts, $lastException?->getMessage()),
             0,
             $lastException
@@ -296,12 +275,11 @@ class MysqlPool implements PoolInterface
     }
 
     /**
-     * 创建原始 PDO 连接
+     * 创建原始 PDO 连接.
      *
-     * @return PDO
-     * @throws PDOException
+     * @throws \PDOException
      */
-    private function createConnection(): PDO
+    private function createConnection(): \PDO
     {
         $dsn = sprintf(
             'mysql:host=%s;port=%d;dbname=%s;charset=%s',
@@ -311,23 +289,21 @@ class MysqlPool implements PoolInterface
             $this->dsn['charset']
         );
 
-        $pdo = new PDO($dsn, $this->dsn['username'], $this->dsn['password'], [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_PERSISTENT         => false, // 常驻进程不使用持久连接
-            PDO::ATTR_EMULATE_PREPARES   => false,
-            PDO::MYSQL_ATTR_INIT_COMMAND => sprintf(
+        return new \PDO($dsn, $this->dsn['username'], $this->dsn['password'], [
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_PERSISTENT         => false, // 常驻进程不使用持久连接
+            \PDO::ATTR_EMULATE_PREPARES   => false,
+            \PDO::MYSQL_ATTR_INIT_COMMAND => sprintf(
                 "SET NAMES '%s' COLLATE '%s_unicode_ci'",
                 $this->dsn['charset'],
                 $this->dsn['charset']
             ),
         ]);
-
-        return $pdo;
     }
 
     /**
-     * 写日志
+     * 写日志.
      */
     private function log(string $message): void
     {

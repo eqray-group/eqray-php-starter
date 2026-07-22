@@ -16,9 +16,9 @@ return [
 
     'refresh_ttl' => 86400, // 刷新令牌有效期：24 小时
 
-    'audience' => 'FssPhp.Inc',
+    'audience' => 'eqrayphp.Inc',
 
-    'issuer' => 'FssPhp',
+    'issuer' => 'eqrayphp',
 
     'blacklist_enabled' => true,
 

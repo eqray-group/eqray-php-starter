@@ -136,14 +136,14 @@
 
   const projectList = ref<ProjectItem[]>([
     {
-      name: 'FSSPHP',
+      name: 'eqrayphp',
       url: 'https://gitee.com/fsscms/NovaFrame',
       desc: '企业级php框架，使用workerman，symfony框架，作为基座，可扩展性高。',
       mine: true
     },
     {
-      name: 'FSSADMIN',
-      url: 'https://gitee.com/fsscms/FssAdmin',
+      name: 'eqrayadmin',
+      url: 'https://gitee.com/fsscms/eqrayadmin',
       desc: '企业级Saas后台管理系统，使用 Vue3、TypeScript、ElementPlus 技术栈，支持多租户。',
       mine: true
     },
