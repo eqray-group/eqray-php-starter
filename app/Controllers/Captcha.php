@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of eqrayphp.
- *
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Controllers;
@@ -15,16 +15,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class Captcha
 {
-	
     public function captchaImage(Request $request): Response
     {
-		$CaptchaImage =\Framework\Utils\Captcha::base64();
-		
-		$imgsrc = $CaptchaImage['base64'];
-		
-		return new Response ( "<img src='{$imgsrc}'>" );
+        $CaptchaImage =CCaptcha::base64();
 
+        $imgsrc = $CaptchaImage['base64'];
+
+        return new Response("<img src='{$imgsrc}'>");
     }
-	
-
 }

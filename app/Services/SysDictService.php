@@ -3,44 +3,38 @@
 declare(strict_types=1);
 
 /**
- * 数据字典服务
- *
- * @package App\Services
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
 
-use App\Models\SysDictType;
-use App\Models\SysDictData;
-use App\Dao\SysDictTypeDao;
 use App\Dao\SysDictDataDao;
+use App\Dao\SysDictTypeDao;
+use App\Models\SysDictData;
+use App\Models\SysDictType;
 use Framework\Basic\BaseService;
-
 
 /**
  * SysDictService 数据字典服务
-  * @extends BaseService<SysDictTypeDao>
+ * @extends BaseService<SysDictTypeDao>
  */
 class SysDictService extends BaseService
 {
     /**
-     * 字典类型DAO
-     * @var SysDictTypeDao
+     * 字典类型DAO.
      * @return mixed
      */
     protected SysDictTypeDao $dictTypeDao;
 
     /**
-     * 字典数据DAO
-     * @var SysDictDataDao
+     * 字典数据DAO.
      * @return mixed
      */
     protected SysDictDataDao $dictDataDao;
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
@@ -53,17 +47,17 @@ class SysDictService extends BaseService
     // ==================== 字典类型管理 ====================
 
     /**
-     * 获取字典类型列表
+     * 获取字典类型列表.
      *
-     * @param array<array-key, mixed> $params 查询参数
+     * @param  array<array-key, mixed> $params 查询参数
      * @return array<array-key, mixed>
      */
     public function getTypeList(array $params): array
     {
-        $page  = (int)($params['page'] ?? 1);
-        $limit = (int)($params['limit'] ?? 20);
-        $name  = $params['name'] ?? '';
-        $code  = $params['code'] ?? '';
+        $page   = (int) ($params['page'] ?? 1);
+        $limit  = (int) ($params['limit'] ?? 20);
+        $name   = $params['name']   ?? '';
+        $code   = $params['code']   ?? '';
         $status = $params['status'] ?? '';
 
         $query = SysDictType::query();
@@ -77,7 +71,7 @@ class SysDictService extends BaseService
         }
 
         if ($status !== '') {
-            $query->where('status', (int)$status);
+            $query->where('status', (int) $status);
         }
 
         $total = $query->count();
@@ -96,10 +90,10 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 获取字典类型详情
+     * 获取字典类型详情.
      *
-     * @param int $id 字典类型ID
-     * @return array<array-key, mixed>|null
+     * @param  int                          $id 字典类型ID
+     * @return null|array<array-key, mixed>
      */
     public function getTypeDetail(int $id): ?array
     {
@@ -108,11 +102,10 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 创建字典类型
+     * 创建字典类型.
      *
      * @param array<array-key, mixed> $data     数据
-     * @param int   $operator 操作人
-     * @return SysDictType|null
+     * @param int                     $operator 操作人
      */
     public function createType(array $data, int $operator = 0): ?SysDictType
     {
@@ -131,17 +124,16 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 更新字典类型
+     * 更新字典类型.
      *
-     * @param int   $id       字典类型ID
+     * @param int                     $id       字典类型ID
      * @param array<array-key, mixed> $data     数据
-     * @param int   $operator 操作人
-     * @return bool
+     * @param int                     $operator 操作人
      */
     public function updateType(int $id, array $data, int $operator = 0): bool
     {
         $dictType = SysDictType::find($id);
-        if (!$dictType) {
+        if (! $dictType) {
             throw new \Exception('字典类型不存在');
         }
 
@@ -162,15 +154,14 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 删除字典类型
+     * 删除字典类型.
      *
      * @param int $id 字典类型ID
-     * @return bool
      */
     public function deleteType(int|string $id): bool
     {
         $dictType = SysDictType::find($id);
-        if (!$dictType) {
+        if (! $dictType) {
             return false;
         }
 
@@ -192,17 +183,16 @@ class SysDictService extends BaseService
      *
      * @param int $id     字典类型ID
      * @param int $status 状态
-     * @return bool
      */
     public function updateTypeStatus(int $id, int $status): bool
     {
         $dictType = SysDictType::find($id);
-        if (!$dictType) {
+        if (! $dictType) {
             return false;
         }
 
         $dictType->status = $status;
-        $result = $dictType->save();
+        $result           = $dictType->save();
 
         $this->clearDictCache($dictType->code);
 
@@ -212,29 +202,29 @@ class SysDictService extends BaseService
     // ==================== 字典数据管理 ====================
 
     /**
-     * 获取字典数据列表
+     * 获取字典数据列表.
      *
      * @param array $params 查询参数
-     * @return array
-    /**
-     * 获取字典数据列表
      *
-     * @param array<array-key, mixed> $params
+     * @param  array<array-key, mixed> $params
+     * @return array
+     *                                 /**
+     *                                 获取字典数据列表
      * @return array<array-key, mixed>
      */
     public function getDataList(array $params): array
     {
-        $page   = (int)($params['page'] ?? 1);
-        $limit  = (int)($params['limit'] ?? 20);
+        $page   = (int) ($params['page'] ?? 1);
+        $limit  = (int) ($params['limit'] ?? 20);
         $typeId = $params['type_id'] ?? '';
-        $label  = $params['label'] ?? '';
-        $value  = $params['value'] ?? '';
-        $status = $params['status'] ?? '';
+        $label  = $params['label']   ?? '';
+        $value  = $params['value']   ?? '';
+        $status = $params['status']  ?? '';
 
         $query = SysDictData::query();
 
         if ($typeId !== '') {
-            $query->where('type_id', (int)$typeId);
+            $query->where('type_id', (int) $typeId);
         }
 
         if ($label !== '') {
@@ -246,7 +236,7 @@ class SysDictService extends BaseService
         }
 
         if ($status !== '') {
-            $query->where('status', (int)$status);
+            $query->where('status', (int) $status);
         }
 
         $total = $query->count();
@@ -265,10 +255,10 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 获取字典数据详情
+     * 获取字典数据详情.
      *
-     * @param int $id 字典数据ID
-     * @return array<array-key, mixed>|null
+     * @param  int                          $id 字典数据ID
+     * @return null|array<array-key, mixed>
      */
     public function getDataDetail(int $id): ?array
     {
@@ -277,11 +267,10 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 创建字典数据
+     * 创建字典数据.
      *
      * @param array<array-key, mixed> $data
-     * @param int   $operator 操作人
-     * @return SysDictData|null
+     * @param int                     $operator 操作人
      */
     public function createData(array $data, int $operator = 0): ?SysDictData
     {
@@ -300,17 +289,16 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 更新字典数据
+     * 更新字典数据.
      *
-     * @param int   $id       字典数据ID
+     * @param int                     $id       字典数据ID
      * @param array<array-key, mixed> $data
-     * @param int   $operator 操作人
-     * @return bool
+     * @param int                     $operator 操作人
      */
     public function updateData(int $id, array $data, int $operator = 0): bool
     {
         $dictData = SysDictData::find($id);
-        if (!$dictData) {
+        if (! $dictData) {
             throw new \Exception('字典数据不存在');
         }
 
@@ -328,32 +316,31 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 批量删除字典数据
+     * 批量删除字典数据.
      *
-     * @param array<array-key, mixed> $ids 字典数据ID列表
-     * @return int 删除数量
+     * @param  array<array-key, mixed> $ids 字典数据ID列表
+     * @return int                     删除数量
      */
     public function batchDeleteData(array $ids): int
     {
         $count = 0;
         foreach ($ids as $id) {
             if ($this->deleteData($id)) {
-                $count++;
+                ++$count;
             }
         }
         return $count;
     }
 
     /**
-     * 删除字典数据
+     * 删除字典数据.
      *
      * @param int $id 字典数据ID
-     * @return bool
      */
     public function deleteData(int|string $id): bool
     {
         $dictData = SysDictData::find($id);
-        if (!$dictData) {
+        if (! $dictData) {
             return false;
         }
 
@@ -374,17 +361,16 @@ class SysDictService extends BaseService
      *
      * @param int $id     字典数据ID
      * @param int $status 状态
-     * @return bool
      */
     public function updateDataStatus(int $id, int $status): bool
     {
         $dictData = SysDictData::find($id);
-        if (!$dictData) {
+        if (! $dictData) {
             return false;
         }
 
         $dictData->status = $status;
-        $result = $dictData->save();
+        $result           = $dictData->save();
 
         // 清除缓存
         $dictType = SysDictType::find($dictData->type_id);
@@ -398,15 +384,15 @@ class SysDictService extends BaseService
     // ==================== 字典获取 ====================
 
     /**
-     * 根据字典编码获取字典数据
+     * 根据字典编码获取字典数据.
      *
-     * @param string $dictCode 字典编码
+     * @param  string                  $dictCode 字典编码
      * @return array<array-key, mixed>
      */
     public function getDictDataByCode(string $dictCode): array
     {
         $cacheKey = "dict:{$dictCode}";
-        $cached = app('cache')->get($cacheKey);
+        $cached   = app('cache')->get($cacheKey);
 
         if ($cached !== null) {
             return $cached;
@@ -419,11 +405,10 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 根据字典编码获取字典标签
+     * 根据字典编码获取字典标签.
      *
      * @param string $dictCode  字典编码
      * @param string $dictValue 字典值
-     * @return string
      */
     public function getDictLabel(string $dictCode, string $dictValue): string
     {
@@ -439,18 +424,7 @@ class SysDictService extends BaseService
     }
 
     /**
-     * 清除字典缓存
-     *
-     * @param string $dictCode 字典编码
-     * @return void
-     */
-    protected function clearDictCache(string $dictCode): void
-    {
-        app('cache')->delete("dict:{$dictCode}");
-    }
-
-    /**
-     * 获取所有字典数据
+     * 获取所有字典数据.
      *
      * @return array<array-key, mixed>
      */
@@ -486,5 +460,15 @@ class SysDictService extends BaseService
         }
 
         return $result;
+    }
+
+    /**
+     * 清除字典缓存.
+     *
+     * @param string $dictCode 字典编码
+     */
+    protected function clearDictCache(string $dictCode): void
+    {
+        app('cache')->delete("dict:{$dictCode}");
     }
 }

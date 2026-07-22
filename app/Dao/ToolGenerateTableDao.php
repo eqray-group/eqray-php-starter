@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 代码生成业务表 DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-29
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -17,30 +14,25 @@ use Framework\Basic\BaseDao;
 
 class ToolGenerateTableDao extends BaseDao
 {
-    protected function setModel(): string
-    {
-        return ToolGenerateTable::class;
-    }
-
     /**
-     * 分页获取代码生成表列表
+     * 分页获取代码生成表列表.
      *
-     * @param array<array-key, mixed> $params 查询参数（table_name/source/page/limit）
+     * @param  array<array-key, mixed> $params 查询参数（table_name/source/page/limit）
      * @return array<array-key, mixed> [list, total]
      */
     public function getPageList(array $params = []): array
     {
         $tableName = $params['table_name'] ?? '';
-        $source    = $params['source'] ?? '';
-        $page      = max(1, (int)($params['page'] ?? 1));
-        $limit     = min(100, max(1, (int)($params['limit'] ?? 15)));
+        $source    = $params['source']     ?? '';
+        $page      = max(1, (int) ($params['page'] ?? 1));
+        $limit     = min(100, max(1, (int) ($params['limit'] ?? 15)));
 
         $model = ToolGenerateTable::query();
 
-        if (!empty($tableName)) {
+        if (! empty($tableName)) {
             $model->where('table_name', 'like', "%{$tableName}%");
         }
-        if (!empty($source)) {
+        if (! empty($source)) {
             $model->where('source', $source);
         }
 
@@ -54,10 +46,7 @@ class ToolGenerateTableDao extends BaseDao
     }
 
     /**
-     * 根据ID查询记录（含软删除判断）
-     *
-     * @param int $id
-     * @return ToolGenerateTable|null
+     * 根据ID查询记录（含软删除判断）.
      */
     public function findById(int $id): ?ToolGenerateTable
     {
@@ -65,10 +54,10 @@ class ToolGenerateTableDao extends BaseDao
     }
 
     /**
-     * 批量删除（软删除）
+     * 批量删除（软删除）.
      *
-     * @param array<array-key, mixed> $ids
-     * @return int 删除数量
+     * @param  array<array-key, mixed> $ids
+     * @return int                     删除数量
      */
     public function batchDeleteByIds(array $ids): int
     {
@@ -76,18 +65,19 @@ class ToolGenerateTableDao extends BaseDao
     }
 
     /**
-     * 检查表名是否已装载
-     *
-     * @param string $tableName
-     * @param string $source
-     * @return bool
+     * 检查表名是否已装载.
      */
     public function isTableLoaded(string $tableName, string $source = ''): bool
     {
         $query = ToolGenerateTable::query()->where('table_name', $tableName);
-        if (!empty($source)) {
+        if (! empty($source)) {
             $query->where('source', $source);
         }
         return $query->exists();
+    }
+
+    protected function setModel(): string
+    {
+        return ToolGenerateTable::class;
     }
 }

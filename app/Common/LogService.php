@@ -2,12 +2,18 @@
 
 declare(strict_types=1);
 
-// App/Common/LogService.php#
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Common;
 
-class LogService {
-    public function info(string $msg): mixed {
-        //dump( "[LOG]: $msg <br>");
+class LogService
+{
+    public function info(string $msg): mixed
+    {
+        // dump( "[LOG]: $msg <br>");
         return null;
     }
 }

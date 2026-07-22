@@ -3,26 +3,24 @@
 declare(strict_types=1);
 
 /**
- * Casbin 适配器
- *
- * @package App\Services\Casbin
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services\Casbin;
 
+use Casbin\Exceptions\InvalidFilterTypeException;
 use Casbin\Model\Model;
 use Casbin\Persist\Adapter;
 use Casbin\Persist\AdapterHelper;
-use Casbin\Persist\UpdatableAdapter;
+use Casbin\Persist\Adapters\Filter;
 use Casbin\Persist\BatchAdapter;
 use Casbin\Persist\FilteredAdapter;
-use Casbin\Persist\Adapters\Filter;
-use Casbin\Exceptions\InvalidFilterTypeException;
+use Casbin\Persist\UpdatableAdapter;
+use Illuminate\Database\Query\Builder;
 
 /**
- * DatabaseAdapter Casbin 数据库适配器
+ * DatabaseAdapter Casbin 数据库适配器.
  *
  * 职责范围：
  * - 持久层适配器，负责 Casbin 策略规则的数据库存储和加载
@@ -35,70 +33,50 @@ use Casbin\Exceptions\InvalidFilterTypeException;
  * - BatchAdapter: 批量策略操作
  * - FilteredAdapter: 过滤式策略加载
  *
- * @package App\Services\Casbin
- * @author  Genie
  * @date    2026-03-12
  */
 class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, FilteredAdapter
 {
     use AdapterHelper;
+
     protected const MAX_RULE_COLUMNS = 6;
 
     /**
-     * 标记当前策略是否经过过滤
-     *
-     * @var bool
-     * @return mixed
-     */
-    private bool $filtered = false;
-
-    /**
-     * 表名
-     * @var string
+     * 表名.
      * @return mixed
      */
     protected string $tableName;
 
     /**
-     * 数据库连接
-     * @var string|null
+     * 数据库连接.
      * @return mixed
      */
     protected ?string $connection;
 
     /**
-     * 构造函数
+     * 标记当前策略是否经过过滤.
      *
-     * @param string      $tableName  表名
-     * @param string|null $connection 数据库连接
+     * @return mixed
+     */
+    private bool $filtered = false;
+
+    /**
+     * 构造函数.
+     *
+     * @param  string      $tableName  表名
+     * @param  null|string $connection 数据库连接
      * @return mixed
      */
     public function __construct(string $tableName = 'casbin_rule', ?string $connection = null)
     {
-        $this->tableName = $tableName;
+        $this->tableName  = $tableName;
         $this->connection = $connection;
     }
 
     /**
-     * 获取数据库查询构建器
-     *
-     * @return \Illuminate\Database\Query\Builder
-     */
-    protected function getQuery(): \Illuminate\Database\Query\Builder
-    {
-        if ($this->connection !== null && $this->connection !== '') {
-            $capsule = app('db')->getDriver()->getCapsule();
-            return $capsule->getConnection($this->connection)->table($this->tableName);
-        }
-
-        return app('db')->table($this->tableName);
-    }
-
-    /**
-     * 加载所有策略规则
+     * 加载所有策略规则.
      *
      * @param Model $model 模型
-     * @return void
      */
     public function loadPolicy(Model $model): void
     {
@@ -113,10 +91,9 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 保存所有策略规则
+     * 保存所有策略规则.
      *
      * @param Model $model 模型
-     * @return void
      */
     public function savePolicy(Model $model): void
     {
@@ -138,12 +115,11 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 添加策略规则
+     * 添加策略规则.
      *
-     * @param string $sec  区域
-     * @param string $ptype 策略类型
-     * @param array<array-key, mixed>  $rule  规则
-     * @return void
+     * @param string                  $sec   区域
+     * @param string                  $ptype 策略类型
+     * @param array<array-key, mixed> $rule  规则
      */
     public function addPolicy(string $sec, string $ptype, array $rule): void
     {
@@ -151,12 +127,11 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 移除策略规则
+     * 移除策略规则.
      *
-     * @param string $sec  区域
-     * @param string $ptype 策略类型
-     * @param array<array-key, mixed>  $rule  规则
-     * @return void
+     * @param string                  $sec   区域
+     * @param string                  $ptype 策略类型
+     * @param array<array-key, mixed> $rule  规则
      */
     public function removePolicy(string $sec, string $ptype, array $rule): void
     {
@@ -173,13 +148,12 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 移除过滤后的策略规则
+     * 移除过滤后的策略规则.
      *
-     * @param string $sec   区域
-     * @param string $ptype 策略类型
-     * @param int    $field 字段索引
+     * @param string $sec       区域
+     * @param string $ptype     策略类型
+     * @param int    $field     字段索引
      * @param string ...$values 值
-     * @return void
      */
     public function removeFilteredPolicy(string $sec, string $ptype, int $field, string ...$values): void
     {
@@ -200,14 +174,13 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 批量添加策略规则（BatchAdapter 接口）
+     * 批量添加策略规则（BatchAdapter 接口）.
      *
      * 将多条策略规则一次性插入数据库，提高批量操作效率
      *
      * @param string     $sec   策略段（'p' 或 'g'）
      * @param string     $ptype 策略类型
      * @param string[][] $rules 策略规则二维数组
-     * @return void
      */
     public function addPolicies(string $sec, string $ptype, array $rules): void
     {
@@ -227,7 +200,7 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
             }
 
             // 填充空值
-            for ($i = count($rule); $i < self::MAX_RULE_COLUMNS; $i++) {
+            for ($i = count($rule); $i < self::MAX_RULE_COLUMNS; ++$i) {
                 $data['v' . $i] = '';
             }
 
@@ -235,20 +208,19 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
         }
 
         // 批量插入
-        if (!empty($cols)) {
+        if (! empty($cols)) {
             $this->getQuery()->insert($cols);
         }
     }
 
     /**
-     * 批量移除策略规则（BatchAdapter 接口）
+     * 批量移除策略规则（BatchAdapter 接口）.
      *
      * 使用事务保证批量删除操作的原子性
      *
      * @param string     $sec   策略段（'p' 或 'g'）
      * @param string     $ptype 策略类型
      * @param string[][] $rules 策略规则二维数组
-     * @return void
      */
     public function removePolicies(string $sec, string $ptype, array $rules): void
     {
@@ -260,7 +232,7 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 更新单条策略规则（UpdatableAdapter 接口）
+     * 更新单条策略规则（UpdatableAdapter 接口）.
      *
      * 找到旧规则并将其更新为新规则
      * 包含空值判断避免异常
@@ -269,7 +241,6 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
      * @param string   $ptype     策略类型
      * @param string[] $oldRule   旧策略规则数组
      * @param string[] $newPolicy 新策略规则数组
-     * @return void
      */
     public function updatePolicy(string $sec, string $ptype, array $oldRule, array $newPolicy): void
     {
@@ -300,7 +271,7 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 批量更新策略规则（UpdatableAdapter 接口）
+     * 批量更新策略规则（UpdatableAdapter 接口）.
      *
      * 使用事务保证批量更新操作的原子性
      * 包含边界检查确保新规则数组索引存在
@@ -309,14 +280,13 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
      * @param string     $ptype    策略类型
      * @param string[][] $oldRules 旧策略规则二维数组
      * @param string[][] $newRules 新策略规则二维数组
-     * @return void
      */
     public function updatePolicies(string $sec, string $ptype, array $oldRules, array $newRules): void
     {
         app('db')->transaction(function () use ($sec, $ptype, $oldRules, $newRules) {
             foreach ($oldRules as $i => $oldRule) {
                 // 边界检查：确保新规则数组索引存在
-                if (!isset($newRules[$i])) {
+                if (! isset($newRules[$i])) {
                     continue;
                 }
                 $this->updatePolicy($sec, $ptype, $oldRule, $newRules[$i]);
@@ -325,16 +295,16 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 更新匹配过滤条件的策略规则（UpdatableAdapter 接口）
+     * 更新匹配过滤条件的策略规则（UpdatableAdapter 接口）.
      *
      * 删除匹配过滤条件的旧规则，并添加新的策略规则
      * 使用事务保证操作原子性
      *
-     * @param string   $sec          策略段（'p' 或 'g'）
-     * @param string   $ptype        策略类型
-     * @param array<array-key, mixed>    $newPolicies  新策略规则数组
-     * @param int      $fieldIndex   字段起始索引
-     * @param string   ...$fieldValues 字段值列表
+     * @param  string                  $sec            策略段（'p' 或 'g'）
+     * @param  string                  $ptype          策略类型
+     * @param  array<array-key, mixed> $newPolicies    新策略规则数组
+     * @param  int                     $fieldIndex     字段起始索引
+     * @param  string                  ...$fieldValues 字段值列表
      * @return array<array-key, mixed> 被删除的旧规则数组
      */
     public function updateFilteredPolicies(string $sec, string $ptype, array $newPolicies, int $fieldIndex, string ...$fieldValues): array
@@ -356,60 +326,16 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 获取匹配过滤条件的策略规则（内部辅助方法）
-     *
-     * 根据字段索引和字段值过滤策略规则，返回匹配的规则数组
-     *
-     * @param string $ptype       策略类型
-     * @param int    $fieldIndex  字段起始索引（0-5）
-     * @param array<array-key, mixed>  $fieldValues 字段值数组
-     * @return array<array-key, mixed> 匹配的规则数组
-     */
-    protected function getFilteredPolicies(string $ptype, int $fieldIndex, array $fieldValues): array
-    {
-        $query = $this->getQuery()->where('ptype', $ptype);
-
-        foreach (range(0, self::MAX_RULE_COLUMNS - 1) as $value) {
-            $offset = $value - $fieldIndex;
-            if ($fieldIndex <= $value && $offset < count($fieldValues)) {
-                $fieldValue = $fieldValues[$offset];
-                if ($fieldValue !== '' && !is_null($fieldValue)) {
-                    $query->where('v' . $value, $fieldValue);
-                }
-            }
-        }
-
-        $rows = $query->get();
-        $rules = [];
-
-        foreach ($rows as $row) {
-            $rule = [];
-            for ($i = 0; $i < self::MAX_RULE_COLUMNS; $i++) {
-                $field = 'v' . $i;
-                if (isset($row->$field) && $row->$field !== '') {
-                    $rule[] = (string) $row->$field;
-                }
-            }
-            if (!empty($rule)) {
-                $rules[] = $rule;
-            }
-        }
-
-        return $rules;
-    }
-
-    /**
-     * 加载匹配过滤条件的策略规则（FilteredAdapter 接口）
+     * 加载匹配过滤条件的策略规则（FilteredAdapter 接口）.
      *
      * 根据过滤条件从数据库加载策略规则，支持多种过滤方式：
      * - 字符串：原生 SQL WHERE 条件
      * - Filter 对象：Casbin 标准过滤器
      * - Closure 闭包：自定义过滤逻辑
      *
-     * @param Model $model  Casbin 模型实例
-     * @param mixed $filter 过滤条件（字符串/Filter对象/闭包）
+     * @param  Model                      $model  Casbin 模型实例
+     * @param  mixed                      $filter 过滤条件（字符串/Filter对象/闭包）
      * @throws InvalidFilterTypeException 无效的过滤类型异常
-     * @return void
      */
     public function loadFilteredPolicy(Model $model, $filter): void
     {
@@ -443,7 +369,7 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 判断当前策略是否已过滤（FilteredAdapter 接口）
+     * 判断当前策略是否已过滤（FilteredAdapter 接口）.
      *
      * @return bool 如果策略已过滤返回 true，否则返回 false
      */
@@ -453,10 +379,9 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 设置策略过滤状态（FilteredAdapter 接口）
+     * 设置策略过滤状态（FilteredAdapter 接口）.
      *
      * @param bool $filtered 是否已过滤
-     * @return void
      */
     public function setFiltered(bool $filtered): void
     {
@@ -464,10 +389,65 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 将数据库行转换为策略行
+     * 获取数据库查询构建器.
+     */
+    protected function getQuery(): Builder
+    {
+        if ($this->connection !== null && $this->connection !== '') {
+            $capsule = app('db')->getDriver()->getCapsule();
+            return $capsule->getConnection($this->connection)->table($this->tableName);
+        }
+
+        return app('db')->table($this->tableName);
+    }
+
+    /**
+     * 获取匹配过滤条件的策略规则（内部辅助方法）.
+     *
+     * 根据字段索引和字段值过滤策略规则，返回匹配的规则数组
+     *
+     * @param  string                  $ptype       策略类型
+     * @param  int                     $fieldIndex  字段起始索引（0-5）
+     * @param  array<array-key, mixed> $fieldValues 字段值数组
+     * @return array<array-key, mixed> 匹配的规则数组
+     */
+    protected function getFilteredPolicies(string $ptype, int $fieldIndex, array $fieldValues): array
+    {
+        $query = $this->getQuery()->where('ptype', $ptype);
+
+        foreach (range(0, self::MAX_RULE_COLUMNS - 1) as $value) {
+            $offset = $value - $fieldIndex;
+            if ($fieldIndex <= $value && $offset < count($fieldValues)) {
+                $fieldValue = $fieldValues[$offset];
+                if ($fieldValue !== '' && ! is_null($fieldValue)) {
+                    $query->where('v' . $value, $fieldValue);
+                }
+            }
+        }
+
+        $rows  = $query->get();
+        $rules = [];
+
+        foreach ($rows as $row) {
+            $rule = [];
+            for ($i = 0; $i < self::MAX_RULE_COLUMNS; ++$i) {
+                $field = 'v' . $i;
+                if (isset($row->{$field}) && $row->{$field} !== '') {
+                    $rule[] = (string) $row->{$field};
+                }
+            }
+            if (! empty($rule)) {
+                $rules[] = $rule;
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * 将数据库行转换为策略行.
      *
      * @param object $row 数据库行
-     * @return string
      */
     protected function rowToLine(object $row): string
     {
@@ -477,9 +457,9 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
         }
 
         $values = [];
-        for ($i = 0; $i < self::MAX_RULE_COLUMNS; $i++) {
-            $field = 'v' . $i;
-            $values[$i] = isset($row->$field) ? trim((string) $row->$field) : '';
+        for ($i = 0; $i < self::MAX_RULE_COLUMNS; ++$i) {
+            $field      = 'v' . $i;
+            $values[$i] = isset($row->{$field}) ? trim((string) $row->{$field}) : '';
         }
 
         // p 规则至少应有 sub/obj/act，兼容历史两段规则时补齐 act='*'
@@ -498,7 +478,7 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
         }
 
         $lastIndex = -1;
-        for ($i = self::MAX_RULE_COLUMNS - 1; $i >= 0; $i--) {
+        for ($i = self::MAX_RULE_COLUMNS - 1; $i >= 0; --$i) {
             if ($values[$i] !== '') {
                 $lastIndex = $i;
                 break;
@@ -510,7 +490,7 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
         }
 
         $line = $ptype;
-        for ($i = 0; $i <= $lastIndex; $i++) {
+        for ($i = 0; $i <= $lastIndex; ++$i) {
             $line .= ', ' . $values[$i];
         }
 
@@ -518,11 +498,10 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
     }
 
     /**
-     * 保存策略行
+     * 保存策略行.
      *
-     * @param string $ptype 策略类型
-     * @param array<array-key, mixed>  $rule  规则
-     * @return void
+     * @param string                  $ptype 策略类型
+     * @param array<array-key, mixed> $rule  规则
      */
     protected function savePolicyLine(string $ptype, array $rule): void
     {
@@ -539,7 +518,7 @@ class DatabaseAdapter implements Adapter, UpdatableAdapter, BatchAdapter, Filter
         }
 
         // 填充空值
-        for ($i = count($rule); $i < self::MAX_RULE_COLUMNS; $i++) {
+        for ($i = count($rule); $i < self::MAX_RULE_COLUMNS; ++$i) {
             $data['v' . $i] = '';
         }
 

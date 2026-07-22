@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Services;
 
-use App\Models\SysOperationLog;
 use App\Dao\SysOperationLogDao;
+use App\Models\SysOperationLog;
 use Framework\Basic\BaseService;
 
 /**
@@ -15,35 +20,35 @@ class OperationLogService extends BaseService
 {
     /**
      * 分页查询操作日志
-     * 前端参数：username, ip, service_name, router, create_time(数组[start,end]), orderField, orderType, page, pageSize
+     * 前端参数：username, ip, service_name, router, create_time(数组[start,end]), orderField, orderType, page, pageSize.
+     * @param  array<array-key, mixed> $params
      * @return array<array-key, mixed>
-     * @param array<array-key, mixed> $params
      */
     public function getPageList(array $params): array
     {
-        $page     = max(1, (int)($params['page'] ?? 1));
-        $pageSize = max(1, (int)($params['limit'] ?? 20));
+        $page     = max(1, (int) ($params['page'] ?? 1));
+        $pageSize = max(1, (int) ($params['limit'] ?? 20));
 
         $query = SysOperationLog::query();
 
-        if (!empty($params['username'])) {
+        if (! empty($params['username'])) {
             $query->where('username', 'like', '%' . $params['username'] . '%');
         }
-        if (!empty($params['ip'])) {
+        if (! empty($params['ip'])) {
             $query->where('ip', 'like', '%' . $params['ip'] . '%');
         }
-        if (!empty($params['service_name'])) {
+        if (! empty($params['service_name'])) {
             $query->where('service_name', 'like', '%' . $params['service_name'] . '%');
         }
-        if (!empty($params['router'])) {
+        if (! empty($params['router'])) {
             $query->where('router', 'like', '%' . $params['router'] . '%');
         }
         // create_time 是 [start, end] 数组
-        if (!empty($params['create_time']) && is_array($params['create_time'])) {
-            if (!empty($params['create_time'][0])) {
+        if (! empty($params['create_time']) && is_array($params['create_time'])) {
+            if (! empty($params['create_time'][0])) {
                 $query->where('create_time', '>=', $params['create_time'][0]);
             }
-            if (!empty($params['create_time'][1])) {
+            if (! empty($params['create_time'][1])) {
                 $query->where('create_time', '<=', $params['create_time'][1]);
             }
         }
@@ -72,7 +77,7 @@ class OperationLogService extends BaseService
     }
 
     /**
-     * 批量删除
+     * 批量删除.
      */
     /**
      * @param array<array-key, mixed> $ids
@@ -83,7 +88,7 @@ class OperationLogService extends BaseService
     }
 
     /**
-     * 记录操作日志
+     * 记录操作日志.
      * @param array<array-key, mixed> $data
      */
     public function record(array $data): SysOperationLog

@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 登录日志中间件
- *
- * @package App\Middlewares
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Middlewares;
@@ -18,20 +15,19 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * LoginLogMiddleware 登录日志中间件
+ * LoginLogMiddleware 登录日志中间件.
  */
 class LoginLogMiddleware
 {
     /**
      * IP地理位置服务
-     * @var IpLocationService
      * @return mixed
      */
     protected IpLocationService $ipLocationService;
 
     /**
-     * 需要记录登录日志的路径
-     * @var array<array-key, mixed>
+     * 需要记录登录日志的路径.
+     * @var    array<array-key, mixed>
      * @return mixed
      */
     protected array $trackedPaths = [
@@ -39,7 +35,7 @@ class LoginLogMiddleware
     ];
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
@@ -52,7 +48,6 @@ class LoginLogMiddleware
      *
      * @param Request  $request 请求对象
      * @param callable $next    下一个处理器
-     * @return Response
      */
     public function handle(Request $request, callable $next): Response
     {
@@ -71,40 +66,39 @@ class LoginLogMiddleware
     }
 
     /**
-     * 记录登录日志
+     * 记录登录日志.
      *
      * @param Request  $request  请求对象
      * @param Response $response 响应对象
-     * @return void
      */
     protected function recordLoginLog(Request $request, Response $response): void
     {
         try {
             $content = json_decode((string) $response->getContent(), true);
-            if (!is_array($content)) {
+            if (! is_array($content)) {
                 $content = [];
             }
 
-            $code = (int)($content['code'] ?? $response->getStatusCode());
+            $code    = (int) ($content['code'] ?? $response->getStatusCode());
             $success = in_array($code, [0, 200], true);
 
             $username = $this->resolveUsername($request, $content);
-            $message = (string)($content['message'] ?? ($success ? '登录成功' : '登录失败'));
+            $message  = (string) ($content['message'] ?? ($success ? '登录成功' : '登录失败'));
 
-            $userAgent = $request->headers->get('User-Agent', '');
+            $userAgent  = $request->headers->get('User-Agent', '');
             $clientInfo = $this->parseUserAgent($userAgent);
 
-            $ip = $this->resolveClientIp($request);
+            $ip       = $this->resolveClientIp($request);
             $location = $this->ipLocationService->getLocation($ip);
 
             SysLoginLog::record([
-                'username' => $username !== '' ? $username : '未知用户',
-                'ip' => $ip,
+                'username'    => $username !== '' ? $username : '未知用户',
+                'ip'          => $ip,
                 'ip_location' => $location,
-                'os' => $clientInfo['os'],
-                'browser' => $clientInfo['browser'],
-                'status' => $success ? SysLoginLog::STATUS_SUCCESS : SysLoginLog::STATUS_FAIL,
-                'message' => $message,
+                'os'          => $clientInfo['os'],
+                'browser'     => $clientInfo['browser'],
+                'status'      => $success ? SysLoginLog::STATUS_SUCCESS : SysLoginLog::STATUS_FAIL,
+                'message'     => $message,
             ]);
         } catch (\Throwable $e) {
             app('log')->error('LoginLogMiddleware recordLoginLog failed', [
@@ -114,15 +108,15 @@ class LoginLogMiddleware
     }
 
     /**
-     * 解析User-Agent
+     * 解析User-Agent.
      *
-     * @param string $userAgent User-Agent字符串
+     * @param  string                  $userAgent User-Agent字符串
      * @return array<array-key, mixed>
      */
     protected function parseUserAgent(string $userAgent): array
     {
         $browser = 'Other';
-        $os = 'Other';
+        $os      = 'Other';
 
         foreach (['Edg', 'Edge', 'Chrome', 'Firefox', 'Safari', 'MSIE', 'Trident'] as $item) {
             if (stripos($userAgent, $item) !== false) {
@@ -146,20 +140,19 @@ class LoginLogMiddleware
 
         return [
             'browser' => $browser,
-            'os' => $os,
+            'os'      => $os,
         ];
     }
 
     /**
-     * 解析请求中的用户名
+     * 解析请求中的用户名.
      *
      * @param array<array-key, mixed> $responseBody 响应体
-     * @return string
      */
     protected function resolveUsername(Request $request, array $responseBody): string
     {
         $requestBody = $this->extractRequestBody($request);
-        $username = (string)($requestBody['username'] ?? '');
+        $username    = (string) ($requestBody['username'] ?? '');
         if ($username !== '') {
             return $username;
         }
@@ -169,14 +162,14 @@ class LoginLogMiddleware
     }
 
     /**
-     * 提取请求体内容
+     * 提取请求体内容.
      *
-     * @param Request $request 请求对象
+     * @param  Request                 $request 请求对象
      * @return array<array-key, mixed>
      */
     protected function extractRequestBody(Request $request): array
     {
-        $body = [];
+        $body    = [];
         $content = $request->getContent();
         if ($content !== '') {
             $decoded = json_decode($content, true);

@@ -245,7 +245,7 @@ class BaseLaORMModel extends Model
      */
     public function newQuery(): Builder
     {
-        /** @var Builder<static> $query */
+        /* @var Builder<static> $query */
         return parent::newQuery();
     }
 
@@ -538,12 +538,12 @@ class BaseLaORMModel extends Model
                 }
                 $fieldDetails[$fieldName] = [
                     'auto_increment' => $column['auto_increment'],
-                    'type_name'      => $column['type_name'] ?? 'unknown',
+                    'type_name'      => $column['type_name']      ?? 'unknown',
                     'type'           => $column['type']           ?? 'unknown',
-                    'nullable'       => $column['nullable']   ?? null,
-                    'default'        => $column['default']     ?? null,
-                    'length'         => $column['length']       ?? null,
-                    'comment'        => $column['comment']     ?? null,
+                    'nullable'       => $column['nullable']       ?? null,
+                    'default'        => $column['default']        ?? null,
+                    'length'         => $column['length']         ?? null,
+                    'comment'        => $column['comment']        ?? null,
                     'primary'        => in_array($fieldName, $primaryKeys),
                 ];
             }

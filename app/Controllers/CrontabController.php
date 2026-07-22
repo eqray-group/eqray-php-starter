@@ -2,15 +2,20 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Controllers;
 
 use App\Services\ToolCrontabService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Framework\Attributes\Permission;
 
 class CrontabController extends BaseController
 {
@@ -18,11 +23,6 @@ class CrontabController extends BaseController
      * @return mixed
      */
     protected ToolCrontabService $crontabService;
-
-    protected function initialize(): void
-    {
-        $this->crontabService = new ToolCrontabService();
-    }
 
     // ==================== 定时任务管理 ====================
 
@@ -41,10 +41,10 @@ class CrontabController extends BaseController
     #[Permission('tool:crontab:index')]
     public function detail(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
+        $id     = (int) $request->attributes->get('id');
         $result = $this->crontabService->getDetail($id);
 
-        if (!$result) {
+        if (! $result) {
             return $this->fail('任务不存在', 404);
         }
 
@@ -77,8 +77,8 @@ class CrontabController extends BaseController
     #[Permission('tool:crontab:edit')]
     public function update(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
-        $data = $this->parseBody($request);
+        $id       = (int) $request->attributes->get('id');
+        $data     = $this->parseBody($request);
         $operator = $this->getOperatorId($request);
 
         try {
@@ -112,7 +112,7 @@ class CrontabController extends BaseController
     #[Permission('tool:crontab:run')]
     public function run(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
+        $id = (int) $request->attributes->get('id');
 
         try {
             $result = $this->crontabService->run($id);
@@ -152,10 +152,13 @@ class CrontabController extends BaseController
         }
     }
 
+    protected function initialize(): void
+    {
+        $this->crontabService = new ToolCrontabService();
+    }
+
     // ==================== 辅助方法 ====================
 
-    /**
-     */
     protected function getOperatorId(Request $request): int
     {
         $user = $request->attributes->get('user');
@@ -163,15 +166,13 @@ class CrontabController extends BaseController
     }
 
     /**
-     */
-        /**
      * @return array<array-key, mixed>
-         */
+     */
     private function parseBody(Request $request): array
     {
-        $body = [];
+        $body    = [];
         $content = $request->getContent();
-        if (!empty($content)) {
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $body = $decoded;
@@ -186,11 +187,11 @@ class CrontabController extends BaseController
     private function parseIds(Request $request): array
     {
         $body = $this->parseBody($request);
-        if (!empty($body['ids']) && is_array($body['ids'])) {
+        if (! empty($body['ids']) && is_array($body['ids'])) {
             return array_map('intval', $body['ids']);
         }
-        if (!empty($body['id'])) {
-            return [(int)$body['id']];
+        if (! empty($body['id'])) {
+            return [(int) $body['id']];
         }
         return [];
     }

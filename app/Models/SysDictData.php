@@ -3,107 +3,57 @@
 declare(strict_types=1);
 
 /**
- * 数据字典数据模型
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-12
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
 use Framework\Basic\BaseLaORMModel;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * SysDictData 数据字典数据模型
+ * SysDictData 数据字典数据模型.
  *
- * @property int         $id           字典数据ID
- * @property int         $dict_type_id 字典类型ID
- * @property string      $dict_label   字典标签
- * @property string      $dict_value   字典键值
- * @property int         $dict_sort    字典排序
- * @property string      $color        样式颜色
- * @property int         $status       状态
- * @property string      $remark       备注
- * @property int         $created_by   创建人ID
- * @property int         $updated_by   更新人ID
- * @property \DateTime   $created_at   创建时间
- * @property \DateTime   $updated_at   更新时间
- * @property \DateTime   $deleted_at   删除时间
+ * @property int       $id           字典数据ID
+ * @property int       $dict_type_id 字典类型ID
+ * @property string    $dict_label   字典标签
+ * @property string    $dict_value   字典键值
+ * @property int       $dict_sort    字典排序
+ * @property string    $color        样式颜色
+ * @property int       $status       状态
+ * @property string    $remark       备注
+ * @property int       $created_by   创建人ID
+ * @property int       $updated_by   更新人ID
+ * @property \DateTime $created_at   创建时间
+ * @property \DateTime $updated_at   更新时间
+ * @property \DateTime $deleted_at   删除时间
  *
- * @property-read SysDictType $dictType 字典类型
- 
- * @property int $type_id
- * @property mixed $label
- * @property mixed $value
- * @property mixed $code
- * @property int $sort
+ * @property SysDictType $dictType 字典类型
+ *
+ * @property int    $type_id
+ * @property mixed  $label
+ * @property mixed  $value
+ * @property mixed  $code
+ * @property int    $sort
  * @property string $create_time
  * @property string $update_time
  * @property string $delete_time
- * @property mixed $tenant_id
-*/
+ * @property mixed  $tenant_id
+ */
 class SysDictData extends BaseLaORMModel
 {
     use SoftDeletes;
 
     /**
-     * 表名
-     * @var string
-     * @return mixed
+     * 自定义时间戳字段名.
      */
-    protected $table = 'sa_system_dict_data';
+    public const CREATED_AT = 'create_time';
 
-    /**
-     * 主键
-     * @var string
-     * @return mixed
-     */
-    protected $primaryKey = 'id';
-    /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
+    public const UPDATED_AT = 'update_time';
 
-    /**
-     * 可填充字段
-     * @var array<int, string>
-     * @return mixed
-     */
-    protected $fillable = [
-        'type_id',
-        'label',
-        'value',
-        'code',
-        'sort',
-        'color',
-        'status',
-        'remark',
-        'created_by',
-        'updated_by',
-    ];
-
-    /**
-     * 类型转换
-     * @var array<array-key, mixed>
-     * @return mixed
-     */
-    protected $casts = [
-        'id' => 'integer',
-        'type_id' => 'integer',
-        'sort' => 'integer',
-        'status' => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
-        'create_time' => 'datetime',
-        'update_time' => 'datetime',
-        'delete_time' => 'datetime',
-    ];
+    public const DELETED_AT = 'delete_time';
 
     // ==================== 状态常量 ====================
 
@@ -130,10 +80,59 @@ class SysDictData extends BaseLaORMModel
     /** @var string 信息颜色 */
     public const COLOR_INFO = 'info';
 
+    /**
+     * 表名.
+     * @var    string
+     * @return mixed
+     */
+    protected $table = 'sa_system_dict_data';
+
+    /**
+     * 主键.
+     * @var    string
+     * @return mixed
+     */
+    protected $primaryKey = 'id';
+
+    /**
+     * 可填充字段.
+     * @var    array<int, string>
+     * @return mixed
+     */
+    protected $fillable = [
+        'type_id',
+        'label',
+        'value',
+        'code',
+        'sort',
+        'color',
+        'status',
+        'remark',
+        'created_by',
+        'updated_by',
+    ];
+
+    /**
+     * 类型转换.
+     * @var    array<array-key, mixed>
+     * @return mixed
+     */
+    protected $casts = [
+        'id'          => 'integer',
+        'type_id'     => 'integer',
+        'sort'        => 'integer',
+        'status'      => 'integer',
+        'created_by'  => 'integer',
+        'updated_by'  => 'integer',
+        'create_time' => 'datetime',
+        'update_time' => 'datetime',
+        'delete_time' => 'datetime',
+    ];
+
     // ==================== 关联关系 ====================
 
     /**
-     * 所属字典类型
+     * 所属字典类型.
      *
      * @return BelongsTo<SysDictType, $this>
      */
@@ -145,9 +144,7 @@ class SysDictData extends BaseLaORMModel
     // ==================== 业务方法 ====================
 
     /**
-     * 检查是否启用
-     *
-     * @return bool
+     * 检查是否启用.
      */
     public function isEnabled(): bool
     {
@@ -155,7 +152,7 @@ class SysDictData extends BaseLaORMModel
     }
 
     /**
-     * 获取可用颜色列表
+     * 获取可用颜色列表.
      *
      * @return array<array-key, mixed>
      */
@@ -165,8 +162,8 @@ class SysDictData extends BaseLaORMModel
             self::COLOR_PRIMARY => '主要(蓝色)',
             self::COLOR_SUCCESS => '成功(绿色)',
             self::COLOR_WARNING => '警告(橙色)',
-            self::COLOR_DANGER => '危险(红色)',
-            self::COLOR_INFO => '信息(灰色)',
+            self::COLOR_DANGER  => '危险(红色)',
+            self::COLOR_INFO    => '信息(灰色)',
         ];
     }
 }

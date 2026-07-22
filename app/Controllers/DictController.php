@@ -3,50 +3,37 @@
 declare(strict_types=1);
 
 /**
- * 数据字典控制器
- *
- * @package App\Controllers
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Controllers;
 
 use App\Services\SysDictService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Framework\Attributes\Permission;
 
 /**
- * DictController 数据字典控制器
+ * DictController 数据字典控制器.
  */
 class DictController extends BaseController
 {
     /**
      * 字典服务
-     * @var SysDictService
      * @return mixed
      */
     protected SysDictService $dictService;
 
-    /**
-     * 初始化
-     */
-    protected function initialize(): void
-    {
-        $this->dictService = new SysDictService();
-    }
-
     // ==================== 字典类型 ====================
 
     /**
-     * 获取字典类型列表
+     * 获取字典类型列表.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/type/list', methods: ['GET'], name: 'dict.type.list')]
     #[Auth(required: true)]
@@ -60,20 +47,19 @@ class DictController extends BaseController
     }
 
     /**
-     * 获取字典类型详情
+     * 获取字典类型详情.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/type/detail/{id}', methods: ['GET'], name: 'dict.type.detail')]
     #[Auth(required: true)]
     #[Permission('core:dict:index')]
     public function typeDetail(Request $request): BaseJsonResponse
     {
-        $id = $request->attributes->get('id');
+        $id     = $request->attributes->get('id');
         $result = $this->dictService->getTypeDetail($id);
 
-        if (!$result) {
+        if (! $result) {
             return $this->fail('字典类型不存在', 404);
         }
 
@@ -81,10 +67,9 @@ class DictController extends BaseController
     }
 
     /**
-     * 创建字典类型
+     * 创建字典类型.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/type/create', methods: ['POST'], name: 'dict.type.create')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -92,8 +77,8 @@ class DictController extends BaseController
     public function typeCreate(Request $request): BaseJsonResponse
     {
         $jsonBody = [];
-        $content = $request->getContent();
-        if (!empty($content)) {
+        $content  = $request->getContent();
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $jsonBody = $decoded;
@@ -104,7 +89,7 @@ class DictController extends BaseController
         $data = [
             'name'   => $all['name'] ?? '',
             'code'   => $all['code'] ?? '',
-            'status' => (int)($all['status'] ?? 1),
+            'status' => (int) ($all['status'] ?? 1),
             'remark' => $all['remark'] ?? '',
         ];
 
@@ -123,21 +108,20 @@ class DictController extends BaseController
     }
 
     /**
-     * 更新字典类型
+     * 更新字典类型.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/type/update/{id}', methods: ['PUT'], name: 'dict.type.update')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
     #[Permission('core:dict:edit')]
     public function typeUpdate(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
+        $id = (int) $request->attributes->get('id');
 
         $jsonBody = [];
-        $content = $request->getContent();
-        if (!empty($content)) {
+        $content  = $request->getContent();
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $jsonBody = $decoded;
@@ -148,11 +132,11 @@ class DictController extends BaseController
         $data = [
             'name'   => $all['name'] ?? null,
             'code'   => $all['code'] ?? null,
-            'status' => isset($all['status']) && $all['status'] !== '' ? (int)$all['status'] : null,
+            'status' => isset($all['status']) && $all['status'] !== '' ? (int) $all['status'] : null,
             'remark' => $all['remark'] ?? null,
         ];
 
-        $data = array_filter($data, fn($v) => $v !== null);
+        $data = array_filter($data, fn ($v) => $v !== null);
 
         $operator = $this->getOperatorId($request);
 
@@ -165,10 +149,9 @@ class DictController extends BaseController
     }
 
     /**
-     * 删除字典类型
+     * 删除字典类型.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/type/delete/{id}', methods: ['DELETE'], name: 'dict.type.delete')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -188,25 +171,24 @@ class DictController extends BaseController
      * 更新字典类型状态
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/type/status/{id}', methods: ['PUT'], name: 'dict.type.status')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
     #[Permission('core:dict:edit')]
     public function typeUpdateStatus(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
+        $id = (int) $request->attributes->get('id');
 
         $jsonBody = [];
-        $content = $request->getContent();
-        if (!empty($content)) {
+        $content  = $request->getContent();
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $jsonBody = $decoded;
             }
         }
-        $all = array_merge($request->request->all(), $jsonBody);
-        $status = (int)($all['status'] ?? 1);
+        $all    = array_merge($request->request->all(), $jsonBody);
+        $status = (int) ($all['status'] ?? 1);
 
         $result = $this->dictService->updateTypeStatus($id, $status);
 
@@ -218,10 +200,9 @@ class DictController extends BaseController
     // ==================== 字典数据 ====================
 
     /**
-     * 获取字典数据列表
+     * 获取字典数据列表.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/list', methods: ['GET'], name: 'dict.data.list')]
     #[Auth(required: true)]
@@ -235,11 +216,10 @@ class DictController extends BaseController
     }
 
     /**
-     * 根据字典编码获取字典数据
+     * 根据字典编码获取字典数据.
      *
-     * @param Request $request 请求对象
+     * @param Request $request  请求对象
      * @param string  $dictCode 字典编码
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/code/{dictCode}', methods: ['GET'], name: 'dict.data.byCode')]
     #[Permission(['core:dict:index'])]
@@ -251,20 +231,19 @@ class DictController extends BaseController
     }
 
     /**
-     * 获取字典数据详情
+     * 获取字典数据详情.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/detail/{id}', methods: ['GET'], name: 'dict.data.detail')]
     #[Auth(required: true)]
     #[Permission('core:dict:index')]
     public function dataDetail(Request $request): BaseJsonResponse
     {
-        $id = $request->attributes->get('id');
+        $id     = $request->attributes->get('id');
         $result = $this->dictService->getDataDetail($id);
 
-        if (!$result) {
+        if (! $result) {
             return $this->fail('字典数据不存在', 404);
         }
 
@@ -272,10 +251,9 @@ class DictController extends BaseController
     }
 
     /**
-     * 创建字典数据
+     * 创建字典数据.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/create', methods: ['POST'], name: 'dict.data.create')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -283,8 +261,8 @@ class DictController extends BaseController
     public function dataCreate(Request $request): BaseJsonResponse
     {
         $jsonBody = [];
-        $content = $request->getContent();
-        if (!empty($content)) {
+        $content  = $request->getContent();
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $jsonBody = $decoded;
@@ -293,12 +271,12 @@ class DictController extends BaseController
         $all = array_merge($request->query->all(), $request->request->all(), $jsonBody);
 
         $data = [
-            'type_id' => (int)($all['type_id'] ?? 0),
+            'type_id' => (int) ($all['type_id'] ?? 0),
             'label'   => $all['label'] ?? '',
             'value'   => $all['value'] ?? '',
-            'sort'    => (int)($all['sort'] ?? 100),
+            'sort'    => (int) ($all['sort'] ?? 100),
             'color'   => $all['color'] ?? '',
-            'status'  => (int)($all['status'] ?? 1),
+            'status'  => (int) ($all['status'] ?? 1),
             'remark'  => $all['remark'] ?? '',
         ];
 
@@ -321,21 +299,20 @@ class DictController extends BaseController
     }
 
     /**
-     * 更新字典数据
+     * 更新字典数据.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/update/{id}', methods: ['PUT'], name: 'dict.data.update')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
     #[Permission('core:dict:edit')]
     public function dataUpdate(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
+        $id = (int) $request->attributes->get('id');
 
         $jsonBody = [];
-        $content = $request->getContent();
-        if (!empty($content)) {
+        $content  = $request->getContent();
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $jsonBody = $decoded;
@@ -346,13 +323,13 @@ class DictController extends BaseController
         $data = [
             'label'  => $all['label'] ?? null,
             'value'  => $all['value'] ?? null,
-            'sort'   => isset($all['sort']) ? (int)$all['sort'] : null,
+            'sort'   => isset($all['sort']) ? (int) $all['sort'] : null,
             'color'  => $all['color'] ?? null,
-            'status' => isset($all['status']) && $all['status'] !== '' ? (int)$all['status'] : null,
+            'status' => isset($all['status']) && $all['status'] !== '' ? (int) $all['status'] : null,
             'remark' => $all['remark'] ?? null,
         ];
 
-        $data = array_filter($data, fn($v) => $v !== null);
+        $data = array_filter($data, fn ($v) => $v !== null);
 
         $operator = $this->getOperatorId($request);
 
@@ -365,10 +342,9 @@ class DictController extends BaseController
     }
 
     /**
-     * 批量删除字典数据
+     * 批量删除字典数据.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/batchDelete', methods: ['DELETE'], name: 'dict.data.batchDelete')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -389,10 +365,9 @@ class DictController extends BaseController
     }
 
     /**
-     * 删除字典数据
+     * 删除字典数据.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/delete/{id}', methods: ['DELETE'], name: 'dict.data.delete')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -412,25 +387,24 @@ class DictController extends BaseController
      * 更新字典数据状态
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dict/data/status/{id}', methods: ['PUT'], name: 'dict.data.status')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
     #[Permission('core:dict:edit')]
     public function dataUpdateStatus(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
+        $id = (int) $request->attributes->get('id');
 
         $jsonBody = [];
-        $content = $request->getContent();
-        if (!empty($content)) {
+        $content  = $request->getContent();
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $jsonBody = $decoded;
             }
         }
-        $all = array_merge($request->request->all(), $jsonBody);
-        $status = (int)($all['status'] ?? 1);
+        $all    = array_merge($request->request->all(), $jsonBody);
+        $status = (int) ($all['status'] ?? 1);
 
         $result = $this->dictService->updateDataStatus($id, $status);
 
@@ -440,10 +414,17 @@ class DictController extends BaseController
     }
 
     /**
-     * 获取操作人ID
+     * 初始化.
+     */
+    protected function initialize(): void
+    {
+        $this->dictService = new SysDictService();
+    }
+
+    /**
+     * 获取操作人ID.
      *
      * @param Request $request 请求对象
-     * @return int
      */
     protected function getOperatorId(Request $request): int
     {
@@ -453,16 +434,15 @@ class DictController extends BaseController
 
     /**
      * 从请求中解析 ID 列表
-     * 支持 { ids: [1,2] } 或 { id: 1 } 两种格式
+     * 支持 { ids: [1,2] } 或 { id: 1 } 两种格式.
      *
-     * @param Request $request
      * @return array<array-key, mixed>
      */
     private function parseIds(Request $request): array
     {
-        $body = [];
+        $body    = [];
         $content = $request->getContent();
-        if (!empty($content)) {
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $body = $decoded;
@@ -470,13 +450,12 @@ class DictController extends BaseController
         }
         $all = array_merge($request->request->all(), $body);
 
-        if (!empty($all['ids']) && is_array($all['ids'])) {
+        if (! empty($all['ids']) && is_array($all['ids'])) {
             return array_map('intval', $all['ids']);
         }
-        if (!empty($all['id'])) {
-            return [(int)$all['id']];
+        if (! empty($all['id'])) {
+            return [(int) $all['id']];
         }
         return [];
     }
-
 }

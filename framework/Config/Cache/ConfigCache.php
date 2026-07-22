@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: ConfigService.php
- * @Date: 2025-12-3
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Config\Cache;
@@ -19,7 +12,7 @@ namespace Framework\Config\Cache;
 use Framework\Config\Exception\ConfigException;
 
 /**
- * 配置缓存：支持自动刷新机制（基于文件签名）
+ * 配置缓存：支持自动刷新机制（基于文件签名）.
  */
 class ConfigCache
 {
@@ -35,13 +28,13 @@ class ConfigCache
     public function __construct(string $cacheFile, int $ttl = 3600, array $configFiles = [])
     {
         $this->validateCachePath($cacheFile);
-        $this->cacheFile = $cacheFile;
-        $this->ttl = $ttl;
+        $this->cacheFile   = $cacheFile;
+        $this->ttl         = $ttl;
         $this->configFiles = $this->filterValidConfigFiles($configFiles);
     }
 
     /**
-     * 获取缓存内容（支持自动刷新）
+     * 获取缓存内容（支持自动刷新）.
      */
     public function get(): ?array
     {
@@ -56,18 +49,18 @@ class ConfigCache
             return null;
         }
 
-        if (!file_exists($this->cacheFile)) {
+        if (! file_exists($this->cacheFile)) {
             return null;
         }
 
-        if (!$this->isCacheValid()) {
+        if (! $this->isCacheValid()) {
             $this->clear();
             return null;
         }
 
-        $data = @unserialize((string)file_get_contents($this->cacheFile));
+        $data = @unserialize((string) file_get_contents($this->cacheFile));
 
-        if (!is_array($data) || !isset($data['config'], $data['file_signature'])) {
+        if (! is_array($data) || ! isset($data['config'], $data['file_signature'])) {
             $this->clear();
             return null;
         }
@@ -76,7 +69,7 @@ class ConfigCache
     }
 
     /**
-     * 保存缓存（自动刷新模式）
+     * 保存缓存（自动刷新模式）.
      */
     public function set(array $data): void
     {
@@ -95,15 +88,15 @@ class ConfigCache
     }
 
     /**
-     * 删除缓存文件
+     * 删除缓存文件.
      */
     public function clear(): bool
     {
-        return !file_exists($this->cacheFile) || unlink($this->cacheFile);
+        return ! file_exists($this->cacheFile) || unlink($this->cacheFile);
     }
 
     /**
-     * 设置配置文件列表（动态由 ConfigService 调用）
+     * 设置配置文件列表（动态由 ConfigService 调用）.
      */
     public function setConfigFiles(array $files): void
     {
@@ -121,12 +114,12 @@ class ConfigCache
 
     private function hasConfigFilesChanged(): bool
     {
-        if (!file_exists($this->cacheFile)) {
+        if (! file_exists($this->cacheFile)) {
             return false;
         }
 
-        $old = @unserialize((string)file_get_contents($this->cacheFile));
-        if (!is_array($old) || !isset($old['file_signature'])) {
+        $old = @unserialize((string) file_get_contents($this->cacheFile));
+        if (! is_array($old) || ! isset($old['file_signature'])) {
             return true;
         }
 
@@ -138,7 +131,7 @@ class ConfigCache
         $parts = [];
         foreach ($this->configFiles as $file) {
             if (is_file($file)) {
-                $parts[] = "{$file}|" . filemtime($file) . "|" . filesize($file);
+                $parts[] = "{$file}|" . filemtime($file) . '|' . filesize($file);
             } else {
                 $parts[] = "{$file}|0|0";
             }
@@ -153,16 +146,16 @@ class ConfigCache
 
     private function getOriginalCache(): ?array
     {
-        if (!file_exists($this->cacheFile)) {
+        if (! file_exists($this->cacheFile)) {
             return null;
         }
 
-        if (!$this->isCacheValid()) {
+        if (! $this->isCacheValid()) {
             $this->clear();
             return null;
         }
 
-        $data = @unserialize((string)file_get_contents($this->cacheFile));
+        $data = @unserialize((string) file_get_contents($this->cacheFile));
         return is_array($data) ? $data : null;
     }
 
@@ -183,12 +176,12 @@ class ConfigCache
         }
 
         $dir = dirname($this->cacheFile);
-        if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+        if (! is_dir($dir) && ! mkdir($dir, 0755, true)) {
             throw new ConfigException("Failed to create cache directory: {$dir}");
         }
 
         $fp = fopen($this->cacheFile, 'w');
-        if (!$fp) {
+        if (! $fp) {
             throw new ConfigException("Failed to write cache file: {$this->cacheFile}");
         }
 
@@ -208,7 +201,7 @@ class ConfigCache
     private function validateCachePath(string $path): void
     {
         if ($path === '') {
-            throw new ConfigException("Cache file path cannot be empty");
+            throw new ConfigException('Cache file path cannot be empty');
         }
     }
 
@@ -216,7 +209,7 @@ class ConfigCache
     {
         return array_values(array_filter(
             $list,
-            fn($f) => is_string($f) && $f !== ''
+            fn ($f) => is_string($f) && $f !== ''
         ));
     }
 

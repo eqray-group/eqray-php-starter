@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 系统用户DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -23,20 +20,9 @@ use Framework\Basic\BaseDao;
 class SysUserDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysUser::class;
-    }
-
-    /**
-     * 根据用户名查找用户
+     * 根据用户名查找用户.
      *
      * @param string $username 用户名
-     * @return SysUser|null
      */
     public function findByUsername(string $username): ?SysUser
     {
@@ -44,10 +30,9 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 根据手机号查找用户
+     * 根据手机号查找用户.
      *
      * @param string $mobile 手机号
-     * @return SysUser|null
      */
     public function findByMobile(string $mobile): ?SysUser
     {
@@ -55,10 +40,9 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 根据邮箱查找用户
+     * 根据邮箱查找用户.
      *
      * @param string $email 邮箱
-     * @return SysUser|null
      */
     public function findByEmail(string $email): ?SysUser
     {
@@ -66,12 +50,12 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 根据部门ID获取用户列表
+     * 根据部门ID获取用户列表.
      *
-     * @param int   $deptId 部门ID
-     * @param array<array-key, mixed> $where  额外条件
-     * @param int   $page   页码
-     * @param int   $limit  每页数量
+     * @param  int                     $deptId 部门ID
+     * @param  array<array-key, mixed> $where  额外条件
+     * @param  int                     $page   页码
+     * @param  int                     $limit  每页数量
      * @return array<array-key, mixed>
      */
     public function getListByDeptId(int $deptId, array $where = [], int $page = 1, int $limit = 20): array
@@ -81,10 +65,10 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 获取启用的用户列表
+     * 获取启用的用户列表.
      *
-     * @param int $page  页码
-     * @param int $limit 每页数量
+     * @param  int                     $page  页码
+     * @param  int                     $limit 每页数量
      * @return array<array-key, mixed>
      */
     public function getEnabledList(int $page = 1, int $limit = 20): array
@@ -93,11 +77,10 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 检查用户名是否存在
+     * 检查用户名是否存在.
      *
      * @param string $username  用户名
      * @param int    $excludeId 排除的用户ID
-     * @return bool
      */
     public function isUsernameExists(string $username, int $excludeId = 0): bool
     {
@@ -109,11 +92,10 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 检查手机号是否存在
+     * 检查手机号是否存在.
      *
      * @param string $mobile    手机号
      * @param int    $excludeId 排除的用户ID
-     * @return bool
      */
     public function isMobileExists(string $mobile, int $excludeId = 0): bool
     {
@@ -129,7 +111,6 @@ class SysUserDao extends BaseDao
      *
      * @param int $userId 用户ID
      * @param int $status 状态
-     * @return bool
      */
     public function updateStatus(int $userId, int $status): bool
     {
@@ -137,16 +118,15 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 更新最后登录信息
+     * 更新最后登录信息.
      *
      * @param int    $userId 用户ID
      * @param string $ip     登录IP
-     * @return bool
      */
     public function updateLoginInfo(int $userId, string $ip): bool
     {
         return $this->update($userId, [
-            'login_ip' => $ip,
+            'login_ip'   => $ip,
             'login_time' => date('Y-m-d H:i:s'),
         ]);
     }
@@ -156,7 +136,6 @@ class SysUserDao extends BaseDao
      *
      * @param int    $userId   用户ID
      * @param string $password 新密码(明文)
-     * @return bool
      */
     public function resetPassword(int $userId, string $password): bool
     {
@@ -164,10 +143,9 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 获取用户总数
+     * 获取用户总数.
      *
      * @param array<array-key, mixed> $where 条件
-     * @return int
      */
     public function getUserCount(array $where = []): int
     {
@@ -175,13 +153,21 @@ class SysUserDao extends BaseDao
     }
 
     /**
-     * 获取部门下的用户ID列表
+     * 获取部门下的用户ID列表.
      *
-     * @param int $deptId 部门ID
+     * @param  int                     $deptId 部门ID
      * @return array<array-key, mixed>
      */
     public function getUserIdsByDeptId(int $deptId): array
     {
         return $this->getColumn(['dept_id' => $deptId], 'id');
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysUser::class;
     }
 }

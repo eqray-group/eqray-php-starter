@@ -1,11 +1,16 @@
 <?php
+
 /**
  * @desc AdapterInterface 适配器接口
  *
- * 
  * @date 2022/3/9 10:07
  */
 declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace Framework\Storage\Adapter;
 

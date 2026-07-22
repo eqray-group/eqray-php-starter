@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 操作日志中间件
- * 记录所有非白名单的 POST/PUT/PATCH/DELETE 请求
- *
- * @package App\Middlewares
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Middlewares;
@@ -20,15 +18,14 @@ class OperationLogMiddleware
 {
     /**
      * IP地理位置服务
-     * @var IpLocationService
      * @return mixed
      */
     protected IpLocationService $ipLocationService;
-	
+
     /**
-     * 白名单路径前缀（不记录操作日志）
+     * 白名单路径前缀（不记录操作日志）.
      * @return mixed
-     * @var array<array-key, mixed>
+     * @var    array<array-key, mixed>
      */
     protected array $whitelist = [
         '/api/core/login',
@@ -42,14 +39,14 @@ class OperationLogMiddleware
     ];
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
     {
         $this->ipLocationService = new IpLocationService();
     }
-	
+
     public function handle(Request $request, callable $next): Response
     {
         $startTime = microtime(true);
@@ -57,7 +54,7 @@ class OperationLogMiddleware
 
         // 只记录写操作
         $method = strtoupper($request->getMethod());
-        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        if (! in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             return $response;
         }
 
@@ -68,7 +65,7 @@ class OperationLogMiddleware
                 return $response;
             }
         }
-		$duration = round((microtime(true) - $startTime) * 1000, 2);
+        $duration = round((microtime(true) - $startTime) * 1000, 2);
         $this->writeLog($request, $response, $duration);
 
         return $response;
@@ -78,22 +75,22 @@ class OperationLogMiddleware
     {
         try {
             $user      = $request->attributes->get('user', []);
-            
+
             // 当 AuthMiddleware 尚未运行时（例如无 #[Auth] 注解的接口），user 属性为空，
             // 此时从 JWT Token 中提取用户信息作为兜底
             if (empty($user['username']) && empty($user['name'])) {
                 $user = $this->resolveUserFromToken($request);
             }
-            
+
             $userAgent = $request->headers->get('User-Agent', '');
             $ip        = $request->headers->get('CF-Connecting-IP') ?? $request->getClientIp();
-			$location  = $this->ipLocationService->getLocation($ip);
+            $location  = $this->ipLocationService->getLocation($ip);
 
             // 获取请求数据（合并 POST body 和 JSON body）
             $params = $request->request->all();
             if (empty($params)) {
                 $raw = $request->getContent();
-                if (!empty($raw)) {
+                if (! empty($raw)) {
                     $decoded = json_decode($raw, true);
                     $params  = is_array($decoded) ? $decoded : [];
                 }
@@ -124,7 +121,7 @@ class OperationLogMiddleware
                 'ip_location'  => $location,
                 'request_data' => $requestData,
                 'created_by'   => $user['id'] ?? 0,
-				'duration'	   => $duration,
+                'duration'	    => $duration,
             ]);
         } catch (\Throwable $e) {
             // 日志写入失败不影响主流程，开发环境下输出错误
@@ -135,9 +132,8 @@ class OperationLogMiddleware
     }
 
     /**
-     * 从 JWT Token 中解析用户信息（当 AuthMiddleware 尚未注入 user 属性时兜底使用）
+     * 从 JWT Token 中解析用户信息（当 AuthMiddleware 尚未注入 user 属性时兜底使用）.
      *
-     * @param Request $request
      * @return array{username: string, id: int}
      */
     protected function resolveUserFromToken(Request $request): array
@@ -160,10 +156,7 @@ class OperationLogMiddleware
     }
 
     /**
-     * 从请求中提取 access_token（优先 Authorization 头，其次 Cookie）
-     *
-     * @param Request $request
-     * @return string|null
+     * 从请求中提取 access_token（优先 Authorization 头，其次 Cookie）.
      */
     protected function extractAccessToken(Request $request): ?string
     {

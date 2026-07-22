@@ -3,42 +3,44 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-11-24
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Database;
 
-//use Psr\Log\LoggerInterface;
-use InvalidArgumentException;
+// use Psr\Log\LoggerInterface;
 
 /**
- * @method mixed getSchemaBuilder()
- * @method bool statement(string $sql, array<int|string, mixed> $bindings = [])
+ * @method mixed              getSchemaBuilder()
+ * @method bool               statement(string $sql, array<int|string, mixed> $bindings = [])
  * @method array<int, object> select(string $sql, array<int|string, mixed> $bindings = [])
- * @method mixed table(string $table)
+ * @method mixed              table(string $table)
  */
 final class DatabaseFactory implements DatabaseInterface
 {
     private EloquentFactory $driver;
-	
+
     /** @var array<string, mixed> 模型实例缓存池 */
     private array $modelCache = [];
-	
+
     public function __construct(
-        array $config, 
-		protected ?object $logger = null
+        array $config,
+        private ?object $logger = null
     ) {
         $this->driver = new EloquentFactory($config, $logger);
     }
-	
+
+    public function __invoke(string $modelClass): mixed
+    {
+        return $this->driver->make($modelClass);
+    }
+
+    public function __call($method, $parameters)
+    {
+        return $this->driver->{$method}(...$parameters);
+    }
+
     // ========== 获取内部 driver ==========
     public function getDriver(): EloquentFactory
     {
@@ -47,7 +49,7 @@ final class DatabaseFactory implements DatabaseInterface
 
     /**
      * 快速获取 QueryBuilder（工厂应实现 builder()）
-     * 如果底层不支持 builder()，退回 make()
+     * 如果底层不支持 builder()，退回 make().
      */
     public function builder(string $modelClass): mixed
     {
@@ -58,7 +60,7 @@ final class DatabaseFactory implements DatabaseInterface
     }
 
     /**
-     * 直接获取“新模型”实例（非 builder）
+     * 直接获取“新模型”实例（非 builder）.
      */
     public function newModel(string $modelClass): mixed
     {
@@ -89,33 +91,22 @@ final class DatabaseFactory implements DatabaseInterface
         return false;
     }
 
-
-    public function __invoke(string $modelClass): mixed
-    {
-        return $this->driver->make($modelClass);
-    }
-
     /**
-     * 缓存模型实例，避免重复 new Model()
+     * 缓存模型实例，避免重复 new Model().
      */
     public function make(string $modelClass): mixed
     {
         // 表名模式（不是 class），直接跳缓存
-        if (!class_exists($modelClass)) {
+        if (! class_exists($modelClass)) {
             return $this->driver->make($modelClass);
         }
 
         // 模型缓存
-        if (!isset($this->modelCache[$modelClass])) {
+        if (! isset($this->modelCache[$modelClass])) {
             $this->modelCache[$modelClass] = $this->driver->make($modelClass);
         }
 
         // 每次返回 clone，避免污染 query builder
         return $this->modelCache[$modelClass];
-    }
-
-    public function __call($method, $parameters)
-    {
-        return $this->driver->$method(...$parameters);
     }
 }

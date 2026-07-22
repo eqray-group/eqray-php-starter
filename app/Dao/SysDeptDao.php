@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 系统部门DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -23,20 +20,9 @@ use Framework\Basic\BaseDao;
 class SysDeptDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysDept::class;
-    }
-
-    /**
-     * 根据部门编码查找部门
+     * 根据部门编码查找部门.
      *
      * @param string $deptCode 部门编码
-     * @return SysDept|null
      */
     public function findByDeptCode(string $deptCode): ?SysDept
     {
@@ -44,10 +30,10 @@ class SysDeptDao extends BaseDao
     }
 
     /**
-     * 获取启用的部门列表
+     * 获取启用的部门列表.
      *
-     * @param int $page  页码
-     * @param int $limit 每页数量
+     * @param  int                     $page  页码
+     * @param  int                     $limit 每页数量
      * @return array<array-key, mixed>
      */
     public function getEnabledList(int $page = 1, int $limit = 20): array
@@ -56,7 +42,7 @@ class SysDeptDao extends BaseDao
     }
 
     /**
-     * 获取所有启用的部门
+     * 获取所有启用的部门.
      *
      * @return array<array-key, mixed>
      */
@@ -66,9 +52,9 @@ class SysDeptDao extends BaseDao
     }
 
     /**
-     * 获取子部门列表
+     * 获取子部门列表.
      *
-     * @param int $parentId 父部门ID
+     * @param  int                     $parentId 父部门ID
      * @return array<array-key, mixed>
      */
     public function getChildrenByParentId(int $parentId): array
@@ -77,11 +63,10 @@ class SysDeptDao extends BaseDao
     }
 
     /**
-     * 检查部门编码是否存在
+     * 检查部门编码是否存在.
      *
      * @param string $deptCode  部门编码
      * @param int    $excludeId 排除的部门ID
-     * @return bool
      */
     public function isDeptCodeExists(string $deptCode, int $excludeId = 0): bool
     {
@@ -97,7 +82,6 @@ class SysDeptDao extends BaseDao
      *
      * @param int $deptId 部门ID
      * @param int $status 状态
-     * @return bool
      */
     public function updateStatus(int $deptId, int $status): bool
     {
@@ -105,10 +89,9 @@ class SysDeptDao extends BaseDao
     }
 
     /**
-     * 获取部门总数
+     * 获取部门总数.
      *
      * @param array<array-key, mixed> $where 条件
-     * @return int
      */
     public function getDeptCount(array $where = []): int
     {
@@ -116,9 +99,9 @@ class SysDeptDao extends BaseDao
     }
 
     /**
-     * 获取部门ID列表
+     * 获取部门ID列表.
      *
-     * @param array<array-key, mixed> $where 条件
+     * @param  array<array-key, mixed> $where 条件
      * @return array<array-key, mixed>
      */
     public function getDeptIds(array $where = []): array
@@ -127,13 +110,20 @@ class SysDeptDao extends BaseDao
     }
 
     /**
-     * 检查部门是否有子部门
+     * 检查部门是否有子部门.
      *
      * @param int $deptId 部门ID
-     * @return bool
      */
     public function hasChildren(int $deptId): bool
     {
         return $this->be(['parent_id' => $deptId]);
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysDept::class;
     }
 }

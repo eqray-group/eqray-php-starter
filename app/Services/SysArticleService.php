@@ -3,36 +3,32 @@
 declare(strict_types=1);
 
 /**
- * 系统文章服务
- *
- * @package App\Services
- * @author  Genie
- * @date    2026-03-19
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
 
-use App\Models\SysArticle;
 use App\Dao\SysArticleDao;
+use App\Models\SysArticle;
 use Framework\Basic\BaseService;
 
 /**
  * SysArticleService 文章服务
  *
  * 处理文章相关的业务逻辑
-  * @extends BaseService<SysArticleDao>
+ * @extends BaseService<SysArticleDao>
  */
 class SysArticleService extends BaseService
 {
     /**
-     * DAO 实例
-     * @var SysArticleDao
+     * DAO 实例.
      * @return mixed
      */
     protected SysArticleDao $articleDao;
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
@@ -42,26 +38,26 @@ class SysArticleService extends BaseService
     }
 
     /**
-     * 获取文章列表
+     * 获取文章列表.
      *
-     * @param array<array-key, mixed> $params  查询参数
-     * @param int   $page    页码
-     * @param int   $pageSize 每页数量
+     * @param  array<array-key, mixed> $params   查询参数
+     * @param  int                     $page     页码
+     * @param  int                     $pageSize 每页数量
      * @return array<array-key, mixed>
      */
     public function getList(array $params, int $page = 1, int $pageSize = 10): array
     {
         $categoryId = $params['category_id'] ?? '';
-        $title      = $params['title'] ?? '';
-        $author     = $params['author'] ?? '';
-        $status     = $params['status'] ?? '';
-        $isHot      = $params['is_hot'] ?? '';
+        $title      = $params['title']       ?? '';
+        $author     = $params['author']      ?? '';
+        $status     = $params['status']      ?? '';
+        $isHot      = $params['is_hot']      ?? '';
 
         $query = SysArticle::query();
 
         // 分类筛选
         if ($categoryId !== '') {
-            $query->where('category_id', (int)$categoryId);
+            $query->where('category_id', (int) $categoryId);
         }
 
         // 标题模糊搜索
@@ -76,16 +72,16 @@ class SysArticleService extends BaseService
 
         // 状态筛选
         if ($status !== '') {
-            $query->where('status', (int)$status);
+            $query->where('status', (int) $status);
         }
 
         // 热门筛选
         if ($isHot !== '') {
-            $query->where('is_hot', (int)$isHot);
+            $query->where('is_hot', (int) $isHot);
         }
 
         $total = $query->count();
-        $list = $query->orderBy('sort', 'asc')
+        $list  = $query->orderBy('sort', 'asc')
             ->orderBy('create_time', 'desc')
             ->offset(($page - 1) * $pageSize)
             ->limit($pageSize)
@@ -97,24 +93,24 @@ class SysArticleService extends BaseService
         }
 
         return [
-            'list' => $list,
+            'list'  => $list,
             'total' => $total,
-            'page' => $page,
-            'size' => $pageSize,
+            'page'  => $page,
+            'size'  => $pageSize,
         ];
     }
 
     /**
-     * 获取文章详情
+     * 获取文章详情.
      *
-     * @param int $articleId 文章ID
-     * @return array<array-key, mixed>|null
+     * @param  int                          $articleId 文章ID
+     * @return null|array<array-key, mixed>
      */
     public function getDetail(int $articleId): ?array
     {
         $article = SysArticle::find($articleId);
-        
-        if (!$article) {
+
+        if (! $article) {
             return null;
         }
 
@@ -122,12 +118,11 @@ class SysArticleService extends BaseService
     }
 
     /**
-     * 创建文章
+     * 创建文章.
      *
-     * @param array<array-key, mixed> $data     文章数据
-     * @param int   $userId   用户ID
-     * @param int   $deptId   部门ID
-     * @return SysArticle
+     * @param  array<array-key, mixed> $data   文章数据
+     * @param  int                     $userId 用户ID
+     * @param  int                     $deptId 部门ID
      * @throws \Exception
      */
     public function create(array $data, int $userId, int $deptId): SysArticle
@@ -152,31 +147,30 @@ class SysArticleService extends BaseService
         }
 
         // 设置默认值和审计字段
-        $data['dept_id'] = $deptId;
+        $data['dept_id']    = $deptId;
         $data['created_by'] = $userId;
         $data['updated_by'] = $userId;
-        $data['views'] = 0;
-        $data['status'] = $data['status'] ?? SysArticle::STATUS_ENABLED;
-        $data['sort'] = $data['sort'] ?? 100;
-        $data['is_hot'] = $data['is_hot'] ?? SysArticle::IS_HOT_NO;
+        $data['views']      = 0;
+        $data['status']     = $data['status'] ?? SysArticle::STATUS_ENABLED;
+        $data['sort']       = $data['sort']   ?? 100;
+        $data['is_hot']     = $data['is_hot'] ?? SysArticle::IS_HOT_NO;
 
         return SysArticle::create($data);
     }
 
     /**
-     * 更新文章
+     * 更新文章.
      *
-     * @param int   $articleId 文章ID
-     * @param array<array-key, mixed> $data      文章数据
-     * @param int   $userId    用户ID
-     * @return bool
+     * @param  int                     $articleId 文章ID
+     * @param  array<array-key, mixed> $data      文章数据
+     * @param  int                     $userId    用户ID
      * @throws \Exception
      */
     public function update(int $articleId, array $data, int $userId): bool
     {
         $article = SysArticle::find($articleId);
-        
-        if (!$article) {
+
+        if (! $article) {
             throw new \Exception('文章不存在');
         }
 
@@ -191,16 +185,15 @@ class SysArticleService extends BaseService
     }
 
     /**
-     * 删除文章（软删除）
+     * 删除文章（软删除）.
      *
      * @param int $articleId 文章ID
-     * @return bool
      */
     public function delete(int $articleId): bool
     {
         $article = SysArticle::find($articleId);
-        
-        if (!$article) {
+
+        if (! $article) {
             return false;
         }
 
@@ -212,7 +205,6 @@ class SysArticleService extends BaseService
      *
      * @param int $articleId 文章ID
      * @param int $status    状态
-     * @return bool
      */
     public function updateStatus(int $articleId, int $status): bool
     {
@@ -220,12 +212,12 @@ class SysArticleService extends BaseService
     }
 
     /**
-     * 格式化文章数据
+     * 格式化文章数据.
      *
-     * @param SysArticle|array<string, mixed> $article 文章
+     * @param  array<string, mixed>|SysArticle $article 文章
      * @return array<array-key, mixed>
      */
-    protected function formatArticle(SysArticle|array $article): array
+    protected function formatArticle(array|SysArticle $article): array
     {
         if ($article instanceof SysArticle) {
             $data = $article->toArray();
@@ -247,8 +239,8 @@ class SysArticleService extends BaseService
         }
 
         // 状态文本
-        $data['status_text'] = $data['status'] === SysArticle::STATUS_ENABLED ? '启用' : '禁用';
-        $data['is_hot_text'] = $data['is_hot'] === SysArticle::IS_HOT_YES ? '是' : '否';
+        $data['status_text']  = $data['status']  === SysArticle::STATUS_ENABLED ? '启用' : '禁用';
+        $data['is_hot_text']  = $data['is_hot']  === SysArticle::IS_HOT_YES ? '是' : '否';
         $data['is_link_text'] = $data['is_link'] === SysArticle::IS_LINK_YES ? '是' : '否';
 
         return $data;

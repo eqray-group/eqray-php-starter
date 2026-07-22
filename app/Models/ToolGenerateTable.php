@@ -3,46 +3,9 @@
 declare(strict_types=1);
 
 /**
- * 代码生成业务表 Model
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-29
- 
- * @property mixed $table_name
- * @property mixed $table_comment
- * @property mixed $stub
- * @property mixed $template
- * @property mixed $namespace
- * @property mixed $package_name
- * @property mixed $business_name
- * @property mixed $class_name
- * @property mixed $menu_name
- * @property int $belong_menu_id
- * @property mixed $tpl_category
- * @property int $generate_type
- * @property mixed $generate_path
- * @property int $generate_model
- * @property mixed $generate_menus
- * @property int $build_menu
- * @property int $component_type
- * @property mixed $options
- * @property int $form_width
- * @property int $is_full
- * @property mixed $remark
- * @property mixed $source
- * @property int $created_by
- * @property int $updated_by
- * @property int $id
- * @property string $create_time
- * @property string $update_time
- * @property string $delete_time
- * @property mixed $tenant_id
- * @property mixed $status
- * @property mixed $created_at
- * @property mixed $updated_at
- * @property mixed $deleted_at
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
@@ -50,12 +13,42 @@ use Framework\Basic\BaseLaORMModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @package App\Models
  * @property mixed $table_name
  */
 class ToolGenerateTable extends BaseLaORMModel
 {
     use SoftDeletes;
+
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    // ========== 生成类型常量 ==========
+
+    /** 压缩包下载 */
+    public const GENERATE_TYPE_ZIP  = 1;
+
+    /** 生成到模块 */
+    public const GENERATE_TYPE_FILE = 2;
+
+    /** 软删除模型 */
+    public const GENERATE_MODEL_SOFT   = 1;
+
+    /** 非软删除模型 */
+    public const GENERATE_MODEL_NORMAL = 2;
+
+    /** 单表CRUD */
+    public const TPL_CATEGORY_SINGLE = 'single';
+
+    /** 树表CRUD */
+    public const TPL_CATEGORY_TREE   = 'tree';
+
+    /**
+     * @return mixed
+     */
+    public $incrementing = true;
 
     // ========== 基础配置 ==========
 
@@ -67,21 +60,12 @@ class ToolGenerateTable extends BaseLaORMModel
     /**
      * @return mixed
      */
-    public $incrementing = true;
-
-    /**
-     * @return mixed
-     */
     protected $keyType = 'int';
 
     /**
      * @return mixed
      */
     protected $dateFormat = 'Y-m-d H:i:s';
-
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
 
     // ========== 可填字段 ==========
 
@@ -134,27 +118,10 @@ class ToolGenerateTable extends BaseLaORMModel
         'delete_time'    => 'datetime',
     ];
 
-    // ========== 生成类型常量 ==========
-
-    /** 压缩包下载 */
-    const GENERATE_TYPE_ZIP  = 1;
-    /** 生成到模块 */
-    const GENERATE_TYPE_FILE = 2;
-
-    /** 软删除模型 */
-    const GENERATE_MODEL_SOFT   = 1;
-    /** 非软删除模型 */
-    const GENERATE_MODEL_NORMAL = 2;
-
-    /** 单表CRUD */
-    const TPL_CATEGORY_SINGLE = 'single';
-    /** 树表CRUD */
-    const TPL_CATEGORY_TREE   = 'tree';
-
     // ========== 关联关系 ==========
 
     /**
-     * 关联字段配置（一对多）
+     * 关联字段配置（一对多）.
      */
     public function columns(): mixed
     {

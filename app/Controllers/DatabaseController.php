@@ -2,15 +2,20 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Controllers;
 
 use App\Services\DatabaseMaintainService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Framework\Attributes\Permission;
 
 class DatabaseController extends BaseController
 {
@@ -35,7 +40,7 @@ class DatabaseController extends BaseController
     public function tableList(Request $request): BaseJsonResponse
     {
         $params = $request->query->all();
-        $list = $this->databaseService->getTables($params);
+        $list   = $this->databaseService->getTables($params);
         return $this->success(['list' => $list, 'total' => count($list)]);
     }
 
@@ -71,7 +76,7 @@ class DatabaseController extends BaseController
     #[Permission('core:database:edit')]
     public function optimizeTable(Request $request): BaseJsonResponse
     {
-        $data = $this->parseBody($request);
+        $data   = $this->parseBody($request);
         $tables = $data['tables'] ?? [];
 
         if (empty($tables)) {
@@ -80,7 +85,7 @@ class DatabaseController extends BaseController
 
         // 验证表名
         foreach ($tables as $table) {
-            if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+            if (! preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
                 return $this->fail('表名格式不正确: ' . $table);
             }
         }
@@ -94,7 +99,7 @@ class DatabaseController extends BaseController
     #[Permission('core:database:edit')]
     public function cleanFragment(Request $request): BaseJsonResponse
     {
-        $data = $this->parseBody($request);
+        $data   = $this->parseBody($request);
         $tables = $data['tables'] ?? [];
 
         if (empty($tables)) {
@@ -103,7 +108,7 @@ class DatabaseController extends BaseController
 
         // 验证表名
         foreach ($tables as $table) {
-            if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+            if (! preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
                 return $this->fail('表名格式不正确: ' . $table);
             }
         }
@@ -129,21 +134,21 @@ class DatabaseController extends BaseController
     #[Permission('core:recycle:edit')]
     public function destroyRecycle(Request $request): BaseJsonResponse
     {
-        $data = $this->parseBody($request);
+        $data  = $this->parseBody($request);
         $table = $data['table'] ?? '';
-        $ids = $data['ids'] ?? [];
+        $ids   = $data['ids']     ?? [];
 
         if (empty($table) || empty($ids)) {
             return $this->fail('参数不完整');
         }
 
         // 验证表名
-        if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+        if (! preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
             return $this->fail('表名格式不正确');
         }
 
         $result = $this->databaseService->destroyRecycleData($table, $ids);
-        return $result 
+        return $result
             ? $this->success([], '销毁成功')
             : $this->fail('销毁失败');
     }
@@ -151,25 +156,23 @@ class DatabaseController extends BaseController
     #[Route(path: '/api/core/database/recycle/recovery', methods: ['POST'], name: 'database.recycle.recovery')]
     #[Auth(required: true)]
     #[Permission('core:recycle:edit')]
-    /**
-     */
     public function recoveryRecycle(Request $request): BaseJsonResponse
     {
-        $data = $this->parseBody($request);
+        $data  = $this->parseBody($request);
         $table = $data['table'] ?? '';
-        $ids = $data['ids'] ?? [];
+        $ids   = $data['ids']     ?? [];
 
         if (empty($table) || empty($ids)) {
             return $this->fail('参数不完整');
         }
 
         // 验证表名
-        if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+        if (! preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
             return $this->fail('表名格式不正确');
         }
 
         $result = $this->databaseService->recoveryRecycleData($table, $ids);
-        return $result 
+        return $result
             ? $this->success([], '恢复成功')
             : $this->fail('恢复失败');
     }
@@ -181,9 +184,9 @@ class DatabaseController extends BaseController
      */
     private function parseBody(Request $request): array
     {
-        $body = [];
+        $body    = [];
         $content = $request->getContent();
-        if (!empty($content)) {
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $body = $decoded;

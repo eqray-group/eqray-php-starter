@@ -3,13 +3,9 @@
 declare(strict_types=1);
 
 /**
- * 操作日志模型
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-12
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
@@ -17,115 +13,55 @@ use Framework\Basic\BaseLaORMModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * SysOperationLog 操作日志模型
+ * SysOperationLog 操作日志模型.
  *
- * @property int         $id               日志ID
- * @property int         $user_id          操作用户ID
- * @property string      $username         操作用户名
- * @property string      $module           模块名称
- * @property string      $business_type    业务类型
- * @property string      $method           请求方法
- * @property string      $url              请求URL
- * @property string      $route_name       路由名称
- * @property string      $operation_ip     操作IP
- * @property string      $operation_location 操作地点
- * @property \DateTime   $operation_time   操作时间
- * @property string      $request_params   请求参数
- * @property string      $response_result  响应结果
- * @property int         $status           操作状态
- * @property string      $error_msg        错误信息
- * @property int         $duration         执行时长(毫秒)
- * @property string      $browser          浏览器
- * @property string      $os               操作系统
- * @property string      $user_agent       用户代理
- * @property \DateTime   $created_at       创建时间
- 
- * @property mixed $app
- * @property mixed $router
- * @property mixed $service_name
- * @property mixed $ip
- * @property mixed $ip_location
- * @property mixed $request_data
- * @property mixed $remark
- * @property int $created_by
- * @property int $updated_by
+ * @property int       $id                 日志ID
+ * @property int       $user_id            操作用户ID
+ * @property string    $username           操作用户名
+ * @property string    $module             模块名称
+ * @property string    $business_type      业务类型
+ * @property string    $method             请求方法
+ * @property string    $url                请求URL
+ * @property string    $route_name         路由名称
+ * @property string    $operation_ip       操作IP
+ * @property string    $operation_location 操作地点
+ * @property \DateTime $operation_time     操作时间
+ * @property string    $request_params     请求参数
+ * @property string    $response_result    响应结果
+ * @property int       $status             操作状态
+ * @property string    $error_msg          错误信息
+ * @property int       $duration           执行时长(毫秒)
+ * @property string    $browser            浏览器
+ * @property string    $os                 操作系统
+ * @property string    $user_agent         用户代理
+ * @property \DateTime $created_at         创建时间
+ *
+ * @property mixed  $app
+ * @property mixed  $router
+ * @property mixed  $service_name
+ * @property mixed  $ip
+ * @property mixed  $ip_location
+ * @property mixed  $request_data
+ * @property mixed  $remark
+ * @property int    $created_by
+ * @property int    $updated_by
  * @property string $create_time
  * @property string $update_time
  * @property string $delete_time
- * @property mixed $tenant_id
- * @property mixed $updated_at
- * @property mixed $deleted_at
-*/
+ * @property mixed  $tenant_id
+ * @property mixed  $updated_at
+ * @property mixed  $deleted_at
+ */
 class SysOperationLog extends BaseLaORMModel
 {
     use SoftDeletes;
 
     /**
-     * 表名
-     * @var string
-     * @return mixed
+     * 自定义时间戳字段名.
      */
-    protected $table = 'sa_system_oper_log';
+    public const CREATED_AT = 'create_time';
 
-    /**
-     * 主键
-     * @var string
-     * @return mixed
-     */
-    protected $primaryKey = 'id';
-    /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const DELETED_AT = 'delete_time';
-
-    /**
-     * 是否自增主键
-     * @var bool
-     * @return mixed
-     */
-    public $incrementing = true;
-
-    /**
-     * 可填充字段
-     * @var array<int, string>
-     * @return mixed
-     */
-    protected $fillable = [
-        'username',
-        'app',
-        'method',
-        'router',
-        'service_name',
-        'ip',
-        'ip_location',
-        'request_data',
-		'duration',
-        'remark',
-        'created_by',
-        'updated_by',
-    ];
-
-    /**
-     * 类型转换
-     * @var array<array-key, mixed>
-     * @return mixed
-     */
-    protected $casts = [
-        'id' => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
-        'create_time' => 'datetime',
-        'update_time' => 'datetime',
-        'delete_time' => 'datetime',
-    ];
-
-    /**
-     * 是否自动维护时间戳
-     * @var bool
-     * @return mixed
-     */
-    public $timestamps = true;
+    public const DELETED_AT = 'delete_time';
 
     // ==================== 状态常量 ====================
 
@@ -164,12 +100,72 @@ class SysOperationLog extends BaseLaORMModel
     /** @var string 其他 */
     public const TYPE_OTHER = '其他';
 
+    /**
+     * 是否自增主键.
+     * @var    bool
+     * @return mixed
+     */
+    public $incrementing = true;
+
+    /**
+     * 是否自动维护时间戳.
+     * @var    bool
+     * @return mixed
+     */
+    public $timestamps = true;
+
+    /**
+     * 表名.
+     * @var    string
+     * @return mixed
+     */
+    protected $table = 'sa_system_oper_log';
+
+    /**
+     * 主键.
+     * @var    string
+     * @return mixed
+     */
+    protected $primaryKey = 'id';
+
+    /**
+     * 可填充字段.
+     * @var    array<int, string>
+     * @return mixed
+     */
+    protected $fillable = [
+        'username',
+        'app',
+        'method',
+        'router',
+        'service_name',
+        'ip',
+        'ip_location',
+        'request_data',
+        'duration',
+        'remark',
+        'created_by',
+        'updated_by',
+    ];
+
+    /**
+     * 类型转换.
+     * @var    array<array-key, mixed>
+     * @return mixed
+     */
+    protected $casts = [
+        'id'          => 'integer',
+        'created_by'  => 'integer',
+        'updated_by'  => 'integer',
+        'create_time' => 'datetime',
+        'update_time' => 'datetime',
+        'delete_time' => 'datetime',
+    ];
+
     // ==================== 业务方法 ====================
 
     /**
      * 检查是否操作成功
-     *
-     * @return bool
      */
     public function isSuccess(): bool
     {
@@ -177,10 +173,9 @@ class SysOperationLog extends BaseLaORMModel
     }
 
     /**
-     * 记录操作日志
+     * 记录操作日志.
      *
      * @param array<array-key, mixed> $data 日志数据
-     * @return static
      */
     public static function record(array $data): static
     {
@@ -190,26 +185,23 @@ class SysOperationLog extends BaseLaORMModel
     }
 
     /**
-     * 根据请求方法获取业务类型
+     * 根据请求方法获取业务类型.
      *
      * @param string $method HTTP方法
-     * @return string
      */
     public static function getBusinessTypeByMethod(string $method): string
     {
         return match (strtoupper($method)) {
-            'POST' => self::TYPE_INSERT,
+            'POST'         => self::TYPE_INSERT,
             'PUT', 'PATCH' => self::TYPE_UPDATE,
-            'DELETE' => self::TYPE_DELETE,
-            'GET' => self::TYPE_SELECT,
-            default => self::TYPE_OTHER,
+            'DELETE'       => self::TYPE_DELETE,
+            'GET'          => self::TYPE_SELECT,
+            default        => self::TYPE_OTHER,
         };
     }
 
     /**
-     * 获取操作状态文本
-     *
-     * @return string
+     * 获取操作状态文本.
      */
     public function getStatusText(): string
     {
@@ -217,10 +209,10 @@ class SysOperationLog extends BaseLaORMModel
     }
 
     /**
-     * 获取指定用户的最近操作记录
+     * 获取指定用户的最近操作记录.
      *
-     * @param int $userId 用户ID
-     * @param int $limit  数量
+     * @param  int                     $userId 用户ID
+     * @param  int                     $limit  数量
      * @return array<array-key, mixed>
      */
     public static function getRecentByUserId(int $userId, int $limit = 10): array
@@ -233,14 +225,14 @@ class SysOperationLog extends BaseLaORMModel
     }
 
     /**
-     * 清理指定天数之前的日志
+     * 清理指定天数之前的日志.
      *
-     * @param int $days 天数
+     * @param  int $days 天数
      * @return int 删除数量
      */
     public static function cleanOldLogs(int $days = 30): int
     {
-        $date = date('Y-m-d H:i:s' ,strtotime("-$days days"));
+        $date = date('Y-m-d H:i:s', strtotime("-{$days} days"));
         return self::where('create_time', '<', $date)->delete();
     }
 }

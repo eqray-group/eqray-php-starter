@@ -3,72 +3,68 @@
 declare(strict_types=1);
 
 /**
- * 系统角色服务
- *
- * @package App\Services
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
 
-use App\Models\SysRole;
-use App\Models\SysRoleMenu;
-use App\Models\SysRoleDept;
-use App\Models\SysMenu;
-use App\Models\SysUserRole;
 use App\Dao\SysRoleDao;
-use App\Services\Casbin\CasbinService;
+use App\Models\SysMenu;
+use App\Models\SysRole;
+use App\Models\SysRoleDept;
+use App\Models\SysRoleMenu;
 use App\Models\SysUser;
+use App\Models\SysUserRole;
+use App\Services\Casbin\CasbinService;
 use Framework\Basic\BaseService;
 
 /**
  * SysRoleService 角色服务
  *
  * 处理角色相关的业务逻辑
-  * @extends BaseService<SysRoleDao>
+ * @extends BaseService<SysRoleDao>
  */
 class SysRoleService extends BaseService
 {
     protected const SYSTEM_PROTECTED_ROLE_ID = 1;
+
     /**
-     * DAO 实例
-     * @var SysRoleDao
+     * DAO 实例.
      * @return mixed
      */
     protected SysRoleDao $roleDao;
 
     /**
      * Casbin 服务
-     * @var CasbinService
      * @return mixed
      */
     protected CasbinService $casbinService;
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
     {
         parent::__construct();
-        $this->roleDao = new SysRoleDao();
+        $this->roleDao       = new SysRoleDao();
         $this->casbinService = new CasbinService();
     }
 
     /**
-     * 获取角色列表
+     * 获取角色列表.
      *
-     * @param array<array-key, mixed> $params 查询参数
+     * @param  array<array-key, mixed> $params 查询参数
      * @return array<array-key, mixed>
      */
     public function getList(array $params): array
     {
-        $page = (int)($params['page'] ?? 1);
-        $limit = (int)($params['limit'] ?? 20);
-        $roleName = $params['name'] ?? '';
-        $roleCode = $params['code'] ?? '';
-        $status = $params['status'] ?? '';
+        $page     = (int) ($params['page'] ?? 1);
+        $limit    = (int) ($params['limit'] ?? 20);
+        $roleName = $params['name']   ?? '';
+        $roleCode = $params['code']   ?? '';
+        $status   = $params['status'] ?? '';
 
         $query = SysRole::query();
 
@@ -85,7 +81,7 @@ class SysRoleService extends BaseService
         }
 
         $total = $query->count();
-        $list = $query->orderBy('sort')
+        $list  = $query->orderBy('sort')
             ->offset(($page - 1) * $limit)
             ->limit($limit)
             ->get()
@@ -97,15 +93,15 @@ class SysRoleService extends BaseService
         }
 
         return [
-            'list' => $list,
+            'list'  => $list,
             'total' => $total,
-            'page' => $page,
-            'size' => $limit,
+            'page'  => $page,
+            'size'  => $limit,
         ];
     }
 
     /**
-     * 获取所有启用的角色
+     * 获取所有启用的角色.
      *
      * @return array<array-key, mixed>
      */
@@ -115,7 +111,7 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 获取可访问的角色列表（供用户编辑弹窗下拉选择使用）
+     * 获取可访问的角色列表（供用户编辑弹窗下拉选择使用）.
      *
      * 返回包含 id、name 字段的扁平数组
      *
@@ -127,7 +123,7 @@ class SysRoleService extends BaseService
             ->where('status', SysRole::STATUS_ENABLED)
             ->orderBy('sort')
             ->get()
-            ->map(fn($role) => [
+            ->map(fn ($role) => [
                 'id'   => $role->id,
                 'name' => $role->name,
                 'code' => $role->code,
@@ -136,7 +132,7 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 获取角色树
+     * 获取角色树.
      *
      * @return array<array-key, mixed>
      */
@@ -146,20 +142,20 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 获取角色详情
+     * 获取角色详情.
      *
-     * @param int $roleId 角色ID
-     * @return array<array-key, mixed>|null
+     * @param  int                          $roleId 角色ID
+     * @return null|array<array-key, mixed>
      */
     public function getDetail(int $roleId): ?array
     {
         $role = SysRole::find($roleId);
 
-        if (!$role) {
+        if (! $role) {
             return null;
         }
 
-        $data = $this->formatRole($role);
+        $data             = $this->formatRole($role);
         $data['menu_ids'] = SysRoleMenu::getMenuIdsByRoleId($roleId);
         $data['dept_ids'] = SysRoleDept::getDeptIdsByRole($roleId);
 
@@ -167,11 +163,10 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 创建角色
+     * 创建角色.
      *
      * @param array<array-key, mixed> $data     角色数据
-     * @param int   $operator 操作人ID
-     * @return SysRole|null
+     * @param int                     $operator 操作人ID
      */
     public function create(array $data, int $operator = 0): ?SysRole
     {
@@ -188,7 +183,7 @@ class SysRoleService extends BaseService
             // 创建角色
             $role = SysRole::create($data);
 
-            if (!empty($data['menu_ids'])) {
+            if (! empty($data['menu_ids'])) {
                 SysRoleMenu::syncRoleMenus($role->id, $data['menu_ids'], $operator);
             }
 
@@ -196,7 +191,7 @@ class SysRoleService extends BaseService
             SysUser::clearAllMenuTreeCache();
 
             // 同步自定义数据权限部门
-            if ((int)($data['data_scope'] ?? 1) === 5) {
+            if ((int) ($data['data_scope'] ?? 1) === 5) {
                 SysRoleDept::syncRoleDepts($role->id, $data['dept_ids'] ?? []);
             } else {
                 SysRoleDept::deleteByRoleId($role->id);
@@ -207,12 +202,11 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 更新角色
+     * 更新角色.
      *
-     * @param int   $roleId   角色ID
+     * @param int                     $roleId   角色ID
      * @param array<array-key, mixed> $data     角色数据
-     * @param int   $operator 操作人ID
-     * @return bool
+     * @param int                     $operator 操作人ID
      */
     public function update(int $roleId, array $data, int $operator = 0): bool
     {
@@ -221,7 +215,7 @@ class SysRoleService extends BaseService
         }
         return $this->transaction(function () use ($roleId, $data, $operator) {
             $role = SysRole::find($roleId);
-            if (!$role) {
+            if (! $role) {
                 throw new \Exception('角色不存在');
             }
 
@@ -249,7 +243,7 @@ class SysRoleService extends BaseService
 
             // 同步自定义数据权限部门
             if (isset($data['data_scope'])) {
-                if ((int)$data['data_scope'] === SysRole::DATA_SCOPE_CUSTOM) {
+                if ((int) $data['data_scope'] === SysRole::DATA_SCOPE_CUSTOM) {
                     SysRoleDept::syncRoleDepts($roleId, $data['dept_ids'] ?? []);
                 } else {
                     SysRoleDept::deleteByRoleId($roleId);
@@ -261,18 +255,17 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 删除角色
+     * 删除角色.
      *
      * @param int $roleId 角色ID
-     * @return bool
      */
     public function delete(int|string $roleId): bool
     {
-        if ((int)$roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
+        if ((int) $roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
             throw new \Exception('系统内置角色不允许删除');
         }
         $role = SysRole::find($roleId);
-        if (!$role) {
+        if (! $role) {
             return false;
         }
 
@@ -289,7 +282,7 @@ class SysRoleService extends BaseService
         SysRoleMenu::deleteByRoleId($roleId);
 
         // 删除自定义数据权限部门
-        if ((int)$role->data_scope === SysRole::DATA_SCOPE_CUSTOM) {
+        if ((int) $role->data_scope === SysRole::DATA_SCOPE_CUSTOM) {
             SysRoleDept::deleteByRoleId($roleId);
         }
 
@@ -304,9 +297,6 @@ class SysRoleService extends BaseService
      *
      * @param int $roleId 角色ID
      * @param int $status 状态
-     * @return bool
-     */
-    /**
      */
     public function updateStatus(int $roleId, int $status): bool
     {
@@ -317,9 +307,9 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 获取角色菜单ID列表
+     * 获取角色菜单ID列表.
      *
-     * @param int $roleId 角色ID
+     * @param  int                     $roleId 角色ID
      * @return array<array-key, mixed>
      */
     public function getMenuIds(int $roleId): array
@@ -328,11 +318,10 @@ class SysRoleService extends BaseService
     }
 
     /**
-     * 分配菜单给角色
+     * 分配菜单给角色.
      *
-     * @param array<array-key, mixed> $menuIds 菜单ID数组
-     * @param int   $operator 操作人ID
-     * @return bool
+     * @param array<array-key, mixed> $menuIds  菜单ID数组
+     * @param int                     $operator 操作人ID
      */
     public function assignMenus(int $roleId, array $menuIds, int $operator = 0): bool
     {
@@ -355,12 +344,12 @@ class SysRoleService extends BaseService
     // ==================== 辅助方法 ====================
 
     /**
-     * 格式化角色数据
+     * 格式化角色数据.
      *
-     * @param SysRole|array<string, mixed> $role 角色
+     * @param  array<string, mixed>|SysRole $role 角色
      * @return array<array-key, mixed>
      */
-    protected function formatRole(SysRole|array $role): array
+    protected function formatRole(array|SysRole $role): array
     {
         if ($role instanceof SysRole) {
             $data = $role->toArray();
@@ -382,17 +371,17 @@ class SysRoleService extends BaseService
         }
 
         // 状态文本
-        $data['status_text'] = (int)($data['status'] ?? 0) === 1 ? '启用' : '禁用';
+        $data['status_text'] = (int) ($data['status'] ?? 0) === 1 ? '启用' : '禁用';
 
         return $data;
     }
 
     /**
-     * 统一状态过滤语义：1=启用，0=禁用（兼容历史字典值 2）
+     * 统一状态过滤语义：1=启用，0=禁用（兼容历史字典值 2）.
      */
     protected function normalizeStatusFilter(mixed $status): int
     {
-        $value = (int)$status;
+        $value = (int) $status;
         if ($value === 2) {
             return 0;
         }

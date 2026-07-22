@@ -3,16 +3,14 @@
 declare(strict_types=1);
 
 /**
- * 数据字典数据DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
 
 use App\Models\SysDictData;
+use App\Models\SysDictType;
 use Framework\Basic\BaseDao;
 
 /**
@@ -21,19 +19,9 @@ use Framework\Basic\BaseDao;
 class SysDictDataDao extends BaseDao
 {
     /**
-     * 设置模型类
+     * 根据字典类型ID获取数据列表.
      *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysDictData::class;
-    }
-
-    /**
-     * 根据字典类型ID获取数据列表
-     *
-     * @param int $dictTypeId 字典类型ID
+     * @param  int                     $dictTypeId 字典类型ID
      * @return array<array-key, mixed>
      */
     public function getListByDictTypeId(int $dictTypeId): array
@@ -48,18 +36,18 @@ class SysDictDataDao extends BaseDao
     }
 
     /**
-     * 根据字典编码获取数据列表
+     * 根据字典编码获取数据列表.
      *
-     * @param string $dictCode 字典编码
+     * @param  string                  $dictCode 字典编码
      * @return array<array-key, mixed>
      */
     public function getListByDictCode(string $dictCode): array
     {
-        $dictType = \App\Models\SysDictType::where('code', $dictCode)
-            ->where('status', \App\Models\SysDictType::STATUS_ENABLED)
+        $dictType = SysDictType::where('code', $dictCode)
+            ->where('status', SysDictType::STATUS_ENABLED)
             ->first();
 
-        if (!$dictType) {
+        if (! $dictType) {
             return [];
         }
 
@@ -67,12 +55,11 @@ class SysDictDataDao extends BaseDao
     }
 
     /**
-     * 检查字典值是否存在
+     * 检查字典值是否存在.
      *
      * @param int    $dictTypeId 字典类型ID
      * @param string $dictValue  字典值
      * @param int    $excludeId  排除的ID
-     * @return bool
      */
     public function isDictValueExists(int $dictTypeId, string $dictValue, int $excludeId = 0): bool
     {
@@ -84,10 +71,9 @@ class SysDictDataDao extends BaseDao
     }
 
     /**
-     * 删除字典类型下的所有数据
+     * 删除字典类型下的所有数据.
      *
      * @param int $dictTypeId 字典类型ID
-     * @return bool
      */
     public function deleteByDictTypeId(int $dictTypeId): bool
     {
@@ -95,18 +81,25 @@ class SysDictDataDao extends BaseDao
     }
 
     /**
-     * 获取字典标签
+     * 获取字典标签.
      *
      * @param int    $dictTypeId 字典类型ID
      * @param string $dictValue  字典值
-     * @return string
      */
     public function getDictLabel(int $dictTypeId, string $dictValue): string
     {
         return $this->value([
             'type_id' => $dictTypeId,
-            'value' => $dictValue,
-            'status' => SysDictData::STATUS_ENABLED,
+            'value'   => $dictValue,
+            'status'  => SysDictData::STATUS_ENABLED,
         ], 'label') ?? '';
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysDictData::class;
     }
 }

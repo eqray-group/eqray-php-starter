@@ -3,65 +3,57 @@
 declare(strict_types=1);
 
 /**
- * This file is part of eqrayphp Framework.
- *
- * @link     https://github.com/xuey490/novaphp
- * @license  https://github.com/xuey490/novaphp/blob/main/LICENSE
- *
- * @Filename: AppServiceProvider.php
- * @Date: 2026-1-8
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Providers;
 
+use Framework\Container\ServiceProviderInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Framework\Container\ServiceProviderInterface;
-use InvalidArgumentException;
 
 /**
  * 统一注册 App 目录下的所有服务（带路径合法性检查）
- * 替代原有的 ControllersProvider、MiddlewaresProvider、ModelsProvider
+ * 替代原有的 ControllersProvider、MiddlewaresProvider、ModelsProvider.
  */
 final class AppServiceProvider implements ServiceProviderInterface
 {
     /**
      * 定义需要自动注册的模块配置
-     * 格式：[命名空间前缀 => 相对路径]
+     * 格式：[命名空间前缀 => 相对路径].
      */
     private const MODULES = [
-        'App\\Controllers\\' 			=> '/Controllers',
-        'App\\Middlewares\\' 			=> '/Middlewares',
-        'App\\Models\\'      			=> '/Models',
-        'App\\Dao\\'      	 			=> '/Dao',
+        'App\Controllers\\' 			=> '/Controllers',
+        'App\Middlewares\\' 			=> '/Middlewares',
+        'App\Models\\'      			=> '/Models',
+        'App\Dao\\'      	 			 => '/Dao',
         // 如需新增模块，直接在这里添加即可
-        'App\\Repository\\' 			=> '/Repository',
-        'App\\Services\\'     			=> '/Services',
-        'App\\Validate\\'     			=> '/Validate',
+        'App\Repository\\' 			  => '/Repository',
+        'App\Services\\'     			=> '/Services',
+        'App\Validate\\'     			=> '/Validate',
     ];
 
     /**
-     * 注册所有 App 目录下的服务（带路径检查）
+     * 注册所有 App 目录下的服务（带路径检查）.
      */
     public function register(ContainerConfigurator $configurator): void
     {
         $services = $configurator->services();
-        $appDir = \dirname(__DIR__); // 获取 App 目录的绝对路径
+        $appDir   = \dirname(__DIR__); // 获取 App 目录的绝对路径
 
         // 验证 App 根目录是否存在
-        if (!is_dir($appDir)) {
-            throw new InvalidArgumentException("App 根目录不存在: {$appDir}");
+        if (! is_dir($appDir)) {
+            throw new \InvalidArgumentException("App 根目录不存在: {$appDir}");
         }
 
         // 遍历所有模块，批量注册服务（跳过不存在的目录）
         foreach (self::MODULES as $namespace => $relativePath) {
-            $fullDir = $appDir . $relativePath; // 模块完整目录路径
+            $fullDir  = $appDir . $relativePath; // 模块完整目录路径
             $scanPath = $fullDir . '/**/*.php'; // 扫描的文件路径
 
             // 核心判断：检查目录是否存在且是合法目录
-            if (!is_dir($fullDir)) {
+            if (! is_dir($fullDir)) {
                 // 可选：开发环境下可以打印提示，生产环境建议注释
                 // trigger_error("模块目录不存在，跳过加载: {$fullDir}", E_USER_NOTICE);
                 continue; // 跳过不存在的目录，不执行加载
@@ -76,7 +68,7 @@ final class AppServiceProvider implements ServiceProviderInterface
     }
 
     /**
-     * 启动回调（如需初始化逻辑可在这里添加）
+     * 启动回调（如需初始化逻辑可在这里添加）.
      */
     public function boot(ContainerInterface $container): void
     {

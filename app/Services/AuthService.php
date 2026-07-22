@@ -1,5 +1,11 @@
 <?php
+
 declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Services;
 
@@ -10,7 +16,7 @@ use App\Models\Menu;
 class AuthService
 {
     /**
-     * 登录并初始化双重权限
+     * 登录并初始化双重权限.
      */
     public function login(string $username, string $password, ?int $tenantId = null): ?Admin
     {
@@ -23,7 +29,7 @@ class AuthService
 
         // 2. 查询用户（自动触发租户隔离）
         $admin = Admin::where('username', $username)->first();
-        if (!$admin || !password_verify($password, $admin->password)) {
+        if (! $admin || ! password_verify($password, $admin->password)) {
             return null;
         }
 
@@ -34,7 +40,7 @@ class AuthService
         Menu::setSuperAdmin($isSuper);
 
         // 4. 初始化角色数据权限
-        if (!$isSuper) {
+        if (! $isSuper) {
             $dataScope = $admin->getMaxDataScope();
             Asset::initDataScope(
                 $admin->id,
@@ -47,7 +53,7 @@ class AuthService
     }
 
     /**
-     * 退出登录，清空权限
+     * 退出登录，清空权限.
      */
     public function logout(): void
     {

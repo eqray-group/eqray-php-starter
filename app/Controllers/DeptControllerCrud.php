@@ -3,25 +3,22 @@
 declare(strict_types=1);
 
 /**
- * 部门管理控制器（使用 CrudActionTrait 示例）
- *
- * @package App\Controllers
- * @author  Genie
- * @date    2026-03-19
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Controllers;
 
 use App\Dao\SysDeptDao;
 use App\Services\SysDeptService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
 
 /**
- * DeptControllerCrud 部门管理控制器（CRUD Trait 示例）
+ * DeptControllerCrud 部门管理控制器（CRUD Trait 示例）.
  *
  * 演示如何使用 CrudActionTrait 快速实现 CRUD 操作。
  *
@@ -36,8 +33,7 @@ class DeptControllerCrud extends BaseController
 {
     /**
      * 业务服务类名
-     * 指定后 BaseController 会自动实例化
-     * @var string
+     * 指定后 BaseController 会自动实例化.
      * @return mixed
      */
     protected string $serviceClass = SysDeptService::class;
@@ -54,16 +50,15 @@ class DeptControllerCrud extends BaseController
     // ==================== 基础 CRUD（使用 Trait 方法）====================
 
     /**
-     * 获取部门列表
+     * 获取部门列表.
      *
      * 使用 CrudActionTrait::index() 方法
      * 自动处理分页、排序、过滤
      *
-     * @param Request $request
      * @return mixed
      */
     #[Route(path: '/api/system/dept-crud/list', methods: ['GET'], name: 'deptCrud.list')]
-    ///[Auth(required: true)]
+    // /[Auth(required: true)]
     public function index(Request $request)
     {
         // 调用 Trait 的 index 方法
@@ -72,11 +67,10 @@ class DeptControllerCrud extends BaseController
     }
 
     /**
-     * 获取部门详情
+     * 获取部门详情.
      *
      * 使用 CrudActionTrait::show() 方法
      *
-     * @param Request $request
      * @return mixed
      */
     #[Route(path: '/api/system/dept-crud/detail/{id}', methods: ['GET'], name: 'deptCrud.detail')]
@@ -87,12 +81,11 @@ class DeptControllerCrud extends BaseController
     }
 
     /**
-     * 创建部门
+     * 创建部门.
      *
      * 使用 CrudActionTrait::store() 方法
      * 自动使用 insertInput() 获取并过滤数据
      *
-     * @param Request $request
      * @return mixed
      */
     #[Route(path: '/api/system/dept-crud/create', methods: ['POST'], name: 'deptCrud.create')]
@@ -103,11 +96,10 @@ class DeptControllerCrud extends BaseController
     }
 
     /**
-     * 更新部门
+     * 更新部门.
      *
      * 使用 CrudActionTrait::update() 方法
      *
-     * @param Request $request
      * @return mixed
      */
     #[Route(path: '/api/system/dept-crud/update/{id}', methods: ['PUT'], name: 'deptCrud.update')]
@@ -118,11 +110,10 @@ class DeptControllerCrud extends BaseController
     }
 
     /**
-     * 删除部门
+     * 删除部门.
      *
      * 使用 CrudActionTrait::destroy() 方法
      *
-     * @param Request $request
      * @return mixed
      */
     #[Route(path: '/api/system/dept-crud/delete/{id}', methods: ['DELETE'], name: 'deptCrud.delete')]
@@ -135,12 +126,9 @@ class DeptControllerCrud extends BaseController
     // ==================== 自定义方法（覆盖或扩展）====================
 
     /**
-     * 获取部门树
+     * 获取部门树.
      *
      * 自定义方法，使用 input() 获取参数
-     *
-     * @param Request $request
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dept-crud/tree', methods: ['GET'], name: 'deptCrud.tree')]
     #[Auth(required: true)]
@@ -148,7 +136,7 @@ class DeptControllerCrud extends BaseController
     {
         // 使用 input() 获取单个参数
         $parentId = (int) $this->input('parent_id', 0);
-        $status = $this->input('status', '');
+        $status   = $this->input('status', '');
 
         $where = [];
         if ($status !== '') {
@@ -161,12 +149,9 @@ class DeptControllerCrud extends BaseController
     }
 
     /**
-     * 获取部门下拉选项
+     * 获取部门下拉选项.
      *
      * 自定义方法，使用 selectInput() 获取查询参数
-     *
-     * @param Request $request
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dept-crud/options', methods: ['GET'], name: 'deptCrud.options')]
     #[Auth(required: true)]
@@ -193,9 +178,6 @@ class DeptControllerCrud extends BaseController
      * 批量更新部门状态
      *
      * 自定义方法，演示 input() 获取数组参数
-     *
-     * @param Request $request
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/dept-crud/batch-status', methods: ['PUT'], name: 'deptCrud.batch_status')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -219,11 +201,10 @@ class DeptControllerCrud extends BaseController
     // ==================== 自定义数据获取方法 ====================
 
     /**
-     * 覆盖 insertInput 方法（可选）
+     * 覆盖 insertInput 方法（可选）.
      *
      * 如果需要自定义获取数据的逻辑，可以覆盖此方法
      *
-     * @param Request $request
      * @return array<array-key, mixed>
      */
     protected function insertInput(Request $request): array
@@ -234,25 +215,24 @@ class DeptControllerCrud extends BaseController
         // 方式2：使用 input() 逐个获取字段（推荐，支持 XSS 过滤）
         $fields = [
             'parent_id' => 0,
-            'name' => '',
-            'code' => '',
+            'name'      => '',
+            'code'      => '',
             'leader_id' => 0,
-            'phone' => '',
-            'email' => '',
-            'sort' => 0,
-            'status' => 1,
-            'remark' => '',
+            'phone'     => '',
+            'email'     => '',
+            'sort'      => 0,
+            'status'    => 1,
+            'remark'    => '',
         ];
 
         return $this->insertInputByFields($fields);
     }
 
     /**
-     * 覆盖 selectInput 方法（可选）
+     * 覆盖 selectInput 方法（可选）.
      *
      * 自定义列表查询参数获取
      *
-     * @param Request $request
      * @return array<array-key, mixed>
      */
     protected function selectInput(Request $request): array
@@ -273,10 +253,10 @@ class DeptControllerCrud extends BaseController
         }
 
         // 获取分页和排序参数
-        $page = (int) $this->input('page', 1);
-        $limit = (int) $this->input('limit', 10);
-        $order = $this->input('order', 'sort asc');
-        $field = $this->input('field', '*');
+        $page   = (int) $this->input('page', 1);
+        $limit  = (int) $this->input('limit', 10);
+        $order  = $this->input('order', 'sort asc');
+        $field  = $this->input('field', '*');
         $format = $this->input('format', 'normal'); // normal, select, tree
 
         return [$where, $format, $limit, $field, $order, $page];
@@ -285,12 +265,11 @@ class DeptControllerCrud extends BaseController
     // ==================== 自定义格式化方法 ====================
 
     /**
-     * 覆盖 formatNormal 方法（可选）
+     * 覆盖 formatNormal 方法（可选）.
      *
      * 自定义普通列表格式
      *
-     * @param mixed $list
-     * @param int $total
+     * @param  mixed            $list
      * @return BaseJsonResponse
      */
     protected function formatNormal($list, int $total)
@@ -299,19 +278,19 @@ class DeptControllerCrud extends BaseController
         $formattedList = [];
         foreach ($list as $item) {
             $formattedList[] = [
-                'id' => $item->id,
-                'dept_name' => $item->name,
-                'dept_code' => $item->code,
-                'parent_id' => $item->parent_id,
-                'leader' => $item->leader,
-                'status' => $item->status,
+                'id'          => $item->id,
+                'dept_name'   => $item->name,
+                'dept_code'   => $item->code,
+                'parent_id'   => $item->parent_id,
+                'leader'      => $item->leader,
+                'status'      => $item->status,
                 'status_text' => $item->status === 1 ? '启用' : '禁用',
-                'created_at' => $item->create_time?->format('Y-m-d H:i:s'),
+                'created_at'  => $item->create_time?->format('Y-m-d H:i:s'),
             ];
         }
 
         return $this->success([
-            'list' => $formattedList,
+            'list'  => $formattedList,
             'total' => $total,
         ]);
     }

@@ -3,13 +3,9 @@
 declare(strict_types=1);
 
 /**
- * 系统用户部门关联模型
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-12
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
@@ -17,19 +13,19 @@ use Framework\Basic\BaseLaORMModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * SysUserDept 用户-部门关联模型
+ * SysUserDept 用户-部门关联模型.
  *
- * @property int         $id          主键ID
- * @property int         $user_id     用户ID
- * @property int         $dept_id     部门ID
- * @property int|null    $created_by  创建人ID
- * @property int|null    $updated_by  更新人ID
- * @property \DateTime   $create_time 创建时间
- * @property \DateTime   $update_time 更新时间
+ * @property int       $id          主键ID
+ * @property int       $user_id     用户ID
+ * @property int       $dept_id     部门ID
+ * @property null|int  $created_by  创建人ID
+ * @property null|int  $updated_by  更新人ID
+ * @property \DateTime $create_time 创建时间
+ * @property \DateTime $update_time 更新时间
  *
- * @property-read SysUser   $user   关联的用户
- * @property-read SysDept   $dept   关联的部门
- 
+ * @property SysUser $user 关联的用户
+ * @property SysDept $dept 关联的部门
+ *
  * @property mixed $status
  * @property mixed $remark
  * @property mixed $delete_time
@@ -40,28 +36,29 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SysUserDept extends BaseLaORMModel
 {
     /**
-     * 表名
-     * @var string
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    /**
+     * 表名.
+     * @var    string
      * @return mixed
      */
     protected $table = 'sa_system_user_dept';
 
     /**
-     * 主键
-     * @var string
+     * 主键.
+     * @var    string
      * @return mixed
      */
     protected $primaryKey = 'id';
 
     /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-
-    /**
-     * 可填充字段
-     * @var array<int, string>
+     * 可填充字段.
+     * @var    array<int, string>
      * @return mixed
      */
     protected $fillable = [
@@ -72,16 +69,16 @@ class SysUserDept extends BaseLaORMModel
     ];
 
     /**
-     * 类型转换
-     * @var array<array-key, mixed>
+     * 类型转换.
+     * @var    array<array-key, mixed>
      * @return mixed
      */
     protected $casts = [
-        'id' => 'integer',
-        'user_id' => 'integer',
-        'dept_id' => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        'id'          => 'integer',
+        'user_id'     => 'integer',
+        'dept_id'     => 'integer',
+        'created_by'  => 'integer',
+        'updated_by'  => 'integer',
         'create_time' => 'datetime',
         'update_time' => 'datetime',
     ];
@@ -89,7 +86,7 @@ class SysUserDept extends BaseLaORMModel
     // ==================== 关联关系 ====================
 
     /**
-     * 关联的用户
+     * 关联的用户.
      *
      * @return BelongsTo<SysUser, $this>
      */
@@ -99,7 +96,7 @@ class SysUserDept extends BaseLaORMModel
     }
 
     /**
-     * 关联的部门
+     * 关联的部门.
      *
      * @return BelongsTo<SysDept, $this>
      */
@@ -111,10 +108,10 @@ class SysUserDept extends BaseLaORMModel
     // ==================== 业务方法 ====================
 
     /**
-     * 获取用户的部门ID
+     * 获取用户的部门ID.
      *
-     * @param int $userId 用户ID
-     * @return int|null 部门ID，不存在返回null
+     * @param  int      $userId 用户ID
+     * @return null|int 部门ID，不存在返回null
      */
     public static function getDeptIdByUser(int $userId): ?int
     {
@@ -124,14 +121,13 @@ class SysUserDept extends BaseLaORMModel
     }
 
     /**
-     * 同步用户部门关联
+     * 同步用户部门关联.
      *
      * 如果记录存在则更新，不存在则创建
      *
      * @param int $userId     用户ID
      * @param int $deptId     部门ID
      * @param int $operatorId 操作人ID
-     * @return void
      */
     public static function syncUserDept(int $userId, int $deptId, int $operatorId): void
     {
@@ -139,14 +135,14 @@ class SysUserDept extends BaseLaORMModel
 
         if ($record) {
             // 更新现有记录
-            $record->dept_id = $deptId;
+            $record->dept_id    = $deptId;
             $record->updated_by = $operatorId;
             $record->save();
         } else {
             // 创建新记录
             self::create([
-                'user_id' => $userId,
-                'dept_id' => $deptId,
+                'user_id'    => $userId,
+                'dept_id'    => $deptId,
                 'created_by' => $operatorId,
                 'updated_by' => $operatorId,
             ]);
@@ -154,9 +150,9 @@ class SysUserDept extends BaseLaORMModel
     }
 
     /**
-     * 获取部门下的所有用户ID
+     * 获取部门下的所有用户ID.
      *
-     * @param int $deptId 部门ID
+     * @param  int                     $deptId 部门ID
      * @return array<array-key, mixed> 用户ID数组
      */
     public static function getUsersByDept(int $deptId): array
@@ -167,9 +163,9 @@ class SysUserDept extends BaseLaORMModel
     }
 
     /**
-     * 获取用户的部门关联
+     * 获取用户的部门关联.
      *
-     * @param int $userId 用户ID
+     * @param  int                     $userId 用户ID
      * @return array<array-key, mixed> 格式：[['dept_id' => 5], ...]
      */
     public static function getDeptsByUser(int $userId): array

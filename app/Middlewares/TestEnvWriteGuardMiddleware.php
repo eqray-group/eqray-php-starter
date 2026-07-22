@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Middlewares;
 
 use Framework\Basic\BaseJsonResponse;
@@ -21,15 +26,13 @@ class TestEnvWriteGuardMiddleware
      */
     public function handle(Request $request, callable $next): Response
     {
-        if (!$this->shouldGuard($request)) {
+        if (! $this->shouldGuard($request)) {
             return $next($request);
         }
 
         return BaseJsonResponse::fail('测试环境已禁止写操作', 403);
     }
 
-    /**
-     */
     protected function shouldGuard(Request $request): bool
     {
         $method = strtoupper((string) $request->getMethod());
@@ -37,24 +40,24 @@ class TestEnvWriteGuardMiddleware
             return false;
         }
 
-        $cfg = config('middleware.test_env_write_guard', []);
+        $cfg     = config('middleware.test_env_write_guard', []);
         $enabled = (bool) ($cfg['enabled'] ?? true);
-        if (!$enabled) {
+        if (! $enabled) {
             return false;
         }
 
         $currentEnv = (string) (env('APP_ENV') ?: 'local');
-        $onlyEnvs = $cfg['only_envs'] ?? ['test', 'testing'];
-        if (!in_array($currentEnv, $onlyEnvs, true)) {
-            //return false;
+        $onlyEnvs   = $cfg['only_envs'] ?? ['test', 'testing'];
+        if (! in_array($currentEnv, $onlyEnvs, true)) {
+            // return false;
         }
 
         $blockMethods = array_map('strtoupper', $cfg['block_methods'] ?? ['POST', 'PUT', 'PATCH', 'DELETE']);
-        if (!in_array($method, $blockMethods, true)) {
+        if (! in_array($method, $blockMethods, true)) {
             return false;
         }
 
-        return !$this->isWhitelistedPath((string) $request->getPathInfo(), (array) ($cfg['whitelist'] ?? []));
+        return ! $this->isWhitelistedPath((string) $request->getPathInfo(), (array) ($cfg['whitelist'] ?? []));
     }
 
     /**
@@ -76,7 +79,7 @@ class TestEnvWriteGuardMiddleware
                 continue;
             }
 
-            if ($path === $rule || str_starts_with($path, rtrim($rule, '/').'/')) {
+            if ($path === $rule || str_starts_with($path, rtrim($rule, '/') . '/')) {
                 return true;
             }
         }

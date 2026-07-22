@@ -18,7 +18,7 @@ use Framework\Repository\Strategies\OrmStrategyInterface;
 use Illuminate\Database\Eloquent\Model;
 use Psr\SimpleCache\CacheInterface;
 
-	// 启用租户隔离#
+// 启用租户隔离#
 
 /**
  * Class BaseRepository

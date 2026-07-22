@@ -3,37 +3,33 @@
 declare(strict_types=1);
 
 /**
- * 系统岗位服务
- *
- * @package App\Services
- * @author  Genie
- * @date    2026-03-19
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
 
+use App\Dao\SysPostDao;
 use App\Models\SysPost;
 use App\Models\SysUserPost;
-use App\Dao\SysPostDao;
 use Framework\Basic\BaseService;
 
 /**
  * SysPostService 岗位服务
  *
  * 处理岗位相关的业务逻辑
-  * @extends BaseService<SysPostDao>
+ * @extends BaseService<SysPostDao>
  */
 class SysPostService extends BaseService
 {
     /**
-     * DAO 实例
-     * @var SysPostDao
+     * DAO 实例.
      * @return mixed
      */
     protected SysPostDao $postDao;
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
@@ -43,18 +39,18 @@ class SysPostService extends BaseService
     }
 
     /**
-     * 获取岗位列表
+     * 获取岗位列表.
      *
-     * @param array<array-key, mixed> $params 查询参数
+     * @param  array<array-key, mixed> $params 查询参数
      * @return array<array-key, mixed>
      */
     public function getList(array $params): array
     {
-        $postCode = $params['code'] ?? '';
-        $postName = $params['name'] ?? '';
+        $postCode = $params['code']   ?? '';
+        $postName = $params['name']   ?? '';
         $enabled  = $params['status'] ?? '';
-        $page     = max(1, (int)($params['page'] ?? 1));
-        $limit    = max(1, (int)($params['limit'] ?? 20));
+        $page     = max(1, (int) ($params['page'] ?? 1));
+        $limit    = max(1, (int) ($params['limit'] ?? 20));
 
         $query = SysPost::query();
 
@@ -67,7 +63,7 @@ class SysPostService extends BaseService
         }
 
         if ($enabled !== '') {
-            $query->where('status', (int)$enabled);
+            $query->where('status', (int) $enabled);
         }
 
         $total = $query->count();
@@ -90,16 +86,16 @@ class SysPostService extends BaseService
     }
 
     /**
-     * 获取岗位详情
+     * 获取岗位详情.
      *
-     * @param int $postId 岗位ID
-     * @return array<array-key, mixed>|null
+     * @param  int                          $postId 岗位ID
+     * @return null|array<array-key, mixed>
      */
     public function getDetail(int $postId): ?array
     {
         $post = SysPost::find($postId);
 
-        if (!$post) {
+        if (! $post) {
             return null;
         }
 
@@ -112,11 +108,10 @@ class SysPostService extends BaseService
     }
 
     /**
-     * 创建岗位
+     * 创建岗位.
      *
      * @param array<array-key, mixed> $data     岗位数据
-     * @param int   $operator 操作人ID
-     * @return SysPost|null
+     * @param int                     $operator 操作人ID
      */
     public function create(array $data, int $operator = 0): ?SysPost
     {
@@ -133,17 +128,16 @@ class SysPostService extends BaseService
     }
 
     /**
-     * 更新岗位
+     * 更新岗位.
      *
-     * @param int   $postId   岗位ID
+     * @param int                     $postId   岗位ID
      * @param array<array-key, mixed> $data     岗位数据
-     * @param int   $operator 操作人ID
-     * @return bool
+     * @param int                     $operator 操作人ID
      */
     public function update(int $postId, array $data, int $operator = 0): bool
     {
         $post = SysPost::find($postId);
-        if (!$post) {
+        if (! $post) {
             throw new \Exception('岗位不存在');
         }
 
@@ -162,15 +156,14 @@ class SysPostService extends BaseService
     }
 
     /**
-     * 删除岗位
+     * 删除岗位.
      *
      * @param int $postId 岗位ID
-     * @return bool
      */
     public function delete(int|string $postId): bool
     {
         $post = SysPost::find($postId);
-        if (!$post) {
+        if (! $post) {
             return false;
         }
 
@@ -188,9 +181,6 @@ class SysPostService extends BaseService
      *
      * @param int $postId  岗位ID
      * @param int $enabled 状态
-     * @return bool
-     */
-    /**
      */
     public function updateEnabled(int $postId, int $enabled): bool
     {
@@ -198,7 +188,7 @@ class SysPostService extends BaseService
     }
 
     /**
-     * 获取所有启用的岗位
+     * 获取所有启用的岗位.
      *
      * @return array<array-key, mixed>
      */
@@ -208,7 +198,7 @@ class SysPostService extends BaseService
     }
 
     /**
-     * 获取可访问的岗位列表（供用户编辑弹窗下拉选择使用）
+     * 获取可访问的岗位列表（供用户编辑弹窗下拉选择使用）.
      *
      * 返回包含 id、name 字段的扁平数组
      *
@@ -220,7 +210,7 @@ class SysPostService extends BaseService
             ->where('status', SysPost::ENABLED_ENABLED)
             ->orderBy('sort')
             ->get()
-            ->map(fn($post) => [
+            ->map(fn ($post) => [
                 'id'   => $post->id,
                 'name' => $post->name,
                 'code' => $post->code,
@@ -231,12 +221,12 @@ class SysPostService extends BaseService
     // ==================== 辅助方法 ====================
 
     /**
-     * 格式化岗位数据
+     * 格式化岗位数据.
      *
-     * @param SysPost|array<string, mixed> $post 岗位
+     * @param  array<string, mixed>|SysPost $post 岗位
      * @return array<array-key, mixed>
      */
-    protected function formatPost(SysPost|array $post): array
+    protected function formatPost(array|SysPost $post): array
     {
         if ($post instanceof SysPost) {
             $data = $post->toArray();

@@ -3,16 +3,15 @@
 declare(strict_types=1);
 
 /**
- * 定时任务服务
- *
- * @package App\Services
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
 
+use App\Dao\ToolCrontabDao;
 use App\Models\ToolCrontab;
 use App\Models\ToolCrontabLog;
-use App\Dao\ToolCrontabDao;
 use Framework\Basic\BaseService;
 
 /**
@@ -21,25 +20,25 @@ use Framework\Basic\BaseService;
 class ToolCrontabService extends BaseService
 {
     /**
-     * 获取定时任务分页列表
+     * 获取定时任务分页列表.
+     * @param  array<array-key, mixed> $params
      * @return array<array-key, mixed>
-     * @param array<array-key, mixed> $params
      */
     public function getPageList(array $params): array
     {
-        $page     = max(1, (int)($params['page'] ?? 1));
-        $pageSize = max(1, (int)($params['limit'] ?? 20));
+        $page     = max(1, (int) ($params['page'] ?? 1));
+        $pageSize = max(1, (int) ($params['limit'] ?? 20));
 
         $query = ToolCrontab::query();
 
-        if (!empty($params['name'])) {
+        if (! empty($params['name'])) {
             $query->where('name', 'like', '%' . $params['name'] . '%');
         }
         if (isset($params['type']) && $params['type'] !== '') {
-            $query->where('type', (int)$params['type']);
+            $query->where('type', (int) $params['type']);
         }
         if (isset($params['status']) && $params['status'] !== '') {
-            $query->where('status', (int)$params['status']);
+            $query->where('status', (int) $params['status']);
         }
 
         $orderField = in_array($params['orderField'] ?? '', ['id', 'create_time', 'update_time'])
@@ -57,10 +56,10 @@ class ToolCrontabService extends BaseService
     }
 
     /**
-     * 获取任务详情
+     * 获取任务详情.
      */
     /**
-     * @return array<array-key, mixed>|null
+     * @return null|array<array-key, mixed>
      */
     public function getDetail(int $id): ?array
     {
@@ -75,8 +74,6 @@ class ToolCrontabService extends BaseService
      * 创建定时任务
      *
      * @param array<array-key, mixed> $data
-     * @param int $operator
-     * @return ToolCrontab
      */
     public function create(array $data, int $operator = 0): ToolCrontab
     {
@@ -89,12 +86,11 @@ class ToolCrontabService extends BaseService
      * 更新定时任务
      *
      * @param array<array-key, mixed> $data
-     * @return bool
      */
     public function update(int $id, array $data, int $operator = 0): bool
     {
         $crontab = ToolCrontab::find($id);
-        if (!$crontab) {
+        if (! $crontab) {
             throw new \Exception('任务不存在');
         }
         $data['updated_by'] = $operator;
@@ -103,7 +99,7 @@ class ToolCrontabService extends BaseService
     }
 
     /**
-     * 删除定时任务（支持批量）
+     * 删除定时任务（支持批量）.
      *
      * @param array<array-key, mixed> $ids
      */
@@ -120,7 +116,7 @@ class ToolCrontabService extends BaseService
     public function run(int $id): array
     {
         $crontab = ToolCrontab::find($id);
-        if (!$crontab) {
+        if (! $crontab) {
             throw new \Exception('任务不存在');
         }
 
@@ -166,19 +162,68 @@ class ToolCrontabService extends BaseService
         ];
     }
 
+    // ==================== 日志相关 ====================
+
+    /**
+     * 获取执行日志分页列表.
+     *
+     * @param  array<array-key, mixed> $params
+     * @return array<array-key, mixed>
+     */
+    public function getLogPageList(array $params): array
+    {
+        $page     = max(1, (int) ($params['page'] ?? 1));
+        $pageSize = max(1, (int) ($params['limit'] ?? 20));
+
+        $query = ToolCrontabLog::query();
+
+        if (! empty($params['crontab_id'])) {
+            $query->where('crontab_id', (int) $params['crontab_id']);
+        }
+        if (! empty($params['create_time']) && is_array($params['create_time'])) {
+            if (! empty($params['create_time'][0])) {
+                $query->where('create_time', '>=', $params['create_time'][0]);
+            }
+            if (! empty($params['create_time'][1])) {
+                $query->where('create_time', '<=', $params['create_time'][1]);
+            }
+        }
+
+        $orderType = strtolower($params['orderType'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+
+        $total = $query->count();
+        $list  = $query->orderBy('create_time', $orderType)
+            ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()
+            ->toArray();
+
+        return ['list' => $list, 'total' => $total, 'page' => $page, 'size' => $pageSize];
+    }
+
+    /**
+     * 删除执行日志（支持批量）.
+     *
+     * @param array<array-key, mixed> $ids
+     */
+    public function deleteLog(array $ids): int
+    {
+        return ToolCrontabLog::whereIn('id', $ids)->delete();
+    }
+
     /**
      * 执行 URL GET 请求
      */
     protected function executeUrlGet(string $url, ?string $parameter): void
     {
         $params = [];
-        if (!empty($parameter)) {
+        if (! empty($parameter)) {
             $decoded = json_decode($parameter, true);
             if (is_array($decoded)) {
                 $params = $decoded;
             }
         }
-        if (!empty($params)) {
+        if (! empty($params)) {
             $url .= '?' . http_build_query($params);
         }
 
@@ -204,7 +249,7 @@ class ToolCrontabService extends BaseService
     protected function executeUrlPost(string $url, ?string $parameter): void
     {
         $params = [];
-        if (!empty($parameter)) {
+        if (! empty($parameter)) {
             $decoded = json_decode($parameter, true);
             if (is_array($decoded)) {
                 $params = $decoded;
@@ -233,19 +278,17 @@ class ToolCrontabService extends BaseService
     /**
      * 执行类任务
      */
-    /**
-     */
     protected function executeClass(string $target, ?string $parameter): void
     {
         // 将反斜杠路径转为命名空间
         $className = str_replace('/', '\\', $target);
 
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             throw new \RuntimeException("类不存在: {$className}");
         }
 
         $params = [];
-        if (!empty($parameter)) {
+        if (! empty($parameter)) {
             $decoded = json_decode($parameter, true);
             if (is_array($decoded)) {
                 $params = $decoded;
@@ -253,58 +296,9 @@ class ToolCrontabService extends BaseService
         }
 
         $instance = new $className();
-        if (!method_exists($instance, 'execute')) {
+        if (! method_exists($instance, 'execute')) {
             throw new \RuntimeException("类 {$className} 未实现 execute() 方法");
         }
         $instance->execute($params);
-    }
-
-    // ==================== 日志相关 ====================
-
-    /**
-     * 获取执行日志分页列表
-     *
-     * @param array<array-key, mixed> $params
-     * @return array<array-key, mixed>
-     */
-    public function getLogPageList(array $params): array
-    {
-        $page     = max(1, (int)($params['page'] ?? 1));
-        $pageSize = max(1, (int)($params['limit'] ?? 20));
-
-        $query = ToolCrontabLog::query();
-
-        if (!empty($params['crontab_id'])) {
-            $query->where('crontab_id', (int)$params['crontab_id']);
-        }
-        if (!empty($params['create_time']) && is_array($params['create_time'])) {
-            if (!empty($params['create_time'][0])) {
-                $query->where('create_time', '>=', $params['create_time'][0]);
-            }
-            if (!empty($params['create_time'][1])) {
-                $query->where('create_time', '<=', $params['create_time'][1]);
-            }
-        }
-
-        $orderType = strtolower($params['orderType'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
-
-        $total = $query->count();
-        $list  = $query->orderBy('create_time', $orderType)
-            ->offset(($page - 1) * $pageSize)
-            ->limit($pageSize)
-            ->get()
-            ->toArray();
-
-        return ['list' => $list, 'total' => $total, 'page' => $page, 'size' => $pageSize];
-    }
-
-    /**
-     * 删除执行日志（支持批量）
-     *
-     * @param array<array-key, mixed> $ids
-     */
-    public function deleteLog(array $ids): int
-    {
-        return ToolCrontabLog::whereIn('id', $ids)->delete();
     }
 }

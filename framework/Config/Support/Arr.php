@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: %filename%
- * @Date: 2025-12-2
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Config\Support;
@@ -24,7 +17,7 @@ class Arr
             return $array;
         }
         $segments = explode('.', $key);
-        $cursor = $array;
+        $cursor   = $array;
         foreach ($segments as $seg) {
             if (is_array($cursor) && array_key_exists($seg, $cursor)) {
                 $cursor = $cursor[$seg];

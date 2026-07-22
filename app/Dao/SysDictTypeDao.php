@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 数据字典类型DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -21,20 +18,9 @@ use Framework\Basic\BaseDao;
 class SysDictTypeDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysDictType::class;
-    }
-
-    /**
-     * 根据字典编码查找
+     * 根据字典编码查找.
      *
      * @param string $dictCode 字典编码
-     * @return SysDictType|null
      */
     public function findByDictCode(string $dictCode): ?SysDictType
     {
@@ -42,11 +28,10 @@ class SysDictTypeDao extends BaseDao
     }
 
     /**
-     * 检查字典编码是否存在
+     * 检查字典编码是否存在.
      *
      * @param string $dictCode  字典编码
      * @param int    $excludeId 排除的ID
-     * @return bool
      */
     public function isDictCodeExists(string $dictCode, int $excludeId = 0): bool
     {
@@ -58,12 +43,20 @@ class SysDictTypeDao extends BaseDao
     }
 
     /**
-     * 获取启用的字典类型列表
+     * 获取启用的字典类型列表.
      *
      * @return array<array-key, mixed>
      */
     public function getAllEnabled(): array
     {
         return $this->selectList(['status' => SysDictType::STATUS_ENABLED], '*', 0, 0, 'id desc')->toArray();
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysDictType::class;
     }
 }

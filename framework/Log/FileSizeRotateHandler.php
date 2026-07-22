@@ -3,15 +3,8 @@
 declare(strict_types=1);
 
 /**
- * This file is part of FssPHP Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: FileSizeRotateHandler.php
- * @Date: 2025-12-2
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace Framework\Log;
@@ -31,12 +24,12 @@ class FileSizeRotateHandler extends StreamHandler
         string $filename,
         int $maxSize,
         int $keepDays = 30,
-        int|string|Level $level = Logger::DEBUG,
+        int|Level|string $level = Logger::DEBUG,
         bool $bubble = true
     ) {
         $this->maxSize  = $maxSize;
         $this->keepDays = $keepDays;
-        
+
         parent::__construct($filename, $level, $bubble);
     }
 
@@ -44,7 +37,7 @@ class FileSizeRotateHandler extends StreamHandler
     {
         // 在写入前检查是否需要轮转
         $this->checkRotation();
-        
+
         parent::write($record);
     }
 

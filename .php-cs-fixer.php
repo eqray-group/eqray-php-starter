@@ -96,6 +96,7 @@ return (new PhpCsFixer\Config())
                          ->exclude('storage')
                          ->exclude('resource')
                          ->exclude('vendor')
+                         ->in(__DIR__ . '/app')
                          ->in(__DIR__ . '/framework')
     )
     ->setCacheFile(__DIR__ . '/.php-cs-fixer.cache');

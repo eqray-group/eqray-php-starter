@@ -3,72 +3,79 @@
 declare(strict_types=1);
 
 /**
- * 系统岗位模型
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-19
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
 use Framework\Basic\BaseLaORMModel;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * SysPost 系统岗位模型
+ * SysPost 系统岗位模型.
  *
  * 岗位表模型，管理系统中岗位信息
  *
- * @property int         $id          岗位ID
- * @property string      $name        岗位名称
- * @property string      $code        岗位代码
- * @property int         $sort        排序
- * @property int         $status      状态: 1启用, 0禁用
- * @property int         $tenant_id   所属租户ID
- * @property string      $remark      备注
- * @property int         $created_by  创建人ID
- * @property int         $updated_by  更新人ID
- * @property \DateTime   $created_at  创建时间
- * @property \DateTime   $updated_at  更新时间
+ * @property int       $id         岗位ID
+ * @property string    $name       岗位名称
+ * @property string    $code       岗位代码
+ * @property int       $sort       排序
+ * @property int       $status     状态: 1启用, 0禁用
+ * @property int       $tenant_id  所属租户ID
+ * @property string    $remark     备注
+ * @property int       $created_by 创建人ID
+ * @property int       $updated_by 更新人ID
+ * @property \DateTime $created_at 创建时间
+ * @property \DateTime $updated_at 更新时间
  *
- * @property-read SysUser[]  $users   岗位下的用户
- 
+ * @property SysUser[] $users 岗位下的用户
+ *
  * @property string $create_time
  * @property string $update_time
  * @property string $delete_time
- * @property mixed $deleted_at
- * @property mixed $enabled
-*/
+ * @property mixed  $deleted_at
+ * @property mixed  $enabled
+ */
 class SysPost extends BaseLaORMModel
 {
     use SoftDeletes;
 
     /**
-     * 表名
-     * @var string
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    // ==================== 状态常量 ====================
+
+    /** @var int 禁用状态 */
+    public const ENABLED_DISABLED = 0;
+
+    /** @var int 启用状态 */
+    public const ENABLED_ENABLED = 1;
+
+    /**
+     * 表名.
+     * @var    string
      * @return mixed
      */
     protected $table = 'sa_system_post';
 
     /**
-     * 主键
-     * @var string
+     * 主键.
+     * @var    string
      * @return mixed
      */
     protected $primaryKey = 'id';
-    /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
 
     /**
-     * 可填充字段
-     * @var array<int, string>
+     * 可填充字段.
+     * @var    array<int, string>
      * @return mixed
      */
     protected $fillable = [
@@ -83,34 +90,26 @@ class SysPost extends BaseLaORMModel
     ];
 
     /**
-     * 类型转换
-     * @var array<array-key, mixed>
+     * 类型转换.
+     * @var    array<array-key, mixed>
      * @return mixed
      */
     protected $casts = [
-        'id' => 'integer',
-        'sort' => 'integer',
-        'status' => 'integer',
-        'tenant_id' => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        'id'          => 'integer',
+        'sort'        => 'integer',
+        'status'      => 'integer',
+        'tenant_id'   => 'integer',
+        'created_by'  => 'integer',
+        'updated_by'  => 'integer',
         'create_time' => 'datetime',
         'update_time' => 'datetime',
         'delete_time' => 'datetime',
     ];
 
-    // ==================== 状态常量 ====================
-
-    /** @var int 禁用状态 */
-    public const ENABLED_DISABLED = 0;
-
-    /** @var int 启用状态 */
-    public const ENABLED_ENABLED = 1;
-
     // ==================== 关联关系 ====================
 
     /**
-     * 岗位下的用户 (多对多)
+     * 岗位下的用户 (多对多).
      *
      * @return BelongsToMany<SysUser, $this>
      */
@@ -127,9 +126,7 @@ class SysPost extends BaseLaORMModel
     // ==================== 业务方法 ====================
 
     /**
-     * 检查岗位是否被禁用
-     *
-     * @return bool
+     * 检查岗位是否被禁用.
      */
     public function isDisabled(): bool
     {
@@ -137,9 +134,7 @@ class SysPost extends BaseLaORMModel
     }
 
     /**
-     * 检查岗位是否启用
-     *
-     * @return bool
+     * 检查岗位是否启用.
      */
     public function isEnabled(): bool
     {
@@ -151,7 +146,6 @@ class SysPost extends BaseLaORMModel
      *
      * @param string $postCode  岗位编码
      * @param int    $excludeId 排除的岗位ID
-     * @return bool
      */
     public static function isPostCodeUnique(string $postCode, int $excludeId = 0): bool
     {
@@ -161,13 +155,11 @@ class SysPost extends BaseLaORMModel
             $query->where('id', '!=', $excludeId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 
     /**
-     * 检查岗位下是否有用户
-     *
-     * @return bool
+     * 检查岗位下是否有用户.
      */
     public function hasUsers(): bool
     {
@@ -175,7 +167,7 @@ class SysPost extends BaseLaORMModel
     }
 
     /**
-     * 获取岗位下的用户ID列表
+     * 获取岗位下的用户ID列表.
      *
      * @return array<array-key, mixed>
      */

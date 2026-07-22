@@ -3,35 +3,20 @@
 declare(strict_types=1);
 
 /**
- * 代码生成控制器
- *
- * 路由对应前端 web/src/api/api/tool/generate.ts 中的全部 API：
- *   GET    /api/tool/code/index          → index()           分页列表
- *   GET    /api/tool/code/read           → read()            读取表详情+字段
- *   PUT    /api/tool/code/update         → update()          更新配置（含字段）
- *   DELETE /api/tool/code/destroy        → destroy()         批量删除
- *   GET    /api/tool/code/getTableColumns→ getTableColumns() 获取字段列表
- *   POST   /api/tool/code/loadTable      → loadTable()       装载数据表
- *   POST   /api/tool/code/sync           → sync()            同步表结构
- *   GET    /api/tool/code/preview        → preview()         预览代码
- *   POST   /api/tool/code/generate       → generate()        生成代码 ZIP 下载
- *   POST   /api/tool/code/generateFile   → generateFile()    生成代码到项目文件
- *
- * @package App\Controllers
- * @author  Genie
- * @date    2026-03-29
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Controllers;
 
 use App\Services\ToolGenerateService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Framework\Attributes\Permission;
 
 class GenerateController extends BaseController
 {
@@ -40,17 +25,12 @@ class GenerateController extends BaseController
      */
     protected ToolGenerateService $generateService;
 
-    protected function initialize(): void
-    {
-        $this->generateService = new ToolGenerateService();
-    }
-
     // ==================== 列表 ====================
 
     /**
      * 分页列表
      * GET /api/tool/code/index
-     * 参数: table_name, source, page, limit
+     * 参数: table_name, source, page, limit.
      */
     #[Route(path: '/api/tool/code/index', methods: ['GET'], name: 'generate.index')]
     #[Auth(required: true)]
@@ -66,14 +46,14 @@ class GenerateController extends BaseController
 
     /**
      * 读取表详情（含 columns 字段配置）
-     * GET /api/tool/code/read?id=
+     * GET /api/tool/code/read?id=.
      */
     #[Route(path: '/api/tool/code/read', methods: ['GET'], name: 'generate.read')]
     #[Auth(required: true)]
     #[Permission('tool:code:index')]
     public function read(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->query->get('id', 0);
+        $id = (int) $request->query->get('id', 0);
         if ($id <= 0) {
             return $this->fail('参数 id 不能为空');
         }
@@ -91,7 +71,7 @@ class GenerateController extends BaseController
     /**
      * 更新代码生成配置（含 columns 数组）
      * PUT /api/tool/code/update
-     * Body: 表配置字段 + columns 数组 + relations（存入 options）
+     * Body: 表配置字段 + columns 数组 + relations（存入 options）.
      */
     #[Route(path: '/api/tool/code/update', methods: ['PUT'], name: 'generate.update')]
     #[Auth(required: true)]
@@ -99,13 +79,13 @@ class GenerateController extends BaseController
     public function update(Request $request): BaseJsonResponse
     {
         $data = $this->inputAll($request);
-        $id   = (int)($data['id'] ?? 0);
+        $id   = (int) ($data['id'] ?? 0);
 
         if ($id <= 0) {
             return $this->fail('参数 id 不能为空');
         }
 
-        $operatorId = (int)($request->attributes->get('user')['id'] ?? 0);
+        $operatorId = (int) ($request->attributes->get('user')['id'] ?? 0);
 
         try {
             $this->generateService->updateConfig($id, $data, $operatorId);
@@ -120,7 +100,7 @@ class GenerateController extends BaseController
     /**
      * 批量删除
      * DELETE /api/tool/code/destroy
-     * Body: { ids: [1, 2, 3] }
+     * Body: { ids: [1, 2, 3] }.
      */
     #[Route(path: '/api/tool/code/destroy', methods: ['DELETE'], name: 'generate.destroy')]
     #[Auth(required: true)]
@@ -130,17 +110,17 @@ class GenerateController extends BaseController
         $data = $this->inputAll($request);
         $ids  = [];
 
-        if (!empty($data['ids']) && is_array($data['ids'])) {
+        if (! empty($data['ids']) && is_array($data['ids'])) {
             $ids = array_map('intval', $data['ids']);
-        } elseif (!empty($data['id'])) {
-            $ids = [(int)$data['id']];
+        } elseif (! empty($data['id'])) {
+            $ids = [(int) $data['id']];
         }
 
         if (empty($ids)) {
             return $this->fail('请选择要删除的记录');
         }
 
-        $operatorId = (int)($request->attributes->get('user')['id'] ?? 0);
+        $operatorId = (int) ($request->attributes->get('user')['id'] ?? 0);
 
         try {
             $count = $this->generateService->deleteByIds($ids, $operatorId);
@@ -154,14 +134,14 @@ class GenerateController extends BaseController
 
     /**
      * 获取字段列表
-     * GET /api/tool/code/getTableColumns?table_id=
+     * GET /api/tool/code/getTableColumns?table_id=.
      */
     #[Route(path: '/api/tool/code/getTableColumns', methods: ['GET'], name: 'generate.getTableColumns')]
     #[Auth(required: true)]
     #[Permission('tool:code:index')]
     public function getTableColumns(Request $request): BaseJsonResponse
     {
-        $tableId = (int)$request->query->get('table_id', 0);
+        $tableId = (int) $request->query->get('table_id', 0);
         if ($tableId <= 0) {
             return $this->fail('参数 table_id 不能为空');
         }
@@ -179,7 +159,7 @@ class GenerateController extends BaseController
     /**
      * 装载数据表（从数据库读取表结构写入代码生成配置）
      * POST /api/tool/code/loadTable
-     * Body: { source: 'mysql', names: [{name, comment, sourceName}] }
+     * Body: { source: 'mysql', names: [{name, comment, sourceName}] }.
      */
     #[Route(path: '/api/tool/code/loadTable', methods: ['POST'], name: 'generate.loadTable')]
     #[Auth(required: true)]
@@ -190,11 +170,11 @@ class GenerateController extends BaseController
         $source= $data['source'] ?? 'default';
         $names = $data['names']  ?? [];
 
-        if (empty($names) || !is_array($names)) {
+        if (empty($names) || ! is_array($names)) {
             return $this->fail('请选择要装载的数据表');
         }
 
-        $operatorId = (int)($request->attributes->get('user')['id'] ?? 0);
+        $operatorId = (int) ($request->attributes->get('user')['id'] ?? 0);
 
         try {
             $result = $this->generateService->loadTable($source, $names, $operatorId);
@@ -212,7 +192,7 @@ class GenerateController extends BaseController
     /**
      * 同步表结构（将数据库最新字段同步回字段配置，保留已有配置属性）
      * POST /api/tool/code/sync
-     * Body: { id: 1 } 或 { ids: [1,2] }
+     * Body: { id: 1 } 或 { ids: [1,2] }.
      */
     #[Route(path: '/api/tool/code/sync', methods: ['POST'], name: 'generate.sync')]
     #[Auth(required: true)]
@@ -222,17 +202,17 @@ class GenerateController extends BaseController
         $data = $this->inputAll($request);
         $ids  = [];
 
-        if (!empty($data['ids']) && is_array($data['ids'])) {
+        if (! empty($data['ids']) && is_array($data['ids'])) {
             $ids = array_map('intval', $data['ids']);
-        } elseif (!empty($data['id'])) {
-            $ids = [(int)$data['id']];
+        } elseif (! empty($data['id'])) {
+            $ids = [(int) $data['id']];
         }
 
         if (empty($ids)) {
             return $this->fail('参数 id 不能为空');
         }
 
-        $operatorId = (int)($request->attributes->get('user')['id'] ?? 0);
+        $operatorId = (int) ($request->attributes->get('user')['id'] ?? 0);
 
         $success = [];
         $failed  = [];
@@ -245,7 +225,7 @@ class GenerateController extends BaseController
             }
         }
 
-        if (!empty($failed) && empty($success)) {
+        if (! empty($failed) && empty($success)) {
             return $this->fail('同步失败：' . $failed[0]['reason']);
         }
 
@@ -257,14 +237,14 @@ class GenerateController extends BaseController
     /**
      * 预览代码
      * GET /api/tool/code/preview?id=
-     * 返回: [{name, tab_name, code, lang}]
+     * 返回: [{name, tab_name, code, lang}].
      */
     #[Route(path: '/api/tool/code/preview', methods: ['GET'], name: 'generate.preview')]
     #[Auth(required: true)]
     #[Permission('tool:code:index')]
     public function preview(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->query->get('id', 0);
+        $id = (int) $request->query->get('id', 0);
         if ($id <= 0) {
             return $this->fail('参数 id 不能为空');
         }
@@ -293,10 +273,10 @@ class GenerateController extends BaseController
         $data = $this->inputAll($request);
         $ids  = [];
 
-        if (!empty($data['ids']) && is_array($data['ids'])) {
+        if (! empty($data['ids']) && is_array($data['ids'])) {
             $ids = array_map('intval', $data['ids']);
-        } elseif (!empty($data['id'])) {
-            $ids = [(int)$data['id']];
+        } elseif (! empty($data['id'])) {
+            $ids = [(int) $data['id']];
         }
 
         if (empty($ids)) {
@@ -315,7 +295,7 @@ class GenerateController extends BaseController
             $response = new Response($zipContent);
             $response->headers->set('Content-Type', 'application/zip');
             $response->headers->set('Content-Disposition', "attachment; filename=\"{$filename}\"");
-            $response->headers->set('Content-Length', (string)strlen($zipContent));
+            $response->headers->set('Content-Length', (string) strlen($zipContent));
             $response->headers->set('Access-Control-Expose-Headers', 'Content-Disposition');
 
             return $response;
@@ -329,7 +309,7 @@ class GenerateController extends BaseController
     /**
      * 生成代码到项目目录
      * POST /api/tool/code/generateFile
-     * Body: { ids: [1, 2] }
+     * Body: { ids: [1, 2] }.
      */
     #[Route(path: '/api/tool/code/generateFile', methods: ['POST'], name: 'generate.generateFile')]
     #[Auth(required: true)]
@@ -339,27 +319,32 @@ class GenerateController extends BaseController
         $data = $this->inputAll($request);
         $ids  = [];
 
-        if (!empty($data['ids']) && is_array($data['ids'])) {
+        if (! empty($data['ids']) && is_array($data['ids'])) {
             $ids = array_map('intval', $data['ids']);
-        } elseif (!empty($data['id'])) {
-            $ids = [(int)$data['id']];
+        } elseif (! empty($data['id'])) {
+            $ids = [(int) $data['id']];
         }
 
         if (empty($ids)) {
             return $this->fail('请选择要生成的记录');
         }
 
-        $operatorId = (int)($request->attributes->get('user')['id'] ?? 0);
+        $operatorId = (int) ($request->attributes->get('user')['id'] ?? 0);
 
         try {
             $result = $this->generateService->generateFile($ids, $operatorId);
             $msg    = '生成成功，共 ' . count($result['success']) . ' 个文件';
-            if (!empty($result['failed'])) {
+            if (! empty($result['failed'])) {
                 $msg .= '，' . count($result['failed']) . ' 个失败';
             }
             return $this->success($result, $msg);
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
         }
+    }
+
+    protected function initialize(): void
+    {
+        $this->generateService = new ToolGenerateService();
     }
 }

@@ -2,16 +2,21 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Controllers;
 
-use App\Services\SysConfigService;
 use App\Services\SysConfigGroupService;
+use App\Services\SysConfigService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Framework\Attributes\Permission;
 
 class ConfigController extends BaseController
 {
@@ -19,16 +24,11 @@ class ConfigController extends BaseController
      * @return mixed
      */
     protected SysConfigService $configService;
+
     /**
      * @return mixed
      */
     protected SysConfigGroupService $configGroupService;
-
-    protected function initialize(): void
-    {
-        $this->configService = new SysConfigService();
-        $this->configGroupService = new SysConfigGroupService();
-    }
 
     // ==================== 配置组管理 ====================
 
@@ -68,8 +68,8 @@ class ConfigController extends BaseController
     #[Permission('core:config:edit')]
     public function groupUpdate(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
-        $data = $this->parseBody($request);
+        $id       = (int) $request->attributes->get('id');
+        $data     = $this->parseBody($request);
         $operator = $this->getOperatorId($request);
 
         try {
@@ -85,7 +85,7 @@ class ConfigController extends BaseController
     #[Permission('core:config:edit')]
     public function groupDelete(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
+        $id = (int) $request->attributes->get('id');
 
         try {
             $this->configGroupService->delete($id);
@@ -100,10 +100,10 @@ class ConfigController extends BaseController
     #[Permission('core:config:edit')]
     public function testEmail(Request $request): BaseJsonResponse
     {
-        $data = $this->parseBody($request);
+        $data   = $this->parseBody($request);
         $result = $this->configGroupService->testEmail($data);
-        
-        return $result['success'] 
+
+        return $result['success']
             ? $this->success($result, $result['message'])
             : $this->fail($result['message']);
     }
@@ -111,12 +111,12 @@ class ConfigController extends BaseController
     // ==================== 配置项管理 ====================
 
     /**
-     * 按配置键获取配置值（公开接口，登录页等场景使用）
+     * 按配置键获取配置值（公开接口，登录页等场景使用）.
      */
     #[Route(path: '/api/core/config/public/{key}', methods: ['GET'], name: 'config.publicValue')]
     public function publicValue(Request $request): BaseJsonResponse
     {
-        $key = trim((string)$request->attributes->get('key'));
+        $key = trim((string) $request->attributes->get('key'));
         if ($key === '') {
             return $this->fail('配置键不能为空');
         }
@@ -124,7 +124,7 @@ class ConfigController extends BaseController
         $value = $this->configService->getByKey($key);
 
         return $this->success([
-            'key' => $key,
+            'key'   => $key,
             'value' => $value ?? '',
         ]);
     }
@@ -136,9 +136,9 @@ class ConfigController extends BaseController
     {
         $params = $request->query->all();
         $result = $this->configService->getList($params);
-        
+
         // 如果是前端按照 group_id 直接获取配置项（不分页），则返回 list 数组本身
-        if (isset($params['group_id']) && !isset($params['page'])) {
+        if (isset($params['group_id']) && ! isset($params['page'])) {
             return $this->success($result['list'] ?? []);
         }
 
@@ -171,8 +171,8 @@ class ConfigController extends BaseController
     #[Permission('core:config:update')]
     public function configUpdate(Request $request): BaseJsonResponse
     {
-        $id = (int)$request->attributes->get('id');
-        $data = $this->parseBody($request);
+        $id       = (int) $request->attributes->get('id');
+        $data     = $this->parseBody($request);
         $operator = $this->getOperatorId($request);
 
         try {
@@ -206,7 +206,7 @@ class ConfigController extends BaseController
     #[Permission('core:config:update')]
     public function batchUpdate(Request $request): BaseJsonResponse
     {
-        $data = $this->parseBody($request);
+        $data    = $this->parseBody($request);
         $configs = $data['config'] ?? $data['configs'] ?? [];
 
         if (empty($configs)) {
@@ -223,10 +223,14 @@ class ConfigController extends BaseController
         }
     }
 
+    protected function initialize(): void
+    {
+        $this->configService      = new SysConfigService();
+        $this->configGroupService = new SysConfigGroupService();
+    }
+
     // ==================== 辅助方法 ====================
 
-    /**
-     */
     protected function getOperatorId(Request $request): int
     {
         $user = $request->attributes->get('user');
@@ -234,15 +238,13 @@ class ConfigController extends BaseController
     }
 
     /**
-     */
-        /**
      * @return array<array-key, mixed>
-         */
+     */
     private function parseBody(Request $request): array
     {
-        $body = [];
+        $body    = [];
         $content = $request->getContent();
-        if (!empty($content)) {
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $body = $decoded;
@@ -257,11 +259,11 @@ class ConfigController extends BaseController
     private function parseIds(Request $request): array
     {
         $body = $this->parseBody($request);
-        if (!empty($body['ids']) && is_array($body['ids'])) {
+        if (! empty($body['ids']) && is_array($body['ids'])) {
             return array_map('intval', $body['ids']);
         }
-        if (!empty($body['id'])) {
-            return [(int)$body['id']];
+        if (! empty($body['id'])) {
+            return [(int) $body['id']];
         }
         return [];
     }

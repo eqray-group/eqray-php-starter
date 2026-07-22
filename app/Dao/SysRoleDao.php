@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 系统角色DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -23,20 +20,9 @@ use Framework\Basic\BaseDao;
 class SysRoleDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysRole::class;
-    }
-
-    /**
-     * 根据角色编码查找角色
+     * 根据角色编码查找角色.
      *
      * @param string $roleCode 角色编码
-     * @return SysRole|null
      */
     public function findByRoleCode(string $roleCode): ?SysRole
     {
@@ -44,10 +30,10 @@ class SysRoleDao extends BaseDao
     }
 
     /**
-     * 获取启用的角色列表
+     * 获取启用的角色列表.
      *
-     * @param int $page  页码
-     * @param int $limit 每页数量
+     * @param  int                     $page  页码
+     * @param  int                     $limit 每页数量
      * @return array<array-key, mixed>
      */
     public function getEnabledList(int $page = 1, int $limit = 20): array
@@ -56,7 +42,7 @@ class SysRoleDao extends BaseDao
     }
 
     /**
-     * 获取所有启用的角色
+     * 获取所有启用的角色.
      *
      * @return array<array-key, mixed>
      */
@@ -66,9 +52,9 @@ class SysRoleDao extends BaseDao
     }
 
     /**
-     * 获取子角色列表
+     * 获取子角色列表.
      *
-     * @param int $parentId 父角色ID
+     * @param  int                     $parentId 父角色ID
      * @return array<array-key, mixed>
      */
     public function getChildrenByParentId(int $parentId): array
@@ -77,11 +63,10 @@ class SysRoleDao extends BaseDao
     }
 
     /**
-     * 检查角色编码是否存在
+     * 检查角色编码是否存在.
      *
      * @param string $roleCode  角色编码
      * @param int    $excludeId 排除的角色ID
-     * @return bool
      */
     public function isRoleCodeExists(string $roleCode, int $excludeId = 0): bool
     {
@@ -97,7 +82,6 @@ class SysRoleDao extends BaseDao
      *
      * @param int $roleId 角色ID
      * @param int $status 状态
-     * @return bool
      */
     public function updateStatus(int $roleId, int $status): bool
     {
@@ -105,10 +89,9 @@ class SysRoleDao extends BaseDao
     }
 
     /**
-     * 获取角色总数
+     * 获取角色总数.
      *
      * @param array<array-key, mixed> $where 条件
-     * @return int
      */
     public function getRoleCount(array $where = []): int
     {
@@ -116,13 +99,21 @@ class SysRoleDao extends BaseDao
     }
 
     /**
-     * 获取角色ID列表
+     * 获取角色ID列表.
      *
-     * @param array<array-key, mixed> $where 条件
+     * @param  array<array-key, mixed> $where 条件
      * @return array<array-key, mixed>
      */
     public function getRoleIds(array $where = []): array
     {
         return $this->getColumn($where, 'id');
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysRole::class;
     }
 }

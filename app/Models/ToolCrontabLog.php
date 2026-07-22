@@ -3,32 +3,30 @@
 declare(strict_types=1);
 
 /**
- * 定时任务执行日志模型
- *
- * @package App\Models
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
 use Framework\Basic\BaseLaORMModel;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * ToolCrontabLog 定时任务执行日志模型
+ * ToolCrontabLog 定时任务执行日志模型.
  *
  * @property int         $id             主键
- * @property int|null    $crontab_id     任务ID
- * @property string|null $name           任务名称
- * @property string|null $target         调用目标
- * @property string|null $parameter      调用参数
- * @property string|null $exception_info 异常信息
+ * @property null|int    $crontab_id     任务ID
+ * @property null|string $name           任务名称
+ * @property null|string $target         调用目标
+ * @property null|string $parameter      调用参数
+ * @property null|string $exception_info 异常信息
  * @property int         $status         执行状态 (1成功 2失败)
- * @property string|null $create_time    创建时间
- * @property string|null $update_time    修改时间
- * @property string|null $delete_time    删除时间
- 
+ * @property null|string $create_time    创建时间
+ * @property null|string $update_time    修改时间
+ * @property null|string $delete_time    删除时间
+ *
  * @property mixed $tenant_id
  * @property mixed $created_by
  * @property mixed $updated_by
@@ -36,10 +34,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property mixed $created_at
  * @property mixed $updated_at
  * @property mixed $deleted_at
-*/
+ */
 class ToolCrontabLog extends BaseLaORMModel
 {
     use SoftDeletes;
+
+    /**
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    /** 执行状态：成功 */
+    public const STATUS_SUCCESS = 1;
+
+    /** 执行状态：失败 */
+    public const STATUS_FAIL = 2;
 
     /**
      * @return mixed
@@ -50,13 +63,6 @@ class ToolCrontabLog extends BaseLaORMModel
      * @return mixed
      */
     protected $primaryKey = 'id';
-
-    /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
 
     /**
      * @return mixed
@@ -79,11 +85,6 @@ class ToolCrontabLog extends BaseLaORMModel
         'crontab_id' => 'integer',
         'status'     => 'integer',
     ];
-
-    /** 执行状态：成功 */
-    public const STATUS_SUCCESS = 1;
-    /** 执行状态：失败 */
-    public const STATUS_FAIL = 2;
 
     /**
      * 所属任务

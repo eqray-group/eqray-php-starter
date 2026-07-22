@@ -2,15 +2,20 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Controllers;
 
+use App\Models\SysUser;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Framework\Attributes\Permission;
-use App\Models\SysUser;
 
 class ConsoleController extends BaseController
 {
@@ -24,7 +29,7 @@ class ConsoleController extends BaseController
             'user'    => SysUser::count(), // 或者写死比如 1024
             'attach'  => 120, // 附件数
             'login'   => 56,  // 登录数
-            'operate' => 89   // 操作数
+            'operate' => 89,   // 操作数
         ];
 
         return $this->success($data);
@@ -37,7 +42,7 @@ class ConsoleController extends BaseController
     {
         $data = [
             'x_data' => ['01/01', '01/02', '01/03', '01/04', '01/05', '01/06', '01/07'],
-            'y_data' => [12, 34, 23, 45, 12, 65, 34]
+            'y_data' => [12, 34, 23, 45, 12, 65, 34],
         ];
         return $this->success($data);
     }
@@ -49,7 +54,7 @@ class ConsoleController extends BaseController
     {
         $data = [
             'x_data' => ['01/01', '01/02', '01/03', '01/04', '01/05', '01/06', '01/07'],
-            'y_data' => [12, 34, 23, 45, 12, 65, 34]
+            'y_data' => [12, 34, 23, 45, 12, 65, 34],
         ];
         return $this->success($data);
     }

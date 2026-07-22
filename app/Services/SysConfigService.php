@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Services;
 
-use App\Models\SysConfig;
 use App\Dao\SysConfigDao;
+use App\Models\SysConfig;
 use Framework\Basic\BaseService;
 
 /**
@@ -14,22 +19,22 @@ use Framework\Basic\BaseService;
 class SysConfigService extends BaseService
 {
     /**
-     * 获取配置项列表
+     * 获取配置项列表.
+     * @param  array<array-key, mixed> $params
      * @return array<array-key, mixed>
-     * @param array<array-key, mixed> $params
      */
     public function getList(array $params): array
     {
-        $page = max(1, (int)($params['page'] ?? 1));
-        $limit = max(1, (int)($params['limit'] ?? 60));
-        $groupId = $params['group_id'] ?? '';
-        $configKey = $params['key'] ?? '';
-        $configName = $params['name'] ?? '';
+        $page       = max(1, (int) ($params['page'] ?? 1));
+        $limit      = max(1, (int) ($params['limit'] ?? 60));
+        $groupId    = $params['group_id'] ?? '';
+        $configKey  = $params['key']      ?? '';
+        $configName = $params['name']     ?? '';
 
         $query = SysConfig::query();
 
         if ($groupId !== '') {
-            $query->where('group_id', (int)$groupId);
+            $query->where('group_id', (int) $groupId);
         }
 
         if ($configKey !== '') {
@@ -41,7 +46,7 @@ class SysConfigService extends BaseService
         }
 
         $total = $query->count();
-        $list = $query->orderBy('sort', 'asc')
+        $list  = $query->orderBy('sort', 'asc')
             ->where('delete_time', null)
             ->orderBy('id', 'desc')
             ->offset(($page - 1) * $limit)
@@ -49,7 +54,7 @@ class SysConfigService extends BaseService
             ->get()
             ->map(function ($item) {
                 // 转换 JSON 格式的 config_select_data 供前端 ElSelect 等组件使用
-                if (!empty($item->config_select_data)) {
+                if (! empty($item->config_select_data)) {
                     $item->config_select_data = json_decode($item->config_select_data, true) ?: [];
                 } else {
                     $item->config_select_data = [];
@@ -59,18 +64,18 @@ class SysConfigService extends BaseService
             ->toArray();
 
         return [
-            'list' => $list,
+            'list'  => $list,
             'total' => $total,
-            'page' => $page,
-            'size' => $limit,
+            'page'  => $page,
+            'size'  => $limit,
         ];
     }
 
     /**
-     * 获取配置项详情
+     * 获取配置项详情.
      */
     /**
-     * @return array<array-key, mixed>|null
+     * @return null|array<array-key, mixed>
      */
     public function getDetail(int $id): ?array
     {
@@ -79,14 +84,12 @@ class SysConfigService extends BaseService
     }
 
     /**
-     * 保存配置项
+     * 保存配置项.
      */
     /**
-     * 保存配置项
+     * 保存配置项.
      *
      * @param array<array-key, mixed> $data
-     * @param int $operator
-     * @return mixed
      */
     public function save(array $data, int $operator): mixed
     {
@@ -104,17 +107,14 @@ class SysConfigService extends BaseService
     }
 
     /**
-     * 更新配置项
+     * 更新配置项.
      *
-     * @param int $id
      * @param array<array-key, mixed> $data
-     * @param int $operator
-     * @return bool
      */
     public function update(int $id, array $data, int $operator): bool
     {
         $config = SysConfig::find($id);
-        if (!$config) {
+        if (! $config) {
             throw new \Exception('配置项不存在');
         }
 
@@ -132,10 +132,9 @@ class SysConfigService extends BaseService
     }
 
     /**
-     * 删除配置项
+     * 删除配置项.
      *
      * @param array<array-key, mixed> $ids
-     * @return int
      */
     public function delete(array $ids): int
     {
@@ -145,7 +144,7 @@ class SysConfigService extends BaseService
             if ($config) {
                 $this->clearConfigCache($config->key);
                 $config->delete();
-                $count++;
+                ++$count;
             }
         }
         return $count;
@@ -154,19 +153,17 @@ class SysConfigService extends BaseService
     /**
      * 根据配置键获取配置值
      */
-        /**
-         */
     public function getByKey(string $key): mixed
     {
         $cacheKey = "config_{$key}";
-        $cached = app('cache')->get($cacheKey);
+        $cached   = app('cache')->get($cacheKey);
 
         if ($cached !== null) {
             return $cached;
         }
 
         $config = SysConfig::where('key', $key)->first();
-        $value = $config ? $config->value : null;
+        $value  = $config ? $config->value : null;
 
         app('cache')->set($cacheKey, $value, 3600);
 
@@ -181,10 +178,10 @@ class SysConfigService extends BaseService
     public function batchUpdate(array $configs, int $operator): bool
     {
         foreach ($configs as $item) {
-            if (isset($item['id']) && isset($item['value'])) {
+            if (isset($item['id'], $item['value'])) {
                 $config = SysConfig::find($item['id']);
                 if ($config) {
-                    $config->value = $item['value'];
+                    $config->value      = $item['value'];
                     $config->updated_by = $operator;
                     $config->save();
                     $this->clearConfigCache($config->key);
@@ -195,7 +192,7 @@ class SysConfigService extends BaseService
     }
 
     /**
-     * 清除配置缓存
+     * 清除配置缓存.
      */
     protected function clearConfigCache(string $key): void
     {

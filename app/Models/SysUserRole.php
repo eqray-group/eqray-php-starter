@@ -3,67 +3,74 @@
 declare(strict_types=1);
 
 /**
- * 用户角色关联模型
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-19
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
 use Framework\Basic\BaseLaORMModel;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * SysUserRole 用户角色关联模型
+ * SysUserRole 用户角色关联模型.
  *
  * 多对多关联表模型
  *
- * @property int         $id             主键ID
- * @property int         $user_id        用户ID
- * @property int         $role_id        角色ID
- * @property int         $created_by     创建人ID
- * @property int         $updated_by     更新人ID
- * @property \DateTime    $created_at     创建时间
- * @property \DateTime    $updated_at     更新时间
+ * @property int       $id         主键ID
+ * @property int       $user_id    用户ID
+ * @property int       $role_id    角色ID
+ * @property int       $created_by 创建人ID
+ * @property int       $updated_by 更新人ID
+ * @property \DateTime $created_at 创建时间
+ * @property \DateTime $updated_at 更新时间
  *
- * @property-read SysUser   $user        关联用户
- * @property-read SysRole   $role        关联角色
- 
+ * @property SysUser $user 关联用户
+ * @property SysRole $role 关联角色
+ *
  * @property string $create_time
  * @property string $update_time
- * @property mixed $status
- * @property mixed $remark
- * @property mixed $delete_time
- * @property mixed $deleted_at
+ * @property mixed  $status
+ * @property mixed  $remark
+ * @property mixed  $delete_time
+ * @property mixed  $deleted_at
  */
 class SysUserRole extends BaseLaORMModel
 {
     /**
-     * 表名
-     * @var string
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    /**
+     * 是否自动维护时间戳.
+     * @var    bool
+     * @return mixed
+     */
+    public $timestamps = true;
+
+    /**
+     * 表名.
+     * @var    string
      * @return mixed
      */
     protected $table = 'sa_system_user_role';
 
     /**
-     * 主键
-     * @var string
+     * 主键.
+     * @var    string
      * @return mixed
      */
     protected $primaryKey = 'id';
-    /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
 
     /**
-     * 可填充字段
-     * @var array<int, string>
+     * 可填充字段.
+     * @var    array<int, string>
      * @return mixed
      */
     protected $fillable = [
@@ -74,31 +81,24 @@ class SysUserRole extends BaseLaORMModel
     ];
 
     /**
-     * 类型转换
-     * @var array<array-key, mixed>
+     * 类型转换.
+     * @var    array<array-key, mixed>
      * @return mixed
      */
     protected $casts = [
-        'id' => 'integer',
-        'user_id' => 'integer',
-        'role_id' => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        'id'          => 'integer',
+        'user_id'     => 'integer',
+        'role_id'     => 'integer',
+        'created_by'  => 'integer',
+        'updated_by'  => 'integer',
         'create_time' => 'datetime',
         'update_time' => 'datetime',
     ];
 
-    /**
-     * 是否自动维护时间戳
-     * @var bool
-     * @return mixed
-     */
-    public $timestamps = true;
-
     // ==================== 关联关系 ====================
 
     /**
-     * 关联用户
+     * 关联用户.
      *
      * @return BelongsTo<SysUser, $this>
      */
@@ -108,7 +108,7 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 关联角色
+     * 关联角色.
      *
      * @return BelongsTo<SysRole, $this>
      */
@@ -120,9 +120,9 @@ class SysUserRole extends BaseLaORMModel
     // ==================== 查询方法 ====================
 
     /**
-     * 获取用户的角色ID列表
+     * 获取用户的角色ID列表.
      *
-     * @param int $userId 用户ID
+     * @param  int                     $userId 用户ID
      * @return array<array-key, mixed> 角色ID列表
      */
     public static function getRoleIdsByUser(int $userId): array
@@ -133,10 +133,10 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 获取用户的所有角色关联
+     * 获取用户的所有角色关联.
      *
-     * @param int $userId 用户ID
-     * @return \Illuminate\Database\Eloquent\Collection<int, static>
+     * @param  int                     $userId 用户ID
+     * @return Collection<int, static>
      */
     public static function getByUserId(int $userId)
     {
@@ -146,10 +146,10 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 获取角色的所有用户关联
+     * 获取角色的所有用户关联.
      *
-     * @param int $roleId 角色ID
-     * @return \Illuminate\Database\Eloquent\Collection<int, static>
+     * @param  int                     $roleId 角色ID
+     * @return Collection<int, static>
      */
     public static function getByRoleId(int $roleId)
     {
@@ -159,11 +159,10 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 检查用户是否拥有指定角色
+     * 检查用户是否拥有指定角色.
      *
      * @param int $userId 用户ID
      * @param int $roleId 角色ID
-     * @return bool
      */
     public static function hasRole(int $userId, int $roleId): bool
     {
@@ -175,9 +174,8 @@ class SysUserRole extends BaseLaORMModel
     /**
      * 检查用户是否拥有指定角色编码
      *
-     * @param int $userId 用户ID
+     * @param int    $userId   用户ID
      * @param string $roleCode 角色编码
-     * @return bool
      */
     public static function hasRoleCode(int $userId, string $roleCode): bool
     {
@@ -189,9 +187,9 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 获取用户的角色编码列表
+     * 获取用户的角色编码列表.
      *
-     * @param int $userId 用户ID
+     * @param  int                     $userId 用户ID
      * @return array<array-key, mixed> 角色编码数组
      */
     public static function getRoleCodes(int $userId): array
@@ -207,12 +205,11 @@ class SysUserRole extends BaseLaORMModel
     // ==================== 修改方法 ====================
 
     /**
-     * 批量插入用户角色关联
+     * 批量插入用户角色关联.
      *
-     * @param int $userId 用户ID
-     * @param array<array-key, mixed> $roleIds 角色ID数组
-     * @param int $createdBy 创建人ID
-     * @return bool
+     * @param int                     $userId    用户ID
+     * @param array<array-key, mixed> $roleIds   角色ID数组
+     * @param int                     $createdBy 创建人ID
      */
     public static function batchInsert(
         int $userId,
@@ -224,14 +221,14 @@ class SysUserRole extends BaseLaORMModel
         }
 
         $data = [];
-        $now = date('Y-m-d H:i:s',time());
+        $now  = date('Y-m-d H:i:s', time());
 
         foreach ($roleIds as $roleId) {
             $data[] = [
-                'user_id' => $userId,
-                'role_id' => $roleId,
-                'created_by' => $createdBy,
-                'updated_by' => $createdBy,
+                'user_id'     => $userId,
+                'role_id'     => $roleId,
+                'created_by'  => $createdBy,
+                'updated_by'  => $createdBy,
                 'create_time' => $now,
                 'update_time' => $now,
             ];
@@ -241,14 +238,13 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 同步用户的角色
+     * 同步用户的角色.
      *
      * 先删除所有角色关联，再插入新的关联
      *
-     * @param int $userId 用户ID
-     * @param array<array-key, mixed> $roleIds 角色ID数组
-     * @param int $createdBy 创建人ID
-     * @return void
+     * @param int                     $userId    用户ID
+     * @param array<array-key, mixed> $roleIds   角色ID数组
+     * @param int                     $createdBy 创建人ID
      */
     public static function syncUserRoles(
         int $userId,
@@ -259,18 +255,17 @@ class SysUserRole extends BaseLaORMModel
         self::where('user_id', $userId)->delete();
 
         // 插入新的角色关联
-        if (!empty($roleIds)) {
+        if (! empty($roleIds)) {
             self::batchInsert($userId, $roleIds, $createdBy);
         }
     }
 
     /**
-     * 为用户添加单个角色
+     * 为用户添加单个角色.
      *
-     * @param int $userId 用户ID
-     * @param int $roleId 角色ID
+     * @param int $userId    用户ID
+     * @param int $roleId    角色ID
      * @param int $createdBy 创建人ID
-     * @return self|null
      */
     public static function addRole(
         int $userId,
@@ -283,19 +278,18 @@ class SysUserRole extends BaseLaORMModel
         }
 
         return self::create([
-            'user_id' => $userId,
-            'role_id' => $roleId,
+            'user_id'    => $userId,
+            'role_id'    => $roleId,
             'created_by' => $createdBy,
             'updated_by' => $createdBy,
         ]);
     }
 
     /**
-     * 移除用户的单个角色
+     * 移除用户的单个角色.
      *
      * @param int $userId 用户ID
      * @param int $roleId 角色ID
-     * @return bool
      */
     public static function removeRole(int $userId, int $roleId): bool
     {
@@ -305,10 +299,9 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 删除用户的所有角色关联
+     * 删除用户的所有角色关联.
      *
      * @param int $userId 用户ID
-     * @return bool
      */
     public static function deleteByUserId(int $userId): bool
     {
@@ -316,10 +309,9 @@ class SysUserRole extends BaseLaORMModel
     }
 
     /**
-     * 删除角色的所有用户关联
+     * 删除角色的所有用户关联.
      *
      * @param int $roleId 角色ID
-     * @return bool
      */
     public static function deleteByRoleId(int $roleId): bool
     {

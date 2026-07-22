@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 系统配置分组DAO
- *
- * @package App\Dao
- * @author  Genie
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -22,21 +20,10 @@ use Framework\Basic\BaseDao;
 class SysConfigGroupDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysConfigGroup::class;
-    }
-
-    /**
-     * 检查配置标识是否已存在
+     * 检查配置标识是否已存在.
      *
      * @param string $code      配置标识
      * @param int    $excludeId 排除的ID（用于修改时排除自身）
-     * @return bool
      */
     public function isCodeExists(string $code, int $excludeId = 0): bool
     {
@@ -45,5 +32,13 @@ class SysConfigGroupDao extends BaseDao
             $query->where('id', '!=', $excludeId);
         }
         return $query->exists();
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysConfigGroup::class;
     }
 }

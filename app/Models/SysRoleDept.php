@@ -3,13 +3,9 @@
 declare(strict_types=1);
 
 /**
- * 角色-部门关联模型（数据权限自定义部门）
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-19
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
@@ -17,17 +13,17 @@ use Framework\Basic\BaseLaORMModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * SysRoleDept 角色-部门关联模型
+ * SysRoleDept 角色-部门关联模型.
  *
  * 用于存储角色的自定义数据权限部门，支持多租户隔离
  *
- * @property int         $id          主键ID
- * @property int         $role_id     角色ID
- * @property int         $dept_id     部门ID
+ * @property int $id      主键ID
+ * @property int $role_id 角色ID
+ * @property int $dept_id 部门ID
  *
- * @property-read SysRole   $role    关联角色
- * @property-read SysDept   $dept    关联部门
- 
+ * @property SysRole $role 关联角色
+ * @property SysDept $dept 关联部门
+ *
  * @property mixed $tenant_id
  * @property mixed $created_by
  * @property mixed $updated_by
@@ -39,21 +35,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property mixed $created_at
  * @property mixed $updated_at
  * @property mixed $deleted_at
-*/
+ */
 class SysRoleDept extends BaseLaORMModel
 {
     /**
      * @return mixed
      */
+    public $timestamps = false;
+
+    /**
+     * @return mixed
+     */
     protected $table = 'sa_system_role_dept';
+
     /**
      * @return mixed
      */
     protected $primaryKey = 'id';
-    /**
-     * @return mixed
-     */
-    public $timestamps = false;
 
     /**
      * @return mixed
@@ -65,7 +63,7 @@ class SysRoleDept extends BaseLaORMModel
 
     /** @var array<string, string> */
     protected $casts = [
-        'id' => 'integer',
+        'id'      => 'integer',
         'role_id' => 'integer',
         'dept_id' => 'integer',
     ];
@@ -73,7 +71,7 @@ class SysRoleDept extends BaseLaORMModel
     // ==================== 关联关系 ====================
 
     /**
-     * 关联角色
+     * 关联角色.
      *
      * @return BelongsTo<SysRole, $this>
      */
@@ -83,7 +81,7 @@ class SysRoleDept extends BaseLaORMModel
     }
 
     /**
-     * 关联部门
+     * 关联部门.
      *
      * @return BelongsTo<SysDept, $this>
      */
@@ -95,9 +93,9 @@ class SysRoleDept extends BaseLaORMModel
     // ==================== 查询方法 ====================
 
     /**
-     * 获取角色的自定义部门ID列表
+     * 获取角色的自定义部门ID列表.
      *
-     * @param int $roleId 角色ID
+     * @param  int                     $roleId 角色ID
      * @return array<array-key, mixed>
      */
     public static function getDeptIdsByRole(int|string $roleId): array
@@ -106,9 +104,9 @@ class SysRoleDept extends BaseLaORMModel
     }
 
     /**
-     * 获取多个角色的自定义部门ID列表（合并去重）
+     * 获取多个角色的自定义部门ID列表（合并去重）.
      *
-     * @param array<array-key, mixed> $roleIds 角色ID数组
+     * @param  array<array-key, mixed> $roleIds 角色ID数组
      * @return array<array-key, mixed>
      */
     public static function getDeptIdsByRoles(array $roleIds): array
@@ -121,7 +119,7 @@ class SysRoleDept extends BaseLaORMModel
     }
 
     /**
-     * 检查角色是否有自定义部门
+     * 检查角色是否有自定义部门.
      */
     public static function hasCustomDepts(int|string $roleId): bool
     {
@@ -129,7 +127,7 @@ class SysRoleDept extends BaseLaORMModel
     }
 
     /**
-     * 检查角色是否包含指定部门
+     * 检查角色是否包含指定部门.
      */
     public static function hasDept(int $roleId, int $deptId): bool
     {
@@ -139,22 +137,21 @@ class SysRoleDept extends BaseLaORMModel
     // ==================== 修改方法 ====================
 
     /**
-     * 同步角色的自定义部门
+     * 同步角色的自定义部门.
      *
-     * @param int   $roleId  角色ID
+     * @param int                     $roleId  角色ID
      * @param array<array-key, mixed> $deptIds 部门ID数组
-     * @return void
      */
     public static function syncRoleDepts(int $roleId, array $deptIds): void
     {
         self::where('role_id', $roleId)->delete();
 
-        if (!empty($deptIds)) {
+        if (! empty($deptIds)) {
             $data = [];
             foreach ($deptIds as $deptId) {
                 $data[] = [
                     'role_id' => $roleId,
-                    'dept_id' => (int)$deptId,
+                    'dept_id' => (int) $deptId,
                 ];
             }
             self::insert($data);
@@ -162,7 +159,7 @@ class SysRoleDept extends BaseLaORMModel
     }
 
     /**
-     * 删除角色的所有部门关联
+     * 删除角色的所有部门关联.
      */
     public static function deleteByRoleId(int|string $roleId): bool
     {
@@ -170,7 +167,7 @@ class SysRoleDept extends BaseLaORMModel
     }
 
     /**
-     * 删除部门的所有角色关联
+     * 删除部门的所有角色关联.
      */
     public static function deleteByDeptId(int|string $deptId): bool
     {
@@ -178,7 +175,7 @@ class SysRoleDept extends BaseLaORMModel
     }
 
     /**
-     * 获取角色的自定义部门数量
+     * 获取角色的自定义部门数量.
      */
     public static function getDeptCount(int|string $roleId): int
     {

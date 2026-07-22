@@ -40,6 +40,5 @@ final class CacheServiceProvider implements ServiceProviderInterface
             ->public();
     }
 
-    public function boot(ContainerInterface $container): void
-    {}
+    public function boot(ContainerInterface $container): void {}
 }

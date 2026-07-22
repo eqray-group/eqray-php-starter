@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 附件分类DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -21,17 +18,7 @@ use Framework\Basic\BaseDao;
 class SysAttachmentCategoryDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysAttachmentCategory::class;
-    }
-
-    /**
-     * 获取启用的分类列表
+     * 获取启用的分类列表.
      *
      * @return array<array-key, mixed>
      */
@@ -41,9 +28,9 @@ class SysAttachmentCategoryDao extends BaseDao
     }
 
     /**
-     * 获取子分类列表
+     * 获取子分类列表.
      *
-     * @param int $parentId 父分类ID
+     * @param  int                     $parentId 父分类ID
      * @return array<array-key, mixed>
      */
     public function getChildrenByParentId(int $parentId): array
@@ -52,11 +39,10 @@ class SysAttachmentCategoryDao extends BaseDao
     }
 
     /**
-     * 检查分类编码是否存在
+     * 检查分类编码是否存在.
      *
      * @param string $categoryCode 分类编码
      * @param int    $excludeId    排除的ID
-     * @return bool
      */
     public function isCategoryCodeExists(string $categoryCode, int $excludeId = 0): bool
     {
@@ -68,13 +54,20 @@ class SysAttachmentCategoryDao extends BaseDao
     }
 
     /**
-     * 检查是否有子分类
+     * 检查是否有子分类.
      *
      * @param int $categoryId 分类ID
-     * @return bool
      */
     public function hasChildren(int $categoryId): bool
     {
         return $this->be(['parent_id' => $categoryId]);
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysAttachmentCategory::class;
     }
 }

@@ -3,43 +3,9 @@
 declare(strict_types=1);
 
 /**
- * 代码生成业务字段表 Model
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-29
- 
- * @property int $table_id
- * @property mixed $column_name
- * @property mixed $column_comment
- * @property mixed $column_type
- * @property mixed $default_value
- * @property int $is_pk
- * @property int $is_required
- * @property int $is_insert
- * @property int $is_edit
- * @property int $is_list
- * @property int $is_query
- * @property int $is_sort
- * @property mixed $query_type
- * @property mixed $view_type
- * @property mixed $dict_type
- * @property mixed $allow_roles
- * @property mixed $options
- * @property int $sort
- * @property mixed $remark
- * @property int $created_by
- * @property int $updated_by
- * @property int $id
- * @property string $create_time
- * @property string $update_time
- * @property string $delete_time
- * @property mixed $tenant_id
- * @property mixed $status
- * @property mixed $created_at
- * @property mixed $updated_at
- * @property mixed $deleted_at
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
@@ -48,7 +14,37 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ToolGenerateColumn extends BaseLaORMModel
 {
-    //use SoftDeletes;
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    // ========== 常量定义 ==========
+
+    /** 非主键 */
+    public const IS_PK_NO  = 1;
+
+    /** 是主键 */
+    public const IS_PK_YES = 2;
+
+    /** 非必填 */
+    public const REQUIRED_NO  = 1;
+
+    /** 必填 */
+    public const REQUIRED_YES = 2;
+
+    /** 不参与 */
+    public const FLAG_NO  = 1;
+
+    /** 参与 */
+    public const FLAG_YES = 2;
+
+    /**
+     * @return mixed
+     */
+    public $incrementing = true;
+    // use SoftDeletes;
 
     // ========== 基础配置 ==========
 
@@ -60,21 +56,12 @@ class ToolGenerateColumn extends BaseLaORMModel
     /**
      * @return mixed
      */
-    public $incrementing = true;
-
-    /**
-     * @return mixed
-     */
     protected $keyType = 'int';
 
     /**
      * @return mixed
      */
     protected $dateFormat = 'Y-m-d H:i:s';
-
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
 
     // ========== 可填字段 ==========
 
@@ -126,27 +113,10 @@ class ToolGenerateColumn extends BaseLaORMModel
         'delete_time'=> 'datetime',
     ];
 
-    // ========== 常量定义 ==========
-
-    /** 非主键 */
-    const IS_PK_NO  = 1;
-    /** 是主键 */
-    const IS_PK_YES = 2;
-
-    /** 非必填 */
-    const REQUIRED_NO  = 1;
-    /** 必填 */
-    const REQUIRED_YES = 2;
-
-    /** 不参与 */
-    const FLAG_NO  = 1;
-    /** 参与 */
-    const FLAG_YES = 2;
-
     // ========== 关联关系 ==========
 
     /**
-     * 所属业务表
+     * 所属业务表.
      */
     public function table(): mixed
     {

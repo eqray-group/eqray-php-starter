@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Services;
 
 use App\Dao\SysMailLogDao;
@@ -27,10 +32,8 @@ class MailLogService extends BaseService
     }
 
     /**
-     */
-    /**
+     * @param  array<array-key, mixed> $params
      * @return array<array-key, mixed>
-     * @param array<array-key, mixed> $params
      */
     public function getPageList(array $params): array
     {

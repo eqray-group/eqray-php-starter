@@ -2,11 +2,16 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Services;
 
-use App\Models\SysConfigGroup;
-use App\Models\SysConfig;
 use App\Dao\SysConfigGroupDao;
+use App\Models\SysConfig;
+use App\Models\SysConfigGroup;
 use Framework\Basic\BaseService;
 
 /**
@@ -15,14 +20,14 @@ use Framework\Basic\BaseService;
 class SysConfigGroupService extends BaseService
 {
     /**
-     * 获取配置组列表
+     * 获取配置组列表.
+     * @param  array<array-key, mixed> $params
      * @return array<array-key, mixed>
-     * @param array<array-key, mixed> $params
      */
     public function getList(array $params): array
     {
-        $page = max(1, (int)($params['page'] ?? 1));
-        $limit = max(1, (int)($params['limit'] ?? 20));
+        $page      = max(1, (int) ($params['page'] ?? 1));
+        $limit     = max(1, (int) ($params['limit'] ?? 20));
         $groupName = $params['name'] ?? '';
         $groupCode = $params['code'] ?? '';
 
@@ -37,7 +42,7 @@ class SysConfigGroupService extends BaseService
         }
 
         $total = $query->count();
-        $list = $query->orderBy('id', 'asc')
+        $list  = $query->orderBy('id', 'asc')
             ->where('delete_time', null)
             ->offset(($page - 1) * $limit)
             ->limit($limit)
@@ -45,18 +50,18 @@ class SysConfigGroupService extends BaseService
             ->toArray();
 
         return [
-            'list' => $list,
+            'list'  => $list,
             'total' => $total,
-            'page' => $page,
-            'size' => $limit,
+            'page'  => $page,
+            'size'  => $limit,
         ];
     }
 
     /**
-     * 获取配置组详情
+     * 获取配置组详情.
      */
     /**
-     * @return array<array-key, mixed>|null
+     * @return null|array<array-key, mixed>
      */
     public function getDetail(int $id): ?array
     {
@@ -65,13 +70,12 @@ class SysConfigGroupService extends BaseService
     }
 
     /**
-     * 保存配置组
+     * 保存配置组.
      */
     /**
-     * 保存配置组
+     * 保存配置组.
      *
      * @param array<array-key, mixed> $data
-     * @return mixed
      */
     public function save(array $data, int $operator): mixed
     {
@@ -83,15 +87,14 @@ class SysConfigGroupService extends BaseService
     }
 
     /**
-     * 更新配置组
+     * 更新配置组.
      *
      * @param array<array-key, mixed> $data
-     * @return bool
      */
     public function update(int $id, array $data, int $operator): bool
     {
         $group = SysConfigGroup::find($id);
-        if (!$group) {
+        if (! $group) {
             throw new \Exception('配置组不存在');
         }
 
@@ -101,14 +104,12 @@ class SysConfigGroupService extends BaseService
     }
 
     /**
-     * 删除配置组
-     */
-    /**
+     * 删除配置组.
      */
     public function delete(int $id): bool
     {
         $group = SysConfigGroup::find($id);
-        if (!$group) {
+        if (! $group) {
             return false;
         }
 
@@ -120,9 +121,9 @@ class SysConfigGroupService extends BaseService
     }
 
     /**
-     * 测试邮件配置
+     * 测试邮件配置.
      *
-     * @param array<array-key, mixed> $config
+     * @param  array<array-key, mixed> $config
      * @return array<array-key, mixed>
      */
     public function testEmail(array $config): array

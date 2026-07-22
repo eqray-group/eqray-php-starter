@@ -3,37 +3,34 @@
 declare(strict_types=1);
 
 /**
- * 系统部门服务
- *
- * @package App\Services
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
 
+use App\Dao\SysDeptDao;
 use App\Models\SysDept;
 use App\Models\SysUser;
-use App\Dao\SysDeptDao;
 use Framework\Basic\BaseService;
 use Symfony\Component\HttpFoundation\Request;
+
 /**
  * SysDeptService 部门服务
  *
  * 处理部门相关的业务逻辑
-  * @extends BaseService<SysDeptDao>
+ * @extends BaseService<SysDeptDao>
  */
 class SysDeptService extends BaseService
 {
     /**
-     * DAO 实例
-     * @var SysDeptDao
+     * DAO 实例.
      * @return mixed
      */
     protected SysDeptDao $deptDao;
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
@@ -44,39 +41,7 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 获取当前请求（每次调用时获取，避免 Workerman 环境下的上下文污染）
-     *
-     * @return Request|null
-     */
-    protected function getCurrentRequest(): ?Request
-    {
-        return app('request');
-    }
-
-    /**
-     * 获取当前用户
-     *
-     * @return SysUser|null
-     */
-    protected function getCurrentUser(): ?SysUser
-    {
-        $request = $this->getCurrentRequest();
-        return $request ? $request->attributes->get('current_user') : null;
-    }
-
-    /**
-     * 检查当前用户是否为超级管理员
-     *
-     * @return bool
-     */
-    protected function isSuperAdmin(): bool
-    {
-        $user = $this->getCurrentUser();
-        return $user && $user->isSuperAdmin();
-    }
-
-    /**
-     * 获取所有启用的部门（扁平列表，用于下拉选择）
+     * 获取所有启用的部门（扁平列表，用于下拉选择）.
      *
      * @return array<array-key, mixed>
      */
@@ -91,19 +56,19 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 获取部门列表
+     * 获取部门列表.
      *
-     * @param array<array-key, mixed> $params 查询参数
+     * @param  array<array-key, mixed> $params 查询参数
      * @return array<array-key, mixed>
      */
     public function getList(array $params): array
     {
-        $deptName = $params['name'] ?? ($params['dept_name'] ?? '');
-        $deptCode = $params['code'] ?? ($params['dept_code'] ?? '');
-        $status = $params['status'] ?? '';
+        $deptName = $params['name']   ?? ($params['dept_name'] ?? '');
+        $deptCode = $params['code']   ?? ($params['dept_code'] ?? '');
+        $status   = $params['status'] ?? '';
 
         // 无搜索条件时，直接构建并返回树
-        if ($deptName === '' && $deptCode === '' && (string)$status === '') {
+        if ($deptName === '' && $deptCode === '' && (string) $status === '') {
             return $this->getDeptTree();
         }
 
@@ -115,103 +80,11 @@ class SysDeptService extends BaseService
         $tree = $this->buildTree($list);
 
         // 从树中递归搜索，保留匹配节点及其祖先链
-        $filtered = $this->filterTree($tree, $deptName, $deptCode, $status);
-
-        return $filtered;
+        return $this->filterTree($tree, $deptName, $deptCode, $status);
     }
 
     /**
-     * 从树中递归过滤，保留匹配节点及其所有子节点
-     *
-     * @param array<array-key, mixed>  $tree      树形数据
-     * @param string $deptName  部门名称关键词
-     * @param string $deptCode  部门编码关键词
-     * @param string $status    状态
-     * @return array<array-key, mixed>
-     */
-    protected function filterTree(array $tree, string $deptName, string $deptCode, mixed $status): array
-    {
-        $statusFilter = $this->normalizeStatusFilter($status);
-        $result = [];
-        foreach ($tree as $item) {
-            $nameMatch = ($deptName === '' || stripos((string)($item['name'] ?? ''), $deptName) !== false);
-            $codeMatch = ($deptCode === '' || stripos((string)($item['code'] ?? ''), $deptCode) !== false);
-            $statusMatch = ($statusFilter === null || (int)($item['status'] ?? 0) === $statusFilter);
-            $selfMatched = $nameMatch && $codeMatch && $statusMatch;
-
-            // 当前节点匹配，保留它及其所有子节点
-            if ($selfMatched) {
-                $result[] = $item;
-                continue;
-            }
-
-            // 递归检查子节点
-            $children = $item['children'] ?? [];
-            if (!empty($children)) {
-                $filteredChildren = $this->filterTree($children, $deptName, $deptCode, $status);
-                if (!empty($filteredChildren)) {
-                    $item['children'] = $filteredChildren;
-                    $result[] = $item;
-                }
-            }
-        }
-        return $result;
-    }
-
-    /**
-     * 统一前后端状态过滤语义：1=启用，0=禁用（兼容历史字典值 2）
-     */
-    protected function normalizeStatusFilter(mixed $status): ?int
-    {
-        if ($status === '' || $status === null) {
-            return null;
-        }
-
-        $value = (int)$status;
-        if ($value === 2) {
-            return 0;
-        }
-        if ($value === 1) {
-            return 1;
-        }
-        if ($value === 0) {
-            return 0;
-        }
-
-        return null;
-    }
-
-    /**
-     * 构建树形结构
-     *
-     * @param array $list   扁平列表
-     * @param int   $parentId 父级ID
-     * @return array
-     */
-    /**
-     * @return array<array-key, mixed>
-     * @param array<array-key, mixed> $list
-     */
-    protected function buildTree(array $list, int $parentId = 0): array
-    {
-        $tree = [];
-        foreach ($list as $item) {
-            if ((int)($item['parent_id'] ?? 0) === $parentId) {
-                $children = $this->buildTree($list, (int)$item['id']);
-                if (!empty($children)) {
-                    $item['children'] = $children;
-                }
-                $item['status_text'] = ($item['status'] ?? 0) === SysDept::STATUS_ENABLED ? '启用' : '禁用';
-                $tree[] = $item;
-            }
-        }
-        return $tree;
-    }
-
-    /**
-     * 获取部门树（管理列表用，显示所有状态）
-     *
-     * @return array
+     * 获取部门树（管理列表用，显示所有状态）.
      */
     /**
      * @return array<array-key, mixed>
@@ -221,11 +94,8 @@ class SysDeptService extends BaseService
         return SysDept::getDeptTree(0, null, false);
     }
 
-
     /**
-     * 获取部门选择树（带 label 字段，适配前端 ElTreeSelect）
-     *
-     * @return array
+     * 获取部门选择树（带 label 字段，适配前端 ElTreeSelect）.
      */
     /**
      * @return array<array-key, mixed>
@@ -241,47 +111,13 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 构建选择树结构
-     *
-     * @param array $list     部门列表
-     * @param int   $parentId 父ID
-     * @return array
-     */
-            /**
-     * @return array<array-key, mixed>
-     * @param array<array-key, mixed> $list
-             */
-    protected function buildSelectTree(array $list, int $parentId = 0): array
-    {
-        $tree = [];
-        foreach ($list as $item) {
-            if ((int)($item['parent_id'] ?? 0) === $parentId) {
-                $children = $this->buildSelectTree($list, (int)$item['id']);
-                $node = [
-                    'id' => $item['id'],
-                    'value' => $item['id'],
-                    'label' => $item['name'],
-                    'name' => $item['name'],
-                    'code' => $item['code'] ?? '',
-                ];
-                if (!empty($children)) {
-                    $node['children'] = $children;
-                }
-                $tree[] = $node;
-            }
-        }
-        return $tree;
-    }
-
-    /**
-     * 获取可访问的部门树（带 label 字段，适配前端 ElTree）
+     * 获取可访问的部门树（带 label 字段，适配前端 ElTree）.
      *
      * @param int $parentId 父部门ID
-     * @return array
      */
-            /**
+    /**
      * @return array<array-key, mixed>
-             */
+     */
     public function getAccessDeptTree(int $parentId = 0): array
     {
         $depts = SysDept::where('parent_id', $parentId)
@@ -307,23 +143,22 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 获取部门详情
+     * 获取部门详情.
      *
      * @param int $deptId 部门ID
-     * @return array|null
      */
-        /**
-     * @return array<array-key, mixed>|null
-         */
+    /**
+     * @return null|array<array-key, mixed>
+     */
     public function getDetail(int $deptId): ?array
     {
         $dept = SysDept::find($deptId);
 
-        if (!$dept) {
+        if (! $dept) {
             return null;
         }
 
-        $data = $this->formatDept($dept);
+        $data         = $this->formatDept($dept);
         $data['path'] = $dept->getPath();
 
         // 获取子部门数量
@@ -336,15 +171,14 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 创建部门
+     * 创建部门.
      *
      * @param array $data     部门数据
      * @param int   $operator 操作人ID
-     * @return SysDept|null
      */
-        /**
+    /**
      * @param array<array-key, mixed> $data
-         */
+     */
     public function create(array $data, int $operator = 0): ?SysDept
     {
         // 检查部门编码是否存在
@@ -353,7 +187,7 @@ class SysDeptService extends BaseService
         }
 
         // 计算 level 字段：祖级列表
-        $parentId = (int)($data['parent_id'] ?? 0);
+        $parentId = (int) ($data['parent_id'] ?? 0);
         if ($parentId > 0) {
             $parentDept = SysDept::find($parentId);
             if ($parentDept) {
@@ -373,17 +207,16 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 更新部门
+     * 更新部门.
      *
-     * @param int   $deptId   部门ID
+     * @param int                     $deptId   部门ID
      * @param array<array-key, mixed> $data     部门数据
-     * @param int   $operator 操作人ID
-     * @return bool
+     * @param int                     $operator 操作人ID
      */
     public function update(int $deptId, array $data, int $operator = 0): bool
     {
         $dept = SysDept::find($deptId);
-        if (!$dept) {
+        if (! $dept) {
             throw new \Exception('部门不存在');
         }
 
@@ -401,14 +234,14 @@ class SysDeptService extends BaseService
             }
 
             // 检查父部门是否存在
-            if (!SysDept::where('id', $data['parent_id'])->exists()) {
+            if (! SysDept::where('id', $data['parent_id'])->exists()) {
                 throw new \Exception('父部门不存在');
             }
         }
 
         // 重新计算 level 字段（如果 parent_id 发生变化）
         if (isset($data['parent_id'])) {
-            $parentId = (int)$data['parent_id'];
+            $parentId = (int) $data['parent_id'];
             if ($parentId > 0) {
                 $parentDept = SysDept::find($parentId);
                 if ($parentDept) {
@@ -429,15 +262,14 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 删除部门
+     * 删除部门.
      *
      * @param int $deptId 部门ID
-     * @return bool
      */
     public function delete(int|string $deptId): bool
     {
         $dept = SysDept::find($deptId);
-        if (!$dept) {
+        if (! $dept) {
             return false;
         }
 
@@ -460,7 +292,6 @@ class SysDeptService extends BaseService
      *
      * @param int $deptId 部门ID
      * @param int $status 状态
-     * @return bool
      */
     public function updateStatus(int $deptId, int $status): bool
     {
@@ -468,9 +299,9 @@ class SysDeptService extends BaseService
     }
 
     /**
-     * 获取所有子部门ID (包含自己)
+     * 获取所有子部门ID (包含自己).
      *
-     * @param int $deptId 部门ID
+     * @param  int                     $deptId 部门ID
      * @return array<array-key, mixed>
      */
     public function getAllChildIds(int $deptId): array
@@ -478,15 +309,160 @@ class SysDeptService extends BaseService
         return SysDept::getAllChildIds($deptId);
     }
 
+    /**
+     * 获取当前请求（每次调用时获取，避免 Workerman 环境下的上下文污染）.
+     */
+    protected function getCurrentRequest(): ?Request
+    {
+        return app('request');
+    }
+
+    /**
+     * 获取当前用户.
+     */
+    protected function getCurrentUser(): ?SysUser
+    {
+        $request = $this->getCurrentRequest();
+        return $request ? $request->attributes->get('current_user') : null;
+    }
+
+    /**
+     * 检查当前用户是否为超级管理员.
+     */
+    protected function isSuperAdmin(): bool
+    {
+        $user = $this->getCurrentUser();
+        return $user && $user->isSuperAdmin();
+    }
+
+    /**
+     * 从树中递归过滤，保留匹配节点及其所有子节点.
+     *
+     * @param  array<array-key, mixed> $tree     树形数据
+     * @param  string                  $deptName 部门名称关键词
+     * @param  string                  $deptCode 部门编码关键词
+     * @param  string                  $status   状态
+     * @return array<array-key, mixed>
+     */
+    protected function filterTree(array $tree, string $deptName, string $deptCode, mixed $status): array
+    {
+        $statusFilter = $this->normalizeStatusFilter($status);
+        $result       = [];
+        foreach ($tree as $item) {
+            $nameMatch   = ($deptName === '' || stripos((string) ($item['name'] ?? ''), $deptName) !== false);
+            $codeMatch   = ($deptCode === '' || stripos((string) ($item['code'] ?? ''), $deptCode) !== false);
+            $statusMatch = ($statusFilter === null || (int) ($item['status'] ?? 0) === $statusFilter);
+            $selfMatched = $nameMatch && $codeMatch && $statusMatch;
+
+            // 当前节点匹配，保留它及其所有子节点
+            if ($selfMatched) {
+                $result[] = $item;
+                continue;
+            }
+
+            // 递归检查子节点
+            $children = $item['children'] ?? [];
+            if (! empty($children)) {
+                $filteredChildren = $this->filterTree($children, $deptName, $deptCode, $status);
+                if (! empty($filteredChildren)) {
+                    $item['children'] = $filteredChildren;
+                    $result[]         = $item;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * 统一前后端状态过滤语义：1=启用，0=禁用（兼容历史字典值 2）.
+     */
+    protected function normalizeStatusFilter(mixed $status): ?int
+    {
+        if ($status === '' || $status === null) {
+            return null;
+        }
+
+        $value = (int) $status;
+        if ($value === 2) {
+            return 0;
+        }
+        if ($value === 1) {
+            return 1;
+        }
+        if ($value === 0) {
+            return 0;
+        }
+
+        return null;
+    }
+
+    /**
+     * 构建树形结构.
+     *
+     * @param array $list     扁平列表
+     * @param int   $parentId 父级ID
+     */
+    /**
+     * @param  array<array-key, mixed> $list
+     * @return array<array-key, mixed>
+     */
+    protected function buildTree(array $list, int $parentId = 0): array
+    {
+        $tree = [];
+        foreach ($list as $item) {
+            if ((int) ($item['parent_id'] ?? 0) === $parentId) {
+                $children = $this->buildTree($list, (int) $item['id']);
+                if (! empty($children)) {
+                    $item['children'] = $children;
+                }
+                $item['status_text'] = ($item['status'] ?? 0) === SysDept::STATUS_ENABLED ? '启用' : '禁用';
+                $tree[]              = $item;
+            }
+        }
+        return $tree;
+    }
+
+    /**
+     * 构建选择树结构.
+     *
+     * @param array $list     部门列表
+     * @param int   $parentId 父ID
+     */
+    /**
+     * @param  array<array-key, mixed> $list
+     * @return array<array-key, mixed>
+     */
+    protected function buildSelectTree(array $list, int $parentId = 0): array
+    {
+        $tree = [];
+        foreach ($list as $item) {
+            if ((int) ($item['parent_id'] ?? 0) === $parentId) {
+                $children = $this->buildSelectTree($list, (int) $item['id']);
+                $node     = [
+                    'id'    => $item['id'],
+                    'value' => $item['id'],
+                    'label' => $item['name'],
+                    'name'  => $item['name'],
+                    'code'  => $item['code'] ?? '',
+                ];
+                if (! empty($children)) {
+                    $node['children'] = $children;
+                }
+                $tree[] = $node;
+            }
+        }
+        return $tree;
+    }
+
     // ==================== 辅助方法 ====================
 
     /**
-     * 格式化部门数据
+     * 格式化部门数据.
      *
-     * @param SysDept|array<string, mixed> $dept 部门
+     * @param  array<string, mixed>|SysDept $dept 部门
      * @return array<array-key, mixed>
      */
-    protected function formatDept(SysDept|array $dept): array
+    protected function formatDept(array|SysDept $dept): array
     {
         if ($dept instanceof SysDept) {
             $data = $dept->toArray();

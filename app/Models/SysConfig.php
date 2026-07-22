@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Models;
 
 use Framework\Basic\BaseLaORMModel;
@@ -9,47 +14,51 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * SysConfig 系统配置项模型
+ * SysConfig 系统配置项模型.
  *
- * @property int         $id             配置ID
- * @property int         $group_id       配置组ID
- * @property string      $key            配置键
- * @property string      $value          配置值
- * @property string      $name           配置名称
- * @property string      $input_type     输入类型
- * @property string      $config_select_data 配置选项
- * @property int         $sort           排序
- * @property string      $remark         备注
- * @property int         $created_by     创建人ID
- * @property int         $updated_by     更新人ID
- * @property \DateTime   $created_at     创建时间
- * @property \DateTime   $updated_at     更新时间
- 
+ * @property int       $id                 配置ID
+ * @property int       $group_id           配置组ID
+ * @property string    $key                配置键
+ * @property string    $value              配置值
+ * @property string    $name               配置名称
+ * @property string    $input_type         输入类型
+ * @property string    $config_select_data 配置选项
+ * @property int       $sort               排序
+ * @property string    $remark             备注
+ * @property int       $created_by         创建人ID
+ * @property int       $updated_by         更新人ID
+ * @property \DateTime $created_at         创建时间
+ * @property \DateTime $updated_at         更新时间
+ *
  * @property string $create_time
  * @property string $update_time
  * @property string $delete_time
- * @property mixed $tenant_id
- * @property mixed $status
- * @property mixed $deleted_at
-*/
+ * @property mixed  $tenant_id
+ * @property mixed  $status
+ * @property mixed  $deleted_at
+ */
 class SysConfig extends BaseLaORMModel
 {
     use SoftDeletes;
 
     /**
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    /**
      * @return mixed
      */
     protected $table = 'sa_system_config';
+
     /**
      * @return mixed
      */
     protected $primaryKey = 'id';
-    /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
 
     /**
      * @return mixed
@@ -69,18 +78,18 @@ class SysConfig extends BaseLaORMModel
 
     /** @var array<string, string> */
     protected $casts = [
-        'id' => 'integer',
-        'group_id' => 'integer',
-        'sort' => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        'id'          => 'integer',
+        'group_id'    => 'integer',
+        'sort'        => 'integer',
+        'created_by'  => 'integer',
+        'updated_by'  => 'integer',
         'create_time' => 'datetime',
         'update_time' => 'datetime',
         'delete_time' => 'datetime',
     ];
 
     /**
-     * 所属配置组
+     * 所属配置组.
      *
      * @return BelongsTo<SysConfigGroup, $this>
      */

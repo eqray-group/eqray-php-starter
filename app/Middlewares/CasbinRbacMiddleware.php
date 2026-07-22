@@ -1,12 +1,19 @@
 <?php
+
+declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Middlewares;
 
-use Framework\Security\CasbinRbac;
 use App\Services\Casbin\CasbinService;
 use Framework\Basic\BaseJsonResponse;
-use Closure;
+use Framework\Security\CasbinRbac;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+
 /**
  * Casbin RBAC 路由权限校验中间件
  * 适配自研框架，自动拦截无权限请求
@@ -15,20 +22,21 @@ class CasbinRbacMiddleware
 {
     /**
      * Casbin 权限核心服务
-     * @var CasbinRbac
+     * @var    CasbinRbac
      * @return mixed
      */
     protected $casbinRbac;
+
     /**
      * Casbin 权限服务
-     * @var CasbinService
+     * @var    CasbinService
      * @return mixed
      */
     protected $casbinService;
 
     /**
-     * 无需校验的路由白名单
-     * @var array<array-key, mixed>
+     * 无需校验的路由白名单.
+     * @var    array<array-key, mixed>
      * @return mixed
      */
     protected $whiteRoutes = [
@@ -44,17 +52,17 @@ class CasbinRbacMiddleware
     public function __construct()
     {
         // 从自研框架容器获取 Casbin 服务实例
-        $this->casbinRbac = new CasbinRbac(config('casbin'));
+        $this->casbinRbac    = new CasbinRbac(config('casbin'));
         $this->casbinService = app(CasbinService::class);
     }
 
     /**
-     * 中间件处理逻辑
-     * @param Request $request 自研框架请求对象
-     * @param Closure $next 下一个中间件/控制器
+     * 中间件处理逻辑.
+     * @param  Request  $request 自研框架请求对象
+     * @param  \Closure $next    下一个中间件/控制器
      * @return mixed
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, \Closure $next)
     {
         // 1. 获取当前请求的资源路径和方法
         $currentPath = $this->normalizePath($request->getPathInfo()); // 如 /api/user/list
@@ -82,7 +90,7 @@ class CasbinRbacMiddleware
         );
 
         // 6. 无权限，返回 403
-        if (!$isAllowed) {
+        if (! $isAllowed) {
             return $this->responseError(403, '无权限访问该接口');
         }
 
@@ -91,9 +99,7 @@ class CasbinRbacMiddleware
     }
 
     /**
-     * 标准化路径（去除末尾斜杠、统一小写）
-     * @param string $path
-     * @return string
+     * 标准化路径（去除末尾斜杠、统一小写）.
      */
     protected function normalizePath(string $path): string
     {
@@ -102,9 +108,8 @@ class CasbinRbacMiddleware
     }
 
     /**
-     * 获取当前登录用户 ID（需适配自研框架的用户认证）
-     * @param Request $request
-     * @return string|int|null
+     * 获取当前登录用户 ID（需适配自研框架的用户认证）.
+     * @return null|int|string
      */
     protected function getCurrentUserId(Request $request)
     {
@@ -114,7 +119,7 @@ class CasbinRbacMiddleware
             return $currentUser->id;
         }
 
-        $user = $request->attributes->get('user');
+        $user   = $request->attributes->get('user');
         $userId = (int) ($user['id'] ?? 0);
         if ($userId > 0) {
             return $userId;
@@ -134,7 +139,7 @@ class CasbinRbacMiddleware
         try {
             $parsed = app('jwt')->parseForAccess($accessToken);
             $claims = $parsed->claims();
-            $uid = (int) $claims->get('uid');
+            $uid    = (int) $claims->get('uid');
             return $uid > 0 ? $uid : null;
         } catch (\Throwable) {
             return null;
@@ -142,7 +147,7 @@ class CasbinRbacMiddleware
     }
 
     /**
-     * 解析 access token（优先 Authorization，其次 cookie）
+     * 解析 access token（优先 Authorization，其次 cookie）.
      */
     protected function extractAccessToken(Request $request): ?string
     {
@@ -156,9 +161,9 @@ class CasbinRbacMiddleware
     }
 
     /**
-     * 统一错误响应格式
-     * @param int $code 状态码
-     * @param string $msg 错误信息
+     * 统一错误响应格式.
+     * @param  int    $code 状态码
+     * @param  string $msg  错误信息
      * @return mixed
      */
     protected function responseError(int $code, string $msg)

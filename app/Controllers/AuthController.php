@@ -2,52 +2,50 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Controllers;
 
+use App\Models\SysLoginLog;
 use App\Models\SysUser;
 use App\Models\SysUserRole;
-use App\Models\SysLoginLog;
-use App\Services\SysUserService;
 use App\Services\Casbin\CasbinService;
-use App\Services\LoginLogService;
 use App\Services\IpLocationService;
+use App\Services\LoginLogService;
+use App\Services\SysUserService;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Framework\Utils\JwtFactory;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 class AuthController extends BaseController
 {
     protected SysUserService $userService;
-    protected array $jwtConfig;
-    protected CasbinService $casbinService;
-    protected LoginLogService $loginLogService;
-    protected IpLocationService $ipLocationService;
-    protected JwtFactory $jwt;
 
-    protected function initialize(): void
-    {
-        $this->userService     = new SysUserService();
-        $this->jwtConfig       = config('jwt', []);
-        $this->casbinService   = new CasbinService();
-        $this->loginLogService = new LoginLogService();
-        $this->ipLocationService = new IpLocationService();
-        $this->jwt             = app('jwt');
-    }
+    protected array $jwtConfig;
+
+    protected CasbinService $casbinService;
+
+    protected LoginLogService $loginLogService;
+
+    protected IpLocationService $ipLocationService;
+
+    protected JwtFactory $jwt;
 
     #[Route(path: '/api/core/login', methods: ['POST'], name: 'auth.login')]
     public function login(Request $request): BaseJsonResponse|JsonResponse
     {
         $username = '';
-        try{
+        try {
             $jsonBody = [];
             $content  = $request->getContent();
-            if (!empty($content)) {
+            if (! empty($content)) {
                 $decoded = json_decode($content, true);
                 if (is_array($decoded)) {
                     $jsonBody = $decoded;
@@ -55,10 +53,10 @@ class AuthController extends BaseController
             }
             $all = array_merge($request->query->all(), $request->request->all(), $jsonBody);
 
-            $username = $all['username'] ?? '';
-            $password = $all['password'] ?? '';
-            $code     = $all['code'] ?? '';
-            $uuid     = $all['uuid'] ?? '';
+            $username = $all['username']         ?? '';
+            $password = $all['password']         ?? '';
+            $code     = $all['code']             ?? '';
+            $uuid     = $all['uuid']             ?? '';
             $remember = $all['rememberPassword'] ?? false;
 
             if (empty($username) || empty($password)) {
@@ -72,7 +70,7 @@ class AuthController extends BaseController
             }
 
             $user = SysUser::where('username', $username)->first();
-            if (!$user || !$user->verifyPassword($password)) {
+            if (! $user || ! $user->verifyPassword($password)) {
                 $this->recordLoginLog($request, $username, false, '用户名或密码错误');
                 return $this->fail('用户名或密码错误', 400);
             }
@@ -82,7 +80,7 @@ class AuthController extends BaseController
                 return $this->fail('账号已被禁用', 403);
             }
 
-            $ttl = $remember ? 604800 : ($this->jwtConfig['ttl'] ?? 3600);
+            $ttl         = $remember ? 604800 : ($this->jwtConfig['ttl'] ?? 3600);
             $tokenResult = $this->jwt->issue([
                 'uid'      => $user->id,
                 'name'     => $user->username,
@@ -131,7 +129,7 @@ class AuthController extends BaseController
     {
         $refreshToken = $request->cookies->get('refresh_token');
 
-        if (!$refreshToken) {
+        if (! $refreshToken) {
             return $this->fail('Refresh token 不存在，请重新登录', 401);
         }
 
@@ -140,7 +138,7 @@ class AuthController extends BaseController
             $userId          = $this->jwt->validateRefreshToken($newRefreshToken);
 
             $user = SysUser::find($userId);
-            if (!$user) {
+            if (! $user) {
                 return $this->fail('用户不存在', 404);
             }
 
@@ -191,12 +189,12 @@ class AuthController extends BaseController
     {
         $userId   = $this->getCurrentUserId($request);
 
-        if (!$userId) {
+        if (! $userId) {
             return $this->fail('登录信息已过期，请重新登录!', 401);
         }
 
         $user = SysUser::find($userId);
-        if (!$user) {
+        if (! $user) {
             return $this->fail('用户不存在', 404);
         }
 
@@ -220,7 +218,7 @@ class AuthController extends BaseController
             'is_admin'   => $user->isSuperAdmin(),
             'buttons'    => $user->isSuperAdmin() ? ['*'] : $user->getPermissions(),
             'roles'      => $roles,
-            'posts'      => collect($user->posts)->map(fn($p) => [
+            'posts'      => collect($user->posts)->map(fn ($p) => [
                 'id'   => $p->id,
                 'name' => $p->name,
             ])->values()->all(),
@@ -231,11 +229,11 @@ class AuthController extends BaseController
     public function menus(Request $request): BaseJsonResponse
     {
         $userId = $this->getCurrentUserId($request);
-        if (!$userId) {
+        if (! $userId) {
             return $this->fail('未登录', 401);
         }
         $sysUser = SysUser::find($userId);
-        if (!$sysUser) {
+        if (! $sysUser) {
             return $this->fail('用户不存在', 404);
         }
         return $this->success($sysUser->getMenuTree());
@@ -245,11 +243,11 @@ class AuthController extends BaseController
     public function permissions(Request $request): BaseJsonResponse
     {
         $userId = $this->getCurrentUserId($request);
-        if (!$userId) {
+        if (! $userId) {
             return $this->fail('未登录', 401);
         }
         $sysUser = SysUser::find($userId);
-        if (!$sysUser) {
+        if (! $sysUser) {
             return $this->fail('用户不存在', 404);
         }
         return $this->success($sysUser->getPermissions());
@@ -259,12 +257,12 @@ class AuthController extends BaseController
     public function changePassword(Request $request): BaseJsonResponse
     {
         $userId = $this->getCurrentUserId($request);
-        if (!$userId) {
+        if (! $userId) {
             return $this->fail('未登录', 401);
         }
 
-        $oldPassword = $this->input('oldPassword', '' ,true , $request);
-        $newPassword = $this->input('newPassword', '' ,true , $request);
+        $oldPassword = $this->input('oldPassword', '', true, $request);
+        $newPassword = $this->input('newPassword', '', true, $request);
 
         if (empty($oldPassword) || empty($newPassword)) {
             return $this->fail('旧密码和新密码不能为空');
@@ -285,7 +283,7 @@ class AuthController extends BaseController
     public function updateInfo(Request $request): BaseJsonResponse
     {
         $userId = $this->getCurrentUserId($request);
-        if (!$userId) {
+        if (! $userId) {
             return $this->fail('未登录', 401);
         }
 
@@ -296,12 +294,12 @@ class AuthController extends BaseController
 
         $data = array_filter([
             'realname' => $body['realname'] ?? null,
-            'email'    => $body['email'] ?? null,
-            'phone'    => $body['phone'] ?? null,
-            'gender'   => $body['gender'] ?? null,
-            'signed'   => $body['signed'] ?? null,
-            'avatar'   => $body['avatar'] ?? null,
-        ], fn($v) => $v !== null);
+            'email'    => $body['email']    ?? null,
+            'phone'    => $body['phone']    ?? null,
+            'gender'   => $body['gender']   ?? null,
+            'signed'   => $body['signed']   ?? null,
+            'avatar'   => $body['avatar']   ?? null,
+        ], fn ($v) => $v !== null);
 
         try {
             $this->userService->update($userId, $data, $userId);
@@ -322,13 +320,23 @@ class AuthController extends BaseController
         }
     }
 
+    protected function initialize(): void
+    {
+        $this->userService       = new SysUserService();
+        $this->jwtConfig         = config('jwt', []);
+        $this->casbinService     = new CasbinService();
+        $this->loginLogService   = new LoginLogService();
+        $this->ipLocationService = new IpLocationService();
+        $this->jwt               = app('jwt');
+    }
+
     // ==================== helpers ====================
 
     protected function getCurrentUserId(Request $request): ?int
     {
         $userId = $request->attributes->get('user')['id'] ?? null;
         if ($userId) {
-            return (int)$userId;
+            return (int) $userId;
         }
 
         $authHeader = $request->headers->get('Authorization');
@@ -424,9 +432,9 @@ class AuthController extends BaseController
         } catch (\Throwable $e) {
             app('log')->error('AuthController recordLoginLog failed', [
                 'username' => $username,
-                'success' => $success,
-                'message' => $message,
-                'error' => $e->getMessage(),
+                'success'  => $success,
+                'message'  => $message,
+                'error'    => $e->getMessage(),
             ]);
         }
     }

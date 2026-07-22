@@ -102,9 +102,9 @@ abstract class BaseService
     /**
      * 执行事务
      *
-     * @param  \Closure $closure  事务内执行的闭包
-     * @param  bool     $isTran   是否启用事务（默认 true）
-     * @return mixed   闭包返回值
+     * @param  \Closure $closure 事务内执行的闭包
+     * @param  bool     $isTran  是否启用事务（默认 true）
+     * @return mixed    闭包返回值
      */
     public function transaction(\Closure $closure, bool $isTran = true): mixed
     {

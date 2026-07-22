@@ -2,10 +2,17 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Middlewares;
 
 use App\Models\SysUser;
 use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
+use Framework\Attributes\Routes\BaseMapping;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,13 +26,13 @@ class PermissionMiddleware
         }
 
         // 2. Route protection check (prevent auto-route bypass)
-        if (!$this->validateRouteAccess($request)) {
+        if (! $this->validateRouteAccess($request)) {
             return $this->forbidden('非法访问：此接口受显式路由保护，禁止通过约定路径绕过权限。');
         }
 
         // 3. Resolve and validate user
         $sysUser = $this->resolveUser($request);
-        if (!$sysUser) {
+        if (! $sysUser) {
             return $this->unauthorized('请先登录!');
         }
 
@@ -56,23 +63,23 @@ class PermissionMiddleware
     protected function validateRouteAccess(Request $request): bool
     {
         $routeInfo = $request->attributes->get('_route');
-        if (!is_array($routeInfo)) {
+        if (! is_array($routeInfo)) {
             return true;
         }
 
         $controller = $routeInfo['controller'] ?? null;
-        $method = $routeInfo['method'] ?? null;
+        $method     = $routeInfo['method']     ?? null;
 
         // Check if this is an auto-route (convention-based routing)
-        $isAutoRoute = !isset($routeInfo['params']['_route']);
+        $isAutoRoute = ! isset($routeInfo['params']['_route']);
 
         if ($isAutoRoute && $controller && $method) {
             try {
                 $rm = new \ReflectionMethod($controller, $method);
 
                 // Check if method has explicit route annotations
-                $hasRouteAttr = !empty($rm->getAttributes(\Framework\Attributes\Route::class, \ReflectionAttribute::IS_INSTANCEOF)) ||
-                               !empty($rm->getAttributes(\Framework\Attributes\Routes\BaseMapping::class, \ReflectionAttribute::IS_INSTANCEOF));
+                $hasRouteAttr = ! empty($rm->getAttributes(Route::class, \ReflectionAttribute::IS_INSTANCEOF))
+                               || ! empty($rm->getAttributes(BaseMapping::class, \ReflectionAttribute::IS_INSTANCEOF));
 
                 if ($hasRouteAttr) {
                     return false; // Deny: explicit route accessed via auto-route
@@ -88,12 +95,12 @@ class PermissionMiddleware
     protected function resolveUser(Request $request): ?SysUser
     {
         $currentUser = $request->attributes->get('current_user');
-		
+
         if ($currentUser instanceof SysUser) {
             return $currentUser;
         }
 
-        $user = $request->attributes->get('user');
+        $user   = $request->attributes->get('user');
         $userId = (int) ($user['id'] ?? 0);
         if ($userId <= 0) {
             return null;
@@ -105,29 +112,29 @@ class PermissionMiddleware
     protected function getPermissionsFromAttribute(Request $request): ?Permission
     {
         $routeInfo = $request->attributes->get('_route');
-        if (!is_array($routeInfo)) {
+        if (! is_array($routeInfo)) {
             return null;
         }
 
         $controllerClass = $routeInfo['controller'] ?? null;
-        $method = $routeInfo['method'] ?? null;
+        $method          = $routeInfo['method']     ?? null;
 
-        if (!$controllerClass || !$method) {
+        if (! $controllerClass || ! $method) {
             return null;
         }
 
         try {
             // Check method-level annotation first
             $reflectionMethod = new \ReflectionMethod($controllerClass, $method);
-            $attributes = $reflectionMethod->getAttributes(Permission::class);
-            if (!empty($attributes)) {
+            $attributes       = $reflectionMethod->getAttributes(Permission::class);
+            if (! empty($attributes)) {
                 return $attributes[0]->newInstance();
             }
 
             // Fallback to class-level annotation
             $reflectionClass = new \ReflectionClass($controllerClass);
-            $attributes = $reflectionClass->getAttributes(Permission::class);
-            if (!empty($attributes)) {
+            $attributes      = $reflectionClass->getAttributes(Permission::class);
+            if (! empty($attributes)) {
                 return $attributes[0]->newInstance();
             }
         } catch (\ReflectionException $e) {
@@ -139,12 +146,12 @@ class PermissionMiddleware
 
     protected function checkPermission(SysUser $user, Permission $permission): bool
     {
-        $userSlugs = $user->getPermissions();
+        $userSlugs     = $user->getPermissions();
         $requiredSlugs = $permission->slugs;
-		
-		//dump($userSlugs);
-		//dump($requiredSlugs);
-		
+
+        // dump($userSlugs);
+        // dump($requiredSlugs);
+
         // Empty slugs array = no permission requirement
         if (empty($requiredSlugs)) {
             return true;
@@ -153,29 +160,28 @@ class PermissionMiddleware
         if ($permission->mode === 'AND') {
             // AND mode: user must have ALL required permissions
             foreach ($requiredSlugs as $slug) {
-                if (!in_array($slug, $userSlugs, true)) {
+                if (! in_array($slug, $userSlugs, true)) {
                     return false;
                 }
             }
             return true;
-        } else {
-            // OR mode: user must have ANY required permission
-            foreach ($requiredSlugs as $slug) {
-                if (in_array($slug, $userSlugs, true)) {
-                    return true;
-                }
-            }
-            return false;
         }
+        // OR mode: user must have ANY required permission
+        foreach ($requiredSlugs as $slug) {
+            if (in_array($slug, $userSlugs, true)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected function unauthorized(string $message): Response
     {
         return new Response(
             json_encode([
-                'code' => 401,
+                'code'    => 401,
                 'message' => $message,
-                'data' => null,
+                'data'    => null,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             401,
             ['Content-Type' => 'application/json']
@@ -186,9 +192,9 @@ class PermissionMiddleware
     {
         return new Response(
             json_encode([
-                'code' => 403,
+                'code'    => 403,
                 'message' => $message,
-                'data' => null,
+                'data'    => null,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             403,
             ['Content-Type' => 'application/json']

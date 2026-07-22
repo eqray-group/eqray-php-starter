@@ -3,23 +3,21 @@
 declare(strict_types=1);
 
 /**
- * 系统用户服务
- *
- * @package App\Services
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
 
-use App\Models\SysUser;
-use App\Models\SysUserRole;
-use App\Models\SysUserMenu;
-use App\Models\SysUserPost;
-use App\Models\SysRole;
+use App\Dao\SysUserDao;
 use App\Models\SysMenu;
 use App\Models\SysPost;
-use App\Dao\SysUserDao;
+use App\Models\SysRole;
+use App\Models\SysUser;
+use App\Models\SysUserDept;
+use App\Models\SysUserMenu;
+use App\Models\SysUserPost;
+use App\Models\SysUserRole;
 use App\Services\Casbin\CasbinService;
 use Framework\Basic\BaseService;
 
@@ -27,52 +25,51 @@ use Framework\Basic\BaseService;
  * SysUserService 用户服务
  *
  * 处理用户相关的业务逻辑
-  * @extends BaseService<SysUserDao>
+ * @extends BaseService<SysUserDao>
  */
 class SysUserService extends BaseService
 {
     protected const SYSTEM_PROTECTED_USER_ID = 1;
+
     /**
-     * DAO 实例
-     * @var SysUserDao
+     * DAO 实例.
      * @return mixed
      */
     protected SysUserDao $userDao;
 
     /**
      * Casbin 服务
-     * @var CasbinService
      * @return mixed
      */
     protected CasbinService $casbinService;
 
     /**
-     * 构造函数
+     * 构造函数.
      * @return mixed
      */
     public function __construct()
     {
         parent::__construct();
-        $this->userDao = new SysUserDao();
+        $this->userDao       = new SysUserDao();
         $this->casbinService = new CasbinService();
     }
 
     // ==================== 用户认证 ====================
 
     /**
-     * 用户登录
+     * 用户登录.
      *
-     * @param string $username 用户名
-     * @param string $password 密码
-     * @param string $ip       登录 IP
-     * @return array<array-key, mixed>|null 成功返回用户信息和 token，失败返回 null
+     * @param  string                       $username 用户名
+     * @param  string                       $password 密码
+     * @param  string                       $ip       登录 IP
+     * @return null|array<array-key, mixed> 成功返回用户信息和 token，失败返回 null
      */
     public function login(string $username, string $password, string $ip = ''): ?array
     {
         // 查找用户
         $user = $this->userDao->findByUsername($username);
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -82,7 +79,7 @@ class SysUserService extends BaseService
         }
 
         // 验证密码
-        if (!password_verify($password, $user->password)) {
+        if (! password_verify($password, $user->password)) {
             return null;
         }
 
@@ -95,57 +92,35 @@ class SysUserService extends BaseService
         $token = $this->generateJwtToken($user);
 
         // 获取用户菜单
-        $menus = $user->getMenuTree();
+        $menus       = $user->getMenuTree();
         $permissions = $user->getPermissions();
 
         return [
-            'user' => $this->formatUser($user),
-            'token' => $token,
-            'menus' => $menus,
+            'user'        => $this->formatUser($user),
+            'token'       => $token,
+            'menus'       => $menus,
             'permissions' => $permissions,
         ];
-    }
-
-    /**
-     * 生成 JWT Token
-     *
-     * @param SysUser $user 用户
-     * @return string
-     */
-    protected function generateJwtToken(SysUser $user): string
-    {
-        $jwt = app('jwt');
-        $roles = $user->getRoleCodes();
-        $primaryRole = $roles[0] ?? 'user';
-
-        $tokenData = $jwt->issue([
-            'uid' => $user->id,
-            'username' => $user->username,
-            'role' => $primaryRole,
-            'roles' => $roles,
-        ]);
-
-        return $tokenData['token'];
     }
 
     // ==================== 用户管理 ====================
 
     /**
-     * 获取用户列表
+     * 获取用户列表.
      *
-     * @param array<array-key, mixed> $params 查询参数
+     * @param  array<array-key, mixed> $params 查询参数
      * @return array<array-key, mixed>
      */
     public function getList(array $params): array
     {
-        $page = (int)($params['page'] ?? 1);
-        $limit = (int)($params['limit'] ?? 20);
-        $keyword = $params['keyword'] ?? '';
-        $username = $params['username'] ?? '';
-        $phone = $params['phone'] ?? '';
-        $status = $params['status'] ?? '';
-        $deptId = $params['dept_id'] ?? '';
-        $currentUserId = (int)($params['current_user_id'] ?? 0);
+        $page          = (int) ($params['page'] ?? 1);
+        $limit         = (int) ($params['limit'] ?? 20);
+        $keyword       = $params['keyword']  ?? '';
+        $username      = $params['username'] ?? '';
+        $phone         = $params['phone']    ?? '';
+        $status        = $params['status']   ?? '';
+        $deptId        = $params['dept_id']  ?? '';
+        $currentUserId = (int) ($params['current_user_id'] ?? 0);
 
         $query = SysUser::query();
 
@@ -153,8 +128,8 @@ class SysUserService extends BaseService
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
                 $q->where('username', 'like', "%{$keyword}%")
-                  ->orWhere('realname', 'like', "%{$keyword}%")
-                  ->orWhere('phone', 'like', "%{$keyword}%");
+                    ->orWhere('realname', 'like', "%{$keyword}%")
+                    ->orWhere('phone', 'like', "%{$keyword}%");
             });
         }
 
@@ -167,23 +142,23 @@ class SysUserService extends BaseService
         }
 
         if ($status !== '') {
-            $query->where('status', (int)$status);
+            $query->where('status', (int) $status);
         }
 
         if ($deptId !== '') {
-            $deptUserIds = \App\Models\SysUserDept::where('dept_id', (int)$deptId)
+            $deptUserIds = SysUserDept::where('dept_id', (int) $deptId)
                 ->pluck('user_id')
                 ->toArray();
-            
+
             if (empty($deptUserIds)) {
                 return [
-                    'list' => [],
+                    'list'  => [],
                     'total' => 0,
-                    'page' => $page,
+                    'page'  => $page,
                     'limit' => $limit,
                 ];
             }
-            
+
             $query->whereIn('id', $deptUserIds);
         }
 
@@ -200,25 +175,25 @@ class SysUserService extends BaseService
         }
 
         return [
-            'list' => $list,
+            'list'  => $list,
             'total' => $total,
-            'page' => $page,
+            'page'  => $page,
             'limit' => $limit,
         ];
     }
 
     /**
-     * 获取用户下拉选择列表（专用于选择组件）
+     * 获取用户下拉选择列表（专用于选择组件）.
      *
-     * @param array<array-key, mixed> $params 查询参数
+     * @param  array<array-key, mixed> $params 查询参数
      * @return array<array-key, mixed>
      */
     public function getSelectorList(array $params): array
     {
-        $page = max(1, (int)($params['page'] ?? 1));
-        $limit = max(1, (int)($params['limit'] ?? 5));
-        $keyword = trim((string)($params['keyword'] ?? ''));
-        $status = $params['status'] ?? '';
+        $page    = max(1, (int) ($params['page'] ?? 1));
+        $limit   = max(1, (int) ($params['limit'] ?? 5));
+        $keyword = trim((string) ($params['keyword'] ?? ''));
+        $status  = $params['status'] ?? '';
 
         $query = SysUser::query();
 
@@ -232,10 +207,10 @@ class SysUserService extends BaseService
         }
 
         if ($status !== '') {
-            $query->where('status', (int)$status);
+            $query->where('status', (int) $status);
         }
 
-        $total = (int)$query->count();
+        $total = (int) $query->count();
 
         $list = $query->select(['id', 'username', 'realname', 'phone', 'avatar', 'email', 'status'])
             ->orderBy('id', 'desc')
@@ -245,33 +220,32 @@ class SysUserService extends BaseService
             ->toArray();
 
         return [
-            'list' => $list,
+            'list'  => $list,
             'total' => $total,
-            'page' => $page,
+            'page'  => $page,
             'limit' => $limit,
         ];
     }
 
     /**
-     * 获取用户详情
+     * 获取用户详情.
      *
-     * @param int $userId 用户 ID
-     * @return array<array-key, mixed>|null
+     * @param  int                          $userId 用户 ID
+     * @return null|array<array-key, mixed>
      */
     public function getDetail(int $userId): ?array
-
     {
         $user = SysUser::find($userId);
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
         $data = $this->formatUser($user);
 
-        $roleIds = SysUserRole::where('user_id', $userId)->pluck('role_id')->toArray();
+        $roleIds          = SysUserRole::where('user_id', $userId)->pluck('role_id')->toArray();
         $data['role_ids'] = $roleIds;
-        if (!empty($roleIds)) {
+        if (! empty($roleIds)) {
             $data['roleList'] = SysRole::whereIn('id', $roleIds)
                 ->where('status', SysRole::STATUS_ENABLED)
                 ->get()
@@ -281,9 +255,9 @@ class SysUserService extends BaseService
         }
 
         // 直接通过中间表获取用户岗位（绕过 posts() 关联）
-        $postIds = SysUserPost::where('user_id', $userId)->where('status', SysPost::ENABLED_ENABLED)->pluck('post_id')->toArray();
+        $postIds          = SysUserPost::where('user_id', $userId)->where('status', SysPost::ENABLED_ENABLED)->pluck('post_id')->toArray();
         $data['post_ids'] = $postIds;
-        if (!empty($postIds)) {
+        if (! empty($postIds)) {
             $data['postList'] = SysPost::whereIn('id', $postIds)
                 ->where('status', SysPost::ENABLED_ENABLED)
                 ->get()
@@ -298,23 +272,22 @@ class SysUserService extends BaseService
     }
 
     /**
-     * 创建用户
+     * 创建用户.
      *
      * @param array<array-key, mixed> $data     用户数据
-     * @param int   $operator 操作人 ID
-     * @return SysUser|null
+     * @param int                     $operator 操作人 ID
      */
     public function create(array $data, int $operator = 0): ?SysUser
     {
         return $this->transaction(function () use ($data, $operator) {
             // 检查用户名是否存在
-             
+
             if ($this->userDao->isUsernameExists($data['username'])) {
                 throw new \Exception('用户名已存在');
             }
 
             // 检查手机号是否存在
-            if (!empty($data['phone']) && $this->userDao->isMobileExists($data['phone'])) {
+            if (! empty($data['phone']) && $this->userDao->isMobileExists($data['phone'])) {
                 throw new \Exception('手机号已存在');
             }
 
@@ -323,35 +296,35 @@ class SysUserService extends BaseService
             $data['updated_by'] = $operator;
 
             // 密码会自动通过模型 mutator 加密
-            if (!isset($data['password'])) {
+            if (! isset($data['password'])) {
                 $data['password'] = '123456'; // 默认密码
             }
 
             $user = SysUser::create($data);
 
-            if (!empty($data['role_ids'])) {
+            if (! empty($data['role_ids'])) {
                 SysUserRole::syncUserRoles($user->id, $data['role_ids'], $operator);
-                
-                $roles = \App\Models\SysRole::whereIn('id', $data['role_ids'])
-                    ->where('status', \App\Models\SysRole::STATUS_ENABLED)
+
+                $roles = SysRole::whereIn('id', $data['role_ids'])
+                    ->where('status', SysRole::STATUS_ENABLED)
                     ->pluck('code')
                     ->toArray();
-                
+
                 foreach ($roles as $roleCode) {
                     $this->casbinService->addRoleForUser($user->id, $roleCode);
                 }
             }
 
-            if (!empty($data['post_ids'])) {
+            if (! empty($data['post_ids'])) {
                 SysUserPost::saveUserPosts($user->id, $data['post_ids'], $operator);
             }
 
-            if (!empty($data['menu_ids'])) {
+            if (! empty($data['menu_ids'])) {
                 SysUserMenu::syncUserMenus($user->id, $data['menu_ids'], $operator);
             }
 
-            if (!empty($data['dept_id'])) {
-                \App\Models\SysUserDept::syncUserDept($user->id, $data['dept_id'], $operator);
+            if (! empty($data['dept_id'])) {
+                SysUserDept::syncUserDept($user->id, $data['dept_id'], $operator);
             }
 
             // Clear menu tree cache if user has role/menu assignments
@@ -362,12 +335,11 @@ class SysUserService extends BaseService
     }
 
     /**
-     * 更新用户
+     * 更新用户.
      *
-     * @param int   $userId   用户 ID
+     * @param int                     $userId   用户 ID
      * @param array<array-key, mixed> $data     用户数据
-     * @param int   $operator 操作人 ID
-     * @return bool
+     * @param int                     $operator 操作人 ID
      */
     public function update(int $userId, array $data, int $operator = 0): bool
     {
@@ -375,11 +347,10 @@ class SysUserService extends BaseService
             throw new \Exception('系统内置用户不允许编辑');
         }
         return $this->transaction(function () use ($userId, $data, $operator) {
-
-            //app('cache')->set('update_user_' . $operator, $data);
+            // app('cache')->set('update_user_' . $operator, $data);
 
             $user = SysUser::find($userId);
-            if (!$user) {
+            if (! $user) {
                 throw new \Exception('用户不存在');
             }
 
@@ -401,7 +372,7 @@ class SysUserService extends BaseService
             $data['updated_by'] = $operator;
 
             // 如果修改密码，密码会自动通过模型 mutator 加密
-            if (isset($data['password']) && !empty($data['password'])) {
+            if (isset($data['password']) && ! empty($data['password'])) {
                 // 模型自动处理，无需手动加密
             } else {
                 unset($data['password']);
@@ -424,7 +395,7 @@ class SysUserService extends BaseService
             }
 
             if (isset($data['dept_id'])) {
-                \App\Models\SysUserDept::syncUserDept($userId, $data['dept_id'], $operator);
+                SysUserDept::syncUserDept($userId, $data['dept_id'], $operator);
             }
 
             // Clear menu tree cache if roles or menus changed
@@ -437,10 +408,9 @@ class SysUserService extends BaseService
     }
 
     /**
-     * 删除用户
+     * 删除用户.
      *
      * @param int $userId 用户 ID
-     * @return bool
      */
     public function delete(int $userId): bool
     {
@@ -448,7 +418,7 @@ class SysUserService extends BaseService
             throw new \Exception('系统内置用户不允许删除');
         }
         $user = SysUser::find($userId);
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -459,13 +429,13 @@ class SysUserService extends BaseService
         SysUserRole::deleteByUserId($userId);
 
         // 删除用户岗位关联
-        \App\Models\SysUserPost::where('user_id', $userId)->delete();
+        SysUserPost::where('user_id', $userId)->delete();
 
         // 删除用户菜单关联（所有租户）
         SysUserMenu::deleteByUserId($userId);
 
         // 删除用户部门关联
-        \App\Models\SysUserDept::where('user_id', $userId)->delete();
+        SysUserDept::where('user_id', $userId)->delete();
 
         // 清除 Casbin 角色
         $this->casbinService->deleteRolesForUser($userId);
@@ -478,7 +448,6 @@ class SysUserService extends BaseService
      *
      * @param int $userId 用户 ID
      * @param int $status 状态
-     * @return bool
      */
     public function updateStatus(int $userId, int $status): bool
     {
@@ -493,12 +462,11 @@ class SysUserService extends BaseService
      *
      * @param int    $userId   用户 ID
      * @param string $password 新密码
-     * @return bool
      */
     public function resetPassword(int $userId, string $password = '123456'): bool
     {
         $user = SysUser::find($userId);
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -509,21 +477,20 @@ class SysUserService extends BaseService
     /**
      * 修改密码
      *
-     * @param int    $userId      用户 ID
-     * @param string $oldPassword 旧密码
-     * @param string $newPassword 新密码
-     * @return bool
+     * @param  int        $userId      用户 ID
+     * @param  string     $oldPassword 旧密码
+     * @param  string     $newPassword 新密码
      * @throws \Exception
      */
     public function changePassword(int $userId, string $oldPassword, string $newPassword): bool
     {
         $user = SysUser::find($userId);
-        if (!$user) {
+        if (! $user) {
             throw new \Exception('用户不存在');
         }
 
         // 验证旧密码
-        if (!$user->verifyPassword($oldPassword)) {
+        if (! $user->verifyPassword($oldPassword)) {
             throw new \Exception('旧密码错误');
         }
 
@@ -532,14 +499,11 @@ class SysUserService extends BaseService
     }
 
     /**
-     * 清理用户缓存
+     * 清理用户缓存.
      *
      * 清除与用户相关的所有缓存数据
      *
      * @param int $userId 用户 ID
-     * @return bool
-     */
-    /**
      */
     public function clearCache(int $userId): bool
     {
@@ -555,9 +519,9 @@ class SysUserService extends BaseService
     }
 
     /**
-     * 获取用户已分配的菜单ID列表
+     * 获取用户已分配的菜单ID列表.
      *
-     * @param int $userId 用户 ID
+     * @param  int                     $userId 用户 ID
      * @return array<array-key, mixed>
      */
     public function getUserMenuIds(int $userId): array
@@ -566,17 +530,16 @@ class SysUserService extends BaseService
     }
 
     /**
-     * 保存用户菜单分配（先清理再写入，并清除用户缓存）
+     * 保存用户菜单分配（先清理再写入，并清除用户缓存）.
      *
-     * @param int   $userId   用户 ID
+     * @param int                     $userId   用户 ID
      * @param array<array-key, mixed> $menuIds  菜单 ID 数组
-     * @param int   $operator 操作人 ID
-     * @return bool
+     * @param int                     $operator 操作人 ID
      */
     public function saveUserMenus(int $userId, array $menuIds, int $operator = 0): bool
     {
         $user = SysUser::find($userId);
-        if (!$user) {
+        if (! $user) {
             throw new \Exception('用户不存在');
         }
 
@@ -602,19 +565,16 @@ class SysUserService extends BaseService
     }
 
     /**
-     * 设置用户首页/工作台
+     * 设置用户首页/工作台.
      *
-     * @param int    $userId    用户 ID
-     * @param string $dashboard 工作台标识
-     * @return bool
+     * @param  int        $userId    用户 ID
+     * @param  string     $dashboard 工作台标识
      * @throws \Exception
-     */
-    /**
      */
     public function setHomePage(int $userId, string $dashboard): bool
     {
         $user = SysUser::find($userId);
-        if (!$user) {
+        if (! $user) {
             throw new \Exception('用户不存在');
         }
 
@@ -622,15 +582,36 @@ class SysUserService extends BaseService
         return $user->save();
     }
 
+    /**
+     * 生成 JWT Token.
+     *
+     * @param SysUser $user 用户
+     */
+    protected function generateJwtToken(SysUser $user): string
+    {
+        $jwt         = app('jwt');
+        $roles       = $user->getRoleCodes();
+        $primaryRole = $roles[0] ?? 'user';
+
+        $tokenData = $jwt->issue([
+            'uid'      => $user->id,
+            'username' => $user->username,
+            'role'     => $primaryRole,
+            'roles'    => $roles,
+        ]);
+
+        return $tokenData['token'];
+    }
+
     // ==================== 辅助方法 ====================
 
     /**
-     * 格式化用户数据
+     * 格式化用户数据.
      *
-     * @param SysUser|array<string, mixed> $user 用户
+     * @param  array<string, mixed>|SysUser $user 用户
      * @return array<array-key, mixed>
      */
-    protected function formatUser(SysUser|array $user): array
+    protected function formatUser(array|SysUser $user): array
     {
         if ($user instanceof SysUser) {
             $data = $user->toArray();
@@ -659,7 +640,7 @@ class SysUserService extends BaseService
 
         // 数据库值映射到字典值：DB 1=启用 0=禁用 → 字典 1=正常 2=停用
         if (isset($data['status'])) {
-         //   $data['status'] = $data['status'] === 0 ? 2 : 1;
+            //   $data['status'] = $data['status'] === 0 ? 2 : 1;
         }
 
         return $data;

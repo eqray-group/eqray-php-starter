@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Middlewares;
 
 use App\Models\SysAccessLog;
@@ -21,22 +26,22 @@ class AccessLogDbMiddleware
         try {
             $currentUser = $request->attributes->get('current_user');
 
-            $params = $this->getFilteredParams($request);
+            $params      = $this->getFilteredParams($request);
             $requestBody = empty($params) ? null : json_encode($params, JSON_UNESCAPED_UNICODE);
 
             SysAccessLog::create([
-                'user_id' => $currentUser->user_id ?? null,
-                'user_name' => $currentUser->user_name ?? null,
-                'ip' => (string) ($request->getClientIp() ?? ''),
-                'method' => strtoupper((string) $request->getMethod()),
-                'path' => (string) $request->getPathInfo(),
+                'user_id'      => $currentUser->user_id   ?? null,
+                'user_name'    => $currentUser->user_name ?? null,
+                'ip'           => (string) ($request->getClientIp() ?? ''),
+                'method'       => strtoupper((string) $request->getMethod()),
+                'path'         => (string) $request->getPathInfo(),
                 'query_string' => $request->getQueryString(),
-                'status_code' => (int) $response->getStatusCode(),
-                'duration_ms' => $durationMs,
-                'user_agent' => $request->headers->get('User-Agent'),
-                'referer' => $request->headers->get('Referer'),
+                'status_code'  => (int) $response->getStatusCode(),
+                'duration_ms'  => $durationMs,
+                'user_agent'   => $request->headers->get('User-Agent'),
+                'referer'      => $request->headers->get('Referer'),
                 'request_body' => $requestBody,
-                'created_at' => date('Y-m-d H:i:s'),
+                'created_at'   => date('Y-m-d H:i:s'),
             ]);
         } catch (\Throwable $e) {
         }
@@ -53,7 +58,7 @@ class AccessLogDbMiddleware
 
         if ($request->getContentTypeFormat() === 'json') {
             try {
-                $json = $request->toArray();
+                $json   = $request->toArray();
                 $params = array_merge($params, $json);
             } catch (\Exception $e) {
             }

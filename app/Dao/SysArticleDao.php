@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 系统文章DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-19
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -23,21 +20,11 @@ use Framework\Basic\BaseDao;
 class SysArticleDao extends BaseDao
 {
     /**
-     * 设置模型类
+     * 根据分类ID获取文章列表.
      *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysArticle::class;
-    }
-
-    /**
-     * 根据分类ID获取文章列表
-     *
-     * @param int $categoryId 分类ID
-     * @param int $page       页码
-     * @param int $limit      每页数量
+     * @param  int                     $categoryId 分类ID
+     * @param  int                     $page       页码
+     * @param  int                     $limit      每页数量
      * @return array<array-key, mixed>
      */
     public function getListByCategoryId(int $categoryId, int $page = 1, int $limit = 10): array
@@ -52,9 +39,9 @@ class SysArticleDao extends BaseDao
     }
 
     /**
-     * 获取热门文章列表
+     * 获取热门文章列表.
      *
-     * @param int $limit 数量限制
+     * @param  int                     $limit 数量限制
      * @return array<array-key, mixed>
      */
     public function getHotArticles(int $limit = 10): array
@@ -69,11 +56,10 @@ class SysArticleDao extends BaseDao
     }
 
     /**
-     * 检查文章标题是否存在
+     * 检查文章标题是否存在.
      *
      * @param string $title     文章标题
      * @param int    $excludeId 排除的文章ID
-     * @return bool
      */
     public function isTitleExists(string $title, int $excludeId = 0): bool
     {
@@ -89,7 +75,6 @@ class SysArticleDao extends BaseDao
      *
      * @param int $articleId 文章ID
      * @param int $status    状态
-     * @return bool
      */
     public function updateStatus(int $articleId, int $status): bool
     {
@@ -97,13 +82,20 @@ class SysArticleDao extends BaseDao
     }
 
     /**
-     * 获取文章总数
+     * 获取文章总数.
      *
      * @param array<array-key, mixed> $where 条件
-     * @return int
      */
     public function getArticleCount(array $where = []): int
     {
         return $this->count($where);
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysArticle::class;
     }
 }

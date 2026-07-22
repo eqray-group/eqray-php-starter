@@ -2,16 +2,21 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Controllers;
 
 use App\Services\LoginLogService;
 use App\Services\OperationLogService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
-use Framework\Attributes\Permission;
 
 class LogController extends BaseController
 {
@@ -19,16 +24,11 @@ class LogController extends BaseController
      * @return mixed
      */
     protected LoginLogService $loginLogService;
+
     /**
      * @return mixed
      */
     protected OperationLogService $operationLogService;
-
-    protected function initialize(): void
-    {
-        $this->loginLogService = new LoginLogService();
-        $this->operationLogService = new OperationLogService();
-    }
 
     // ==================== 登录日志 ====================
 
@@ -38,12 +38,12 @@ class LogController extends BaseController
     public function getLoginLogPageList(Request $request): BaseJsonResponse
     {
         $params = $request->query->all();
-        
+
         // 兼容 pageSize 和 limit 参数
-        if (isset($params['pageSize']) && !isset($params['limit'])) {
+        if (isset($params['pageSize']) && ! isset($params['limit'])) {
             $params['limit'] = $params['pageSize'];
         }
-        
+
         $result = $this->loginLogService->getPageList($params);
         return $this->success($result);
     }
@@ -74,12 +74,12 @@ class LogController extends BaseController
     public function getOperLogPageList(Request $request): BaseJsonResponse
     {
         $params = $request->query->all();
-        
+
         // 兼容 pageSize 和 limit 参数
-        if (isset($params['pageSize']) && !isset($params['limit'])) {
+        if (isset($params['pageSize']) && ! isset($params['limit'])) {
             $params['limit'] = $params['pageSize'];
         }
-        
+
         $result = $this->operationLogService->getPageList($params);
         return $this->success($result);
     }
@@ -87,8 +87,6 @@ class LogController extends BaseController
     #[Route(path: '/api/core/logs/deleteOperLog', methods: ['DELETE'], name: 'log.operation.delete')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
     #[Permission('core:logs:deleteOper')]
-    /**
-     */
     public function deleteOperLog(Request $request): BaseJsonResponse
     {
         $ids = $this->parseIds($request);
@@ -104,6 +102,12 @@ class LogController extends BaseController
         }
     }
 
+    protected function initialize(): void
+    {
+        $this->loginLogService     = new LoginLogService();
+        $this->operationLogService = new OperationLogService();
+    }
+
     // ==================== 辅助方法 ====================
 
     /**
@@ -111,9 +115,9 @@ class LogController extends BaseController
      */
     private function parseIds(Request $request): array
     {
-        $body = [];
+        $body    = [];
         $content = $request->getContent();
-        if (!empty($content)) {
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $body = $decoded;
@@ -121,11 +125,11 @@ class LogController extends BaseController
         }
         $all = array_merge($request->request->all(), $body);
 
-        if (!empty($all['ids']) && is_array($all['ids'])) {
+        if (! empty($all['ids']) && is_array($all['ids'])) {
             return array_map('intval', $all['ids']);
         }
-        if (!empty($all['id'])) {
-            return [(int)$all['id']];
+        if (! empty($all['id'])) {
+            return [(int) $all['id']];
         }
         return [];
     }

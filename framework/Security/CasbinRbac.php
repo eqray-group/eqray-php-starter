@@ -77,7 +77,7 @@ class CasbinRbac
 
         // 2. 框架层只依赖统一持久层适配器，不直接感知底层实现细节
         $tableName  = $config['adapter']['table_name']  ?? 'casbin_rule';
-        $connection = $config['adapter']['connection'] ?? null;
+        $connection = $config['adapter']['connection']  ?? null;
         $adapter    = new DatabaseAdapter($tableName, is_string($connection) ? $connection : null);
 
         // 3. 创建 Casbin 执行器

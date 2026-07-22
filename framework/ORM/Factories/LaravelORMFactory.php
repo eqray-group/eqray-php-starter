@@ -48,7 +48,7 @@ class LaravelORMFactory
     public function getModel(): Model
     {
         if ($this->modelInstance) {
-            /** @var BaseLaORMModel $instance */
+            /* @var BaseLaORMModel $instance */
             return $this->modelInstance;
         }
 
@@ -212,7 +212,7 @@ class LaravelORMFactory
         if ($order !== '' && self::isOrderExpressionSafe($order)) {
             $query->orderByRaw($order);
         }
-        /** @var null|Model $result */
+        /* @var null|Model $result */
         return $query->select($field ?? ['*'])->first();
     }
 
@@ -256,7 +256,7 @@ class LaravelORMFactory
             $query->with($with);
         }
 
-        /** @var null|Model $result */
+        /* @var null|Model $result */
         return $query->select($fieldArray)->first();
     }
 

@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
 namespace App\Models;
 
 use Framework\Basic\BaseLaORMModel;
@@ -11,27 +16,31 @@ class SysMailLog extends BaseLaORMModel
 {
     use SoftDeletes;
 
-    /**
-     * @return mixed
-     */
-    protected $table = 'sa_system_mail';
-    /**
-     * @return mixed
-     */
-    protected $primaryKey = 'id';
+    public const CREATED_AT = 'create_time';
 
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
 
     /**
      * @return mixed
      */
     public $incrementing = true;
+
     /**
      * @return mixed
      */
     public $timestamps = true;
+
+    /**
+     * @return mixed
+     */
+    protected $table = 'sa_system_mail';
+
+    /**
+     * @return mixed
+     */
+    protected $primaryKey = 'id';
 
     /**
      * @return mixed
@@ -51,7 +60,7 @@ class SysMailLog extends BaseLaORMModel
 
     /** @var array<string, string> */
     protected $casts = [
-        'id' => 'integer',
+        'id'          => 'integer',
         'create_time' => 'datetime',
         'update_time' => 'datetime',
         'delete_time' => 'datetime',

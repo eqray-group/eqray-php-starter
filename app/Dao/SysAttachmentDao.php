@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 附件DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -20,13 +17,8 @@ use Framework\Basic\BaseDao;
  */
 class SysAttachmentDao extends BaseDao
 {
-    protected function setModel(): string
-    {
-        return SysAttachment::class;
-    }
-
     /**
-     * 根据 hash 查找附件（秒传）
+     * 根据 hash 查找附件（秒传）.
      */
     public function findByHash(string $hash): ?SysAttachment
     {
@@ -34,7 +26,7 @@ class SysAttachmentDao extends BaseDao
     }
 
     /**
-     * 获取分类下附件数量
+     * 获取分类下附件数量.
      */
     public function getCountByCategoryId(int $categoryId): int
     {
@@ -42,10 +34,15 @@ class SysAttachmentDao extends BaseDao
     }
 
     /**
-     * 获取所有附件总字节数
+     * 获取所有附件总字节数.
      */
     public function getTotalSize(): int
     {
-        return (int)SysAttachment::sum('size_byte');
+        return (int) SysAttachment::sum('size_byte');
+    }
+
+    protected function setModel(): string
+    {
+        return SysAttachment::class;
     }
 }

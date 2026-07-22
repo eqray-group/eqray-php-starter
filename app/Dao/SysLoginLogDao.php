@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 登录日志DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -21,21 +18,11 @@ use Framework\Basic\BaseDao;
 class SysLoginLogDao extends BaseDao
 {
     /**
-     * 设置模型类
+     * 获取用户登录日志列表.
      *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysLoginLog::class;
-    }
-
-    /**
-     * 获取用户登录日志列表
-     *
-     * @param int $userId 用户ID
-     * @param int $page   页码
-     * @param int $limit  每页数量
+     * @param  int                     $userId 用户ID
+     * @param  int                     $page   页码
+     * @param  int                     $limit  每页数量
      * @return array<array-key, mixed>
      */
     public function getListByUserId(int $userId, int $page = 1, int $limit = 20): array
@@ -46,8 +33,8 @@ class SysLoginLogDao extends BaseDao
     /**
      * 获取登录统计
      *
-     * @param string $startDate 开始日期
-     * @param string $endDate   结束日期
+     * @param  string                  $startDate 开始日期
+     * @param  string                  $endDate   结束日期
      * @return array<array-key, mixed>
      */
     public function getLoginStats(string $startDate, string $endDate): array
@@ -57,9 +44,7 @@ class SysLoginLogDao extends BaseDao
     }
 
     /**
-     * 统计今日登录次数
-     *
-     * @return int
+     * 统计今日登录次数.
      */
     public function countTodayLogin(): int
     {
@@ -72,9 +57,7 @@ class SysLoginLogDao extends BaseDao
     }
 
     /**
-     * 统计今日登录失败次数
-     *
-     * @return int
+     * 统计今日登录失败次数.
      */
     public function countTodayFailed(): int
     {
@@ -87,10 +70,9 @@ class SysLoginLogDao extends BaseDao
     }
 
     /**
-     * 统计指定IP今日登录失败次数
+     * 统计指定IP今日登录失败次数.
      *
      * @param string $ip IP地址
-     * @return int
      */
     public function countTodayFailedByIp(string $ip): int
     {
@@ -101,5 +83,13 @@ class SysLoginLogDao extends BaseDao
             ['login_time', '<=', $today . ' 23:59:59'],
             'status' => SysLoginLog::STATUS_FAIL,
         ]);
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysLoginLog::class;
     }
 }

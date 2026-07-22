@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 系统岗位DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-19
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -23,20 +20,9 @@ use Framework\Basic\BaseDao;
 class SysPostDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysPost::class;
-    }
-
-    /**
-     * 根据岗位编码查找岗位
+     * 根据岗位编码查找岗位.
      *
      * @param string $postCode 岗位编码
-     * @return SysPost|null
      */
     public function findByPostCode(string $postCode): ?SysPost
     {
@@ -44,10 +30,10 @@ class SysPostDao extends BaseDao
     }
 
     /**
-     * 获取启用的岗位列表
+     * 获取启用的岗位列表.
      *
-     * @param int $page  页码
-     * @param int $limit 每页数量
+     * @param  int                     $page  页码
+     * @param  int                     $limit 每页数量
      * @return array<array-key, mixed>
      */
     public function getEnabledList(int $page = 1, int $limit = 20): array
@@ -56,7 +42,7 @@ class SysPostDao extends BaseDao
     }
 
     /**
-     * 获取所有启用的岗位
+     * 获取所有启用的岗位.
      *
      * @return array<array-key, mixed>
      */
@@ -66,11 +52,10 @@ class SysPostDao extends BaseDao
     }
 
     /**
-     * 检查岗位编码是否存在
+     * 检查岗位编码是否存在.
      *
      * @param string $postCode  岗位编码
      * @param int    $excludeId 排除的岗位ID
-     * @return bool
      */
     public function isPostCodeExists(string $postCode, int $excludeId = 0): bool
     {
@@ -86,7 +71,6 @@ class SysPostDao extends BaseDao
      *
      * @param int $postId  岗位ID
      * @param int $enabled 状态
-     * @return bool
      */
     public function updateEnabled(int $postId, int $enabled): bool
     {
@@ -94,10 +78,9 @@ class SysPostDao extends BaseDao
     }
 
     /**
-     * 获取岗位总数
+     * 获取岗位总数.
      *
      * @param array<array-key, mixed> $where 条件
-     * @return int
      */
     public function getPostCount(array $where = []): int
     {
@@ -105,13 +88,21 @@ class SysPostDao extends BaseDao
     }
 
     /**
-     * 获取岗位ID列表
+     * 获取岗位ID列表.
      *
-     * @param array<array-key, mixed> $where 条件
+     * @param  array<array-key, mixed> $where 条件
      * @return array<array-key, mixed>
      */
     public function getPostIds(array $where = []): array
     {
         return $this->getColumn($where, 'id');
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysPost::class;
     }
 }

@@ -3,47 +3,34 @@
 declare(strict_types=1);
 
 /**
- * 服务器监控控制器
- *
- * @package App\Controllers\System
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Controllers\System;
 
 use App\Services\ServerMonitorService;
+use Framework\Attributes\Auth;
+use Framework\Attributes\Route;
 use Framework\Basic\BaseController;
 use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
 
 /**
- * MonitorController 服务器监控控制器
+ * MonitorController 服务器监控控制器.
  */
 class MonitorController extends BaseController
 {
     /**
      * 服务器监控服务
-     * @var ServerMonitorService
      * @return mixed
      */
     protected ServerMonitorService $monitorService;
 
     /**
-     * 初始化
-     */
-    protected function initialize(): void
-    {
-        $this->monitorService = new ServerMonitorService();
-    }
-
-    /**
-     * 获取完整监控信息
+     * 获取完整监控信息.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/monitor/full', methods: ['GET'], name: 'monitor.full')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -54,10 +41,9 @@ class MonitorController extends BaseController
     }
 
     /**
-     * 获取服务器信息
+     * 获取服务器信息.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/monitor/server', methods: ['GET'], name: 'monitor.server')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -68,10 +54,9 @@ class MonitorController extends BaseController
     }
 
     /**
-     * 获取PHP信息
+     * 获取PHP信息.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/monitor/php', methods: ['GET'], name: 'monitor.php')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -82,10 +67,9 @@ class MonitorController extends BaseController
     }
 
     /**
-     * 获取CPU信息
+     * 获取CPU信息.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/monitor/cpu', methods: ['GET'], name: 'monitor.cpu')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -96,10 +80,9 @@ class MonitorController extends BaseController
     }
 
     /**
-     * 获取内存信息
+     * 获取内存信息.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/monitor/memory', methods: ['GET'], name: 'monitor.memory')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -110,10 +93,9 @@ class MonitorController extends BaseController
     }
 
     /**
-     * 获取磁盘信息
+     * 获取磁盘信息.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/system/monitor/disk', methods: ['GET'], name: 'monitor.disk')]
     #[Auth(required: true, roles: ['admin', 'super_admin'])]
@@ -121,5 +103,13 @@ class MonitorController extends BaseController
     {
         $result = $this->monitorService->getDiskInfo();
         return $this->success($result);
+    }
+
+    /**
+     * 初始化.
+     */
+    protected function initialize(): void
+    {
+        $this->monitorService = new ServerMonitorService();
     }
 }

@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 系统配置项DAO
- *
- * @package App\Dao
- * @author  Genie
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -23,22 +21,11 @@ use Illuminate\Database\Eloquent\Collection;
 class SysConfigDao extends BaseDao
 {
     /**
-     * 设置模型类
-     *
-     * @return string
-     */
-    protected function setModel(): string
-    {
-        return SysConfig::class;
-    }
-
-    /**
-     * 检查同分组内配置键名是否已存在
+     * 检查同分组内配置键名是否已存在.
      *
      * @param string $key       配置键名
      * @param int    $groupId   分组ID
      * @param int    $excludeId 排除的ID（用于修改时排除自身）
-     * @return bool
      */
     public function isKeyExistsInGroup(string $key, int $groupId, int $excludeId = 0): bool
     {
@@ -50,14 +37,21 @@ class SysConfigDao extends BaseDao
     }
 
     /**
-     * 获取分组下所有配置项
+     * 获取分组下所有配置项.
      *
-     * @param int $groupId 分组ID
-     * @return Collection
-      * @return Collection<int, SysConfig>
+     * @param  int                        $groupId 分组ID
+     * @return Collection<int, SysConfig>
      */
     public function getByGroupId(int $groupId): Collection
     {
         return SysConfig::where('group_id', $groupId)->orderBy('id')->get();
+    }
+
+    /**
+     * 设置模型类.
+     */
+    protected function setModel(): string
+    {
+        return SysConfig::class;
     }
 }

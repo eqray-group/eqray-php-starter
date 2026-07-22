@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 代码生成 Service
- *
- * @package App\Services
- * @author  yl_chen
- * @date    2026-03-29
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
@@ -23,8 +20,10 @@ use Framework\Basic\BaseService;
  */
 class ToolGenerateService extends BaseService
 {
-    protected ToolGenerateTableDao  $tableDao;
+    protected ToolGenerateTableDao $tableDao;
+
     protected ToolGenerateColumnDao $columnDao;
+
     protected DatabaseMaintainService $dbService;
 
     public function __construct()
@@ -38,9 +37,9 @@ class ToolGenerateService extends BaseService
     // ==================== 基础 CRUD ====================
 
     /**
-     * 分页列表
+     * 分页列表.
      *
-     * @param array<array-key, mixed> $params
+     * @param  array<array-key, mixed> $params
      * @return array<array-key, mixed> {items, total}
      */
     public function getPageList(array $params): array
@@ -52,16 +51,15 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 读取表详情（含 columns 数组）
+     * 读取表详情（含 columns 数组）.
      *
-     * @param int $id
      * @return array<array-key, mixed>
      * @throws \Exception
      */
     public function getDetail(int $id): array
     {
         $table = $this->tableDao->findById($id);
-        if (!$table) {
+        if (! $table) {
             throw new \Exception('记录不存在');
         }
 
@@ -69,7 +67,7 @@ class ToolGenerateService extends BaseService
 
         // 解析 options
         $options = [];
-        if (!empty($tableArr['options'])) {
+        if (! empty($tableArr['options'])) {
             $decoded = is_array($tableArr['options'])
                 ? $tableArr['options']
                 : json_decode($tableArr['options'], true);
@@ -78,25 +76,22 @@ class ToolGenerateService extends BaseService
         $tableArr['options'] = $options;
 
         // 获取字段配置
-        $columns = $this->columnDao->getByTableId($id);
+        $columns             = $this->columnDao->getByTableId($id);
         $tableArr['columns'] = array_map([$this, 'formatColumnRow'], $columns);
 
         return $tableArr;
     }
 
     /**
-     * 更新表配置（含 columns 数组）
+     * 更新表配置（含 columns 数组）.
      *
-     * @param int   $id
-     * @param array<array-key, mixed> $data
-     * @param int   $operatorId
-     * @return void
+     * @param  array<array-key, mixed> $data
      * @throws \Exception
      */
     public function updateConfig(int $id, array $data, int $operatorId): void
     {
         $table = $this->tableDao->findById($id);
-        if (!$table) {
+        if (! $table) {
             throw new \Exception('记录不存在');
         }
 
@@ -105,7 +100,7 @@ class ToolGenerateService extends BaseService
 
         // 处理 options（树表配置 + relations）
         $existingOptions = [];
-        if (!empty($table->options)) {
+        if (! empty($table->options)) {
             $decoded = is_array($table->options)
                 ? $table->options
                 : json_decode($table->options, true);
@@ -139,7 +134,7 @@ class ToolGenerateService extends BaseService
             'generate_menus', 'build_menu', 'component_type', 'form_width',
             'is_full', 'remark', 'source',
         ]));
-        
+
         // 如果 generate_menus 是数组，转换为逗号分隔的字符串
         if (isset($updateData['generate_menus']) && is_array($updateData['generate_menus'])) {
             $updateData['generate_menus'] = implode(',', $updateData['generate_menus']);
@@ -160,11 +155,9 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 批量删除（级联删除字段）
+     * 批量删除（级联删除字段）.
      *
-     * @param array<array-key, mixed> $ids
-     * @param int   $operatorId
-     * @return int
+     * @param  array<array-key, mixed> $ids
      * @throws \Exception
      */
     public function deleteByIds(array $ids, int $operatorId): int
@@ -185,16 +178,15 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 获取字段列表
+     * 获取字段列表.
      *
-     * @param int $tableId
      * @return array<array-key, mixed>
      * @throws \Exception
      */
     public function getColumns(int $tableId): array
     {
         $table = $this->tableDao->findById($tableId);
-        if (!$table) {
+        if (! $table) {
             throw new \Exception('记录不存在');
         }
         $columns = $this->columnDao->getByTableId($tableId);
@@ -202,11 +194,9 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 装载数据表（从 DB 读取结构写入代码生成配置表）
+     * 装载数据表（从 DB 读取结构写入代码生成配置表）.
      *
-     * @param string $source
-     * @param array<array-key, mixed>  $names   [{name, comment, sourceName}]
-     * @param int    $operatorId
+     * @param  array<array-key, mixed> $names [{name, comment, sourceName}]
      * @return array<array-key, mixed> {success, failed}
      */
     public function loadTable(string $source, array $names, int $operatorId): array
@@ -219,7 +209,9 @@ class ToolGenerateService extends BaseService
             $tableName   = $item['name']    ?? '';
             $tableComment= $item['comment'] ?? '';
 
-            if (empty($tableName)) continue;
+            if (empty($tableName)) {
+                continue;
+            }
 
             if ($this->tableDao->isTableLoaded($tableName, $source)) {
                 $failed[] = ['name' => $tableName, 'reason' => '已装载，请勿重复添加'];
@@ -228,7 +220,12 @@ class ToolGenerateService extends BaseService
 
             try {
                 $this->transaction(function () use (
-                    $tableName, $tableComment, $source, $operatorId, $now, &$success
+                    $tableName,
+                    $tableComment,
+                    $source,
+                    $operatorId,
+                    $now,
+                    &$success
                 ) {
                     // 1. 创建主表记录
                     $className   = $this->tableNameToClassName($tableName);
@@ -269,7 +266,7 @@ class ToolGenerateService extends BaseService
                     // 3. 批量插入字段配置
                     $rows = [];
                     foreach ($dbColumns as $sort => $col) {
-                        $isPk = !empty($col['column_key']) && strtolower($col['column_key']) === 'pri';
+                        $isPk = ! empty($col['column_key']) && strtolower($col['column_key']) === 'pri';
                         $row  = ToolGenerateColumnDao::buildDefaultColumn(
                             array_merge($col, ['is_pk' => $isPk]),
                             $tableRecord->id,
@@ -294,17 +291,14 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 同步表结构（从DB重新读取字段，保留现有配置）
+     * 同步表结构（从DB重新读取字段，保留现有配置）.
      *
-     * @param int $id
-     * @param int $operatorId
-     * @return void
      * @throws \Exception
      */
     public function syncTable(int $id, int $operatorId): void
     {
         $table = $this->tableDao->findById($id);
-        if (!$table) {
+        if (! $table) {
             throw new \Exception('记录不存在');
         }
 
@@ -318,9 +312,8 @@ class ToolGenerateService extends BaseService
     // ==================== 代码生成 ====================
 
     /**
-     * 预览代码（返回代码数组）
+     * 预览代码（返回代码数组）.
      *
-     * @param int $id
      * @return array<array-key, mixed>
      * @throws \Exception
      */
@@ -331,15 +324,15 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 生成代码压缩包（返回 zip 二进制内容）
+     * 生成代码压缩包（返回 zip 二进制内容）.
      *
-     * @param array<array-key, mixed> $ids
-     * @return string zip 二进制
+     * @param  array<array-key, mixed> $ids
+     * @return string                  zip 二进制
      * @throws \Exception
      */
     public function generateZip(array $ids): string
     {
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             throw new \Exception('ZipArchive 扩展未安装，无法生成压缩包');
         }
 
@@ -352,7 +345,7 @@ class ToolGenerateService extends BaseService
 
         foreach ($ids as $id) {
             try {
-                $detail   = $this->getDetail((int)$id);
+                $detail   = $this->getDetail((int) $id);
                 $files    = $this->renderAllTemplates($detail);
                 $basePath = $this->buildFilePaths($detail);
 
@@ -375,10 +368,9 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 生成代码到项目文件
+     * 生成代码到项目文件.
      *
-     * @param array<int|string> $ids
-     * @param int   $operatorId
+     * @param  array<int|string>    $ids
      * @return array<string, mixed>
      * @throws \Exception
      */
@@ -390,7 +382,7 @@ class ToolGenerateService extends BaseService
 
         foreach ($ids as $id) {
             try {
-                $detail   = $this->getDetail((int)$id);
+                $detail   = $this->getDetail((int) $id);
                 $files    = $this->renderAllTemplates($detail);
                 $basePaths= $this->buildFilePaths($detail);
 
@@ -398,12 +390,14 @@ class ToolGenerateService extends BaseService
                     $name     = $file['name'];
                     $code     = $file['code'];
                     $relPath  = $basePaths[$name] ?? null;
-                    if (!$relPath) continue;
+                    if (! $relPath) {
+                        continue;
+                    }
 
                     $absPath = $baseDir . DIRECTORY_SEPARATOR . ltrim(str_replace('/', DIRECTORY_SEPARATOR, $relPath), DIRECTORY_SEPARATOR);
                     $dir     = dirname($absPath);
 
-                    if (!is_dir($dir)) {
+                    if (! is_dir($dir)) {
                         mkdir($dir, 0755, true);
                     }
                     file_put_contents($absPath, $code);
@@ -420,45 +414,58 @@ class ToolGenerateService extends BaseService
     // ==================== 模板渲染 ====================
 
     /**
-     * 渲染所有代码文件
+     * 渲染所有代码文件.
      *
-     * @param array<array-key, mixed> $detail
+     * @param  array<array-key, mixed> $detail
      * @return array<array-key, mixed>
      */
     protected function renderAllTemplates(array $detail): array
     {
-        $className    = $detail['class_name']    ?? $this->tableNameToClassName($detail['table_name'] ?? '');
-        $businessName = $detail['business_name'] ?? '';
-        $namespace    = rtrim($detail['namespace'] ?? 'App', '\\');
-        $packageName  = $detail['package_name']  ?? '';
-        $tplCategory  = $detail['tpl_category']  ?? 'single';
-        $tableComment = $detail['table_comment'] ?? $className;
-        $tableName    = $detail['table_name']    ?? '';
-        $columns      = $detail['columns']       ?? [];
-        $options      = $detail['options']        ?? [];
-        $generateModel = (int)($detail['generate_model'] ?? 1);
-        $belongMenuId  = (int)($detail['belong_menu_id'] ?? 0);
+        $className     = $detail['class_name']    ?? $this->tableNameToClassName($detail['table_name'] ?? '');
+        $businessName  = $detail['business_name'] ?? '';
+        $namespace     = rtrim($detail['namespace'] ?? 'App', '\\');
+        $packageName   = $detail['package_name']   ?? '';
+        $tplCategory   = $detail['tpl_category']   ?? 'single';
+        $tableComment  = $detail['table_comment']  ?? $className;
+        $tableName     = $detail['table_name']     ?? '';
+        $columns       = $detail['columns']        ?? [];
+        $options       = $detail['options']        ?? [];
+        $generateModel = (int) ($detail['generate_model'] ?? 1);
+        $belongMenuId  = (int) ($detail['belong_menu_id'] ?? 0);
         $menuName      = $detail['menu_name']     ?? $tableComment;
-        $componentType = (int)($detail['component_type'] ?? 1);
+        $componentType = (int) ($detail['component_type'] ?? 1);
         $formWidth     = $detail['form_width']    ?? '800px';
-        $isFull        = (int)($detail['is_full'] ?? 2) === 1;
+        $isFull        = (int) ($detail['is_full'] ?? 2) === 1;
 
         $generateMenus = ['index', 'save', 'update', 'read', 'destroy'];
-        if (!empty($detail['generate_menus'])) {
+        if (! empty($detail['generate_menus'])) {
             $rawMenus = $detail['generate_menus'];
             if (is_array($rawMenus)) {
                 $generateMenus = $rawMenus;
             } elseif (is_string($rawMenus)) {
                 // 因为 formatTableRow 已经去除了多余转义字符并转换成了逗号分隔的字符串
-                $cleanMenus = str_replace(['"', '[', ']', '\\'], '', $rawMenus);
+                $cleanMenus    = str_replace(['"', '[', ']', '\\'], '', $rawMenus);
                 $generateMenus = explode(',', $cleanMenus);
             }
         }
 
         $ctx = compact(
-            'className', 'businessName', 'namespace', 'packageName',
-            'tplCategory', 'tableComment', 'tableName', 'columns', 'options', 'generateModel',
-            'belongMenuId', 'menuName', 'generateMenus', 'componentType', 'formWidth', 'isFull'
+            'className',
+            'businessName',
+            'namespace',
+            'packageName',
+            'tplCategory',
+            'tableComment',
+            'tableName',
+            'columns',
+            'options',
+            'generateModel',
+            'belongMenuId',
+            'menuName',
+            'generateMenus',
+            'componentType',
+            'formWidth',
+            'isFull'
         );
 
         return [
@@ -514,9 +521,9 @@ class ToolGenerateService extends BaseService
     }
 
     /**
-     * 构建文件路径映射
+     * 构建文件路径映射.
      *
-     * @param array<array-key, mixed> $detail
+     * @param  array<array-key, mixed> $detail
      * @return array<array-key, mixed>
      */
     protected function buildFilePaths(array $detail): array
@@ -540,7 +547,7 @@ class ToolGenerateService extends BaseService
             'vue_index'  => "{$vueDir}/index.vue",
             'vue_form'   => "{$vueDir}/modules/form.vue",
             'vue_search' => "{$vueDir}/modules/table-search.vue",
-            'sql'        => "menu.sql",
+            'sql'        => 'menu.sql',
         ];
     }
 
@@ -562,8 +569,8 @@ class ToolGenerateService extends BaseService
         ] = $ctx;
 
         $serviceClass  = "{$className}Service";
-        $controllerNS  = $namespace . '\\Controllers' . ($packageName ? "\\{$packageName}" : '');
-        $serviceNS     = $namespace . '\\Services\\' . $serviceClass;
+        $controllerNS  = $namespace . '\Controllers' . ($packageName ? "\\{$packageName}" : '');
+        $serviceNS     = $namespace . '\Services\\' . $serviceClass;
         $routeBase     = '/api/' . strtolower($businessName ?: $this->classNameToRouteName($className));
         $date          = date('Y-m-d');
 
@@ -576,11 +583,11 @@ declare(strict_types=1);
 namespace {$controllerNS};
 
 use {$serviceNS};
-use Framework\Basic\BaseController;
-use Framework\Basic\BaseJsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Framework\Attributes\Route;
-use Framework\Attributes\Auth;
+use Framework\\Basic\\BaseController;
+use Framework\\Basic\\BaseJsonResponse;
+use Symfony\\Component\\HttpFoundation\\Request;
+use Framework\\Attributes\\Route;
+use Framework\\Attributes\\Auth;
 
 class {$className}Controller extends BaseController
 {
@@ -614,7 +621,7 @@ class {$className}Controller extends BaseController
         try {
             \$result = \$this->{$className}service->getDetail(\$id);
             return \$this->success(\$result);
-        } catch (\Exception \$e) {
+        } catch (\\Exception \$e) {
             return \$this->fail(\$e->getMessage());
         }
     }
@@ -631,7 +638,7 @@ class {$className}Controller extends BaseController
         try {
             \$result = \$this->{$className}service->create(\$data, \$operatorId);
             return \$this->success(['id' => \$result->id], '创建成功');
-        } catch (\Exception \$e) {
+        } catch (\\Exception \$e) {
             return \$this->fail(\$e->getMessage());
         }
     }
@@ -649,7 +656,7 @@ class {$className}Controller extends BaseController
         try {
             \$this->{$className}service->update(\$id, \$data, \$operatorId);
             return \$this->success([], '更新成功');
-        } catch (\Exception \$e) {
+        } catch (\\Exception \$e) {
             return \$this->fail(\$e->getMessage());
         }
     }
@@ -672,7 +679,7 @@ class {$className}Controller extends BaseController
             \$operatorId = (int)(\$request->attributes->get('user')['id'] ?? 0);
             \$count = \$this->{$className}service->deleteByIds(\$ids, \$operatorId);
             return \$this->success(['count' => \$count], '删除成功');
-        } catch (\Exception \$e) {
+        } catch (\\Exception \$e) {
             return \$this->fail(\$e->getMessage());
         }
     }
@@ -696,17 +703,17 @@ PHP;
         ] = $ctx;
 
         $daoClass  = "{$className}Dao";
-        $serviceNS = $namespace . '\\Services';
-        $daoNS     = $namespace . '\\Dao\\' . $daoClass;
+        $serviceNS = $namespace . '\Services';
+        $daoNS     = $namespace . '\Dao\\' . $daoClass;
         $date      = date('Y-m-d');
 
         // 构建搜索条件
         $whereLines = [];
         foreach ($columns as $col) {
-            if ((int)($col['is_query'] ?? 0) === ToolGenerateColumn::FLAG_YES) {
-                $colName = $col['column_name'] ?? '';
-                $queryType = $col['query_type'] ?? 'eq';
-                
+            if ((int) ($col['is_query'] ?? 0) === ToolGenerateColumn::FLAG_YES) {
+                $colName   = $col['column_name'] ?? '';
+                $queryType = $col['query_type']  ?? 'eq';
+
                 switch ($queryType) {
                     case 'eq':
                         $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', '=', \$params['{$colName}']];";
@@ -741,7 +748,7 @@ PHP;
                 }
             }
         }
-        $whereStr = !empty($whereLines) ? implode("\n", $whereLines) : "        // 没有设置搜索字段";
+        $whereStr = ! empty($whereLines) ? implode("\n", $whereLines) : '        // 没有设置搜索字段';
 
         return <<<PHP
 <?php
@@ -752,7 +759,7 @@ declare(strict_types=1);
 namespace {$serviceNS};
 
 use {$daoNS};
-use Framework\Basic\BaseService;
+use Framework\\Basic\\BaseService;
 
 class {$className}Service extends BaseService
 {
@@ -783,7 +790,7 @@ class {$className}Service extends BaseService
     public function getDetail(int \$id): array
     {
         \$record = \$this->{$className}dao->get(\$id);
-        if (!\$record) throw new \Exception('记录不存在');
+        if (!\$record) throw new \\Exception('记录不存在');
         return (array)\$record;
     }
 
@@ -836,8 +843,8 @@ PHP;
             'tableComment' => $tableComment,
         ] = $ctx;
 
-        $modelNS = $namespace . '\\Models\\' . $className;
-        $daoNS   = $namespace . '\\Dao';
+        $modelNS = $namespace . '\Models\\' . $className;
+        $daoNS   = $namespace . '\Dao';
         $date    = date('Y-m-d');
 
         return <<<PHP
@@ -849,7 +856,7 @@ declare(strict_types=1);
 namespace {$daoNS};
 
 use {$modelNS};
-use Framework\Basic\BaseDao;
+use Framework\\Basic\\BaseDao;
 
 class {$className}Dao extends BaseDao
 {
@@ -879,15 +886,15 @@ PHP;
             'generateModel'=> $generateModel,
         ] = $ctx;
 
-        $modelNS    = $namespace . '\\Models';
+        $modelNS    = $namespace . '\Models';
         $date       = date('Y-m-d');
         $softDelete = $generateModel === ToolGenerateTable::GENERATE_MODEL_SOFT;
-        
+
         $imports = [
-            "Framework\\Basic\\BaseLaORMModel" => true,
+            'Framework\\Basic\\BaseLaORMModel' => true,
         ];
         if ($softDelete) {
-            $imports["Illuminate\\Database\\Eloquent\\SoftDeletes"] = true;
+            $imports['Illuminate\\Database\\Eloquent\\SoftDeletes'] = true;
         }
 
         $traitStr   = $softDelete ? "\n    use SoftDeletes;\n" : '';
@@ -895,14 +902,18 @@ PHP;
 
         // 构建 fillable
         $fillableFields = [];
-        $hasSort = false;
+        $hasSort        = false;
         foreach ($columns as $col) {
             $colName = $col['column_name'] ?? '';
             if ($colName === 'sort') {
                 $hasSort = true;
             }
-            if (in_array($colName, ['id', 'create_time', 'update_time', 'delete_time'])) continue;
-            if ((int)($col['is_pk'] ?? 1) === ToolGenerateColumn::IS_PK_YES) continue;
+            if (in_array($colName, ['id', 'create_time', 'update_time', 'delete_time'])) {
+                continue;
+            }
+            if ((int) ($col['is_pk'] ?? 1) === ToolGenerateColumn::IS_PK_YES) {
+                continue;
+            }
             $fillableFields[] = "        '{$colName}'";
         }
         $fillableStr = implode(",\n", $fillableFields);
@@ -924,21 +935,23 @@ PHP;
 
         // 关联方法
         $relationMethods = [];
-        $relations = is_array($options) ? ($options['relations'] ?? []) : [];
+        $relations       = is_array($options) ? ($options['relations'] ?? []) : [];
         foreach ($relations as $rel) {
-            $type = $rel['type'] ?? '';
-            $model = $rel['model'] ?? '';
+            $type       = $rel['type']       ?? '';
+            $model      = $rel['model']      ?? '';
             $foreignKey = $rel['foreignKey'] ?? '';
-            $localKey = $rel['localKey'] ?? '';
-            $name = $rel['name'] ?? lcfirst($model);
+            $localKey   = $rel['localKey']   ?? '';
+            $name       = $rel['name']       ?? lcfirst($model);
 
-            if (empty($type) || empty($model)) continue;
+            if (empty($type) || empty($model)) {
+                continue;
+            }
 
             $methodName = $name;
-            
+
             // 补充模型关联的命名空间
             $modelClass = $model;
-            if (!str_contains($modelClass, '\\')) {
+            if (! str_contains($modelClass, '\\')) {
                 $modelClass = "{$modelNS}\\{$model}";
             }
 
@@ -959,27 +972,27 @@ PHP;
                     $methodBody = "return \$this->belongsTo(\\{$modelClass}::class, '{$foreignKey}', '{$localKey}');";
                     break;
                 case 'belongsToMany':
-                    $table = $rel['table'] ?? '';
+                    $table      = $rel['table'] ?? '';
                     $returnType = 'BelongsToMany';
                     $methodBody = "return \$this->belongsToMany(\\{$modelClass}::class, '{$table}', '{$foreignKey}', '{$localKey}');";
                     break;
             }
 
             if ($methodBody) {
-                $relationMethods[] = "    public function {$methodName}(): {$returnType}\n    {\n        {$methodBody}\n    }";
+                $relationMethods[]                                                   = "    public function {$methodName}(): {$returnType}\n    {\n        {$methodBody}\n    }";
                 $imports["Illuminate\\Database\\Eloquent\\Relations\\{$returnType}"] = true;
             }
         }
 
         // 树表结构
         if ($tplCategory === 'tree') {
-            $treeId = $options['tree_id'] ?? 'id';
+            $treeId       = $options['tree_id']        ?? 'id';
             $treeParentId = $options['tree_parent_id'] ?? 'parent_id';
-            $treeName = $options['tree_name'] ?? 'name';
-            
-            $imports["Illuminate\\Database\\Eloquent\\Relations\\BelongsTo"] = true;
-            $imports["Illuminate\\Database\\Eloquent\\Relations\\HasMany"] = true;
-            
+            $treeName     = $options['tree_name']      ?? 'name';
+
+            $imports['Illuminate\\Database\\Eloquent\\Relations\\BelongsTo'] = true;
+            $imports['Illuminate\\Database\\Eloquent\\Relations\\HasMany']   = true;
+
             $relationMethods[] = <<<PHP
     /*
     BelongsTo 父级分类
@@ -998,8 +1011,8 @@ PHP;
     }
 PHP;
 
-            $orderField = $hasSort ? 'sort' : $treeId;
-            $whereNullStr = $softDelete ? "\n            ->whereNull('delete_time')" : "";
+            $orderField        = $hasSort ? 'sort' : $treeId;
+            $whereNullStr      = $softDelete ? "\n            ->whereNull('delete_time')" : '';
             $relationMethods[] = <<<PHP
     /**
      * 构建分类树（带 label 字段供前端 el-tree 使用）
@@ -1028,7 +1041,7 @@ PHP;
         }
 
         $relationsStr = '';
-        if (!empty($relationMethods)) {
+        if (! empty($relationMethods)) {
             $relationsStr = "\n" . implode("\n\n", $relationMethods) . "\n";
         }
 
@@ -1091,8 +1104,10 @@ PHP;
         // 构建列表列
         $colLines = [];
         foreach ($columns as $col) {
-            if ((int)($col['is_list'] ?? 1) !== ToolGenerateColumn::FLAG_YES) continue;
-            $colName    = $col['column_name'] ?? '';
+            if ((int) ($col['is_list'] ?? 1) !== ToolGenerateColumn::FLAG_YES) {
+                continue;
+            }
+            $colName    = $col['column_name']    ?? '';
             $colComment = $col['column_comment'] ?? $colName;
             $colLines[] = "      { prop: '{$colName}', label: '{$colComment}' }";
         }
@@ -1100,12 +1115,12 @@ PHP;
 
         // 构建搜索表单初始值
         $searchInit = [];
-        $hasSearch = false;
+        $hasSearch  = false;
         foreach ($columns as $col) {
-            if ((int)($col['is_query'] ?? 0) === ToolGenerateColumn::FLAG_YES) {
+            if ((int) ($col['is_query'] ?? 0) === ToolGenerateColumn::FLAG_YES) {
                 $hasSearch = true;
-                $colName = $col['column_name'] ?? '';
-                $queryType = $col['query_type'] ?? 'eq';
+                $colName   = $col['column_name'] ?? '';
+                $queryType = $col['query_type']  ?? 'eq';
                 if ($queryType === 'between') {
                     $searchInit[] = "  {$colName}: []";
                 } else {
@@ -1115,9 +1130,9 @@ PHP;
         }
         $searchInitStr = implode(",\n", $searchInit);
 
-        $searchComponentHtml = $hasSearch ? "\n    <TableSearch v-model=\"searchForm\" @search=\"handleSearch\" @reset=\"handleReset\" />" : "";
-        $searchImportHtml = $hasSearch ? "\nimport TableSearch from './modules/table-search.vue'" : "";
-        $searchLogicHtml = $hasSearch ? <<<LOGIC
+        $searchComponentHtml = $hasSearch ? "\n    <TableSearch v-model=\"searchForm\" @search=\"handleSearch\" @reset=\"handleReset\" />" : '';
+        $searchImportHtml    = $hasSearch ? "\nimport TableSearch from './modules/table-search.vue'" : '';
+        $searchLogicHtml     = $hasSearch ? <<<LOGIC
 
 // 搜索表单
 const searchForm = ref({
@@ -1133,7 +1148,7 @@ const handleReset = () => {
   page.value = 1
   loadData()
 }
-LOGIC : <<<LOGIC
+LOGIC : <<<'LOGIC'
 // 搜索表单
 const searchForm = ref({})
 LOGIC;
@@ -1240,9 +1255,9 @@ VUE;
 
         $routeBase = '/api/' . strtolower($businessName ?: $this->classNameToRouteName($className));
         $date      = date('Y-m-d');
-        
+
         $containerTag = $componentType == 2 ? 'el-dialog' : 'el-drawer';
-        $sizeAttr = '';
+        $sizeAttr     = '';
         if ($componentType == 2) {
             $sizeAttr = $isFull ? ' fullscreen' : " width=\"{$formWidth}\"";
         } else {
@@ -1254,15 +1269,19 @@ VUE;
         $formInit  = [];
         $imports   = [];
         foreach ($columns as $col) {
-            $colName    = $col['column_name'] ?? '';
+            $colName    = $col['column_name']    ?? '';
             $colComment = $col['column_comment'] ?? $colName;
-            $viewType   = $col['view_type'] ?? 'text';
-            $isEdit     = (int)($col['is_edit'] ?? 1) === ToolGenerateColumn::FLAG_YES;
-            $isInsert   = (int)($col['is_insert'] ?? 1) === ToolGenerateColumn::FLAG_YES;
-            $isRequired = (int)($col['is_required'] ?? 1) === ToolGenerateColumn::REQUIRED_YES;
+            $viewType   = $col['view_type']      ?? 'text';
+            $isEdit     = (int) ($col['is_edit'] ?? 1)     === ToolGenerateColumn::FLAG_YES;
+            $isInsert   = (int) ($col['is_insert'] ?? 1)   === ToolGenerateColumn::FLAG_YES;
+            $isRequired = (int) ($col['is_required'] ?? 1) === ToolGenerateColumn::REQUIRED_YES;
 
-            if (!$isEdit && !$isInsert) continue;
-            if (in_array($colName, ['id', 'created_by', 'updated_by', 'create_time', 'update_time', 'delete_time'])) continue;
+            if (! $isEdit && ! $isInsert) {
+                continue;
+            }
+            if (in_array($colName, ['id', 'created_by', 'updated_by', 'create_time', 'update_time', 'delete_time'])) {
+                continue;
+            }
 
             $formInit[] = "    {$colName}: ''";
 
@@ -1274,20 +1293,29 @@ VUE;
 
             // 收集需要的自定义组件导入
             switch ($viewType) {
-                case 'saSelect':   $imports['SaSelect'] = "import SaSelect from '@/components/sai/sa-select/index.vue'"; break;
-                case 'radio':      $imports['SaRadio'] = "import SaRadio from '@/components/sai/sa-radio/index.vue'"; break;
-                case 'checkbox':   $imports['SaCheckbox'] = "import SaCheckbox from '@/components/sai/sa-checkbox/index.vue'"; break;
-                case 'userSelect': $imports['SaUser'] = "import SaUser from '@/components/sai/sa-user/index.vue'"; break;
-                case 'uploadImage':$imports['SaImageUpload'] = "import SaImageUpload from '@/components/sai/sa-image-upload/index.vue'"; break;
-                case 'imagePicker':$imports['SaImagePicker'] = "import SaImagePicker from '@/components/sai/sa-image-picker/index.vue'"; break;
-                case 'uploadFile': $imports['SaFileUpload'] = "import SaFileUpload from '@/components/sai/sa-file-upload/index.vue'"; break;
-                case 'chunkUpload':$imports['SaChunkUpload'] = "import SaChunkUpload from '@/components/sai/sa-chunk-upload/index.vue'"; break;
-                case 'editor':     $imports['SaEditor'] = "import SaEditor from '@/components/sai/sa-editor/index.vue'"; break;
+                case 'saSelect':   $imports['SaSelect'] = "import SaSelect from '@/components/sai/sa-select/index.vue'";
+                    break;
+                case 'radio':      $imports['SaRadio'] = "import SaRadio from '@/components/sai/sa-radio/index.vue'";
+                    break;
+                case 'checkbox':   $imports['SaCheckbox'] = "import SaCheckbox from '@/components/sai/sa-checkbox/index.vue'";
+                    break;
+                case 'userSelect': $imports['SaUser'] = "import SaUser from '@/components/sai/sa-user/index.vue'";
+                    break;
+                case 'uploadImage':$imports['SaImageUpload'] = "import SaImageUpload from '@/components/sai/sa-image-upload/index.vue'";
+                    break;
+                case 'imagePicker':$imports['SaImagePicker'] = "import SaImagePicker from '@/components/sai/sa-image-picker/index.vue'";
+                    break;
+                case 'uploadFile': $imports['SaFileUpload'] = "import SaFileUpload from '@/components/sai/sa-file-upload/index.vue'";
+                    break;
+                case 'chunkUpload':$imports['SaChunkUpload'] = "import SaChunkUpload from '@/components/sai/sa-chunk-upload/index.vue'";
+                    break;
+                case 'editor':     $imports['SaEditor'] = "import SaEditor from '@/components/sai/sa-editor/index.vue'";
+                    break;
             }
 
             // 解析 options 属性并合并默认值
             $colOptions = [];
-            if (!empty($col['options'])) {
+            if (! empty($col['options'])) {
                 $decoded = is_array($col['options']) ? $col['options'] : json_decode($col['options'], true);
                 if (is_array($decoded)) {
                     $colOptions = $decoded;
@@ -1301,9 +1329,11 @@ VUE;
 
             $extraAttr = '';
             foreach ($mergedOptions as $k => $v) {
-                if (in_array($k, ['relations', 'tree_id', 'tree_name', 'tree_parent_id'])) continue;
+                if (in_array($k, ['relations', 'tree_id', 'tree_name', 'tree_parent_id'])) {
+                    continue;
+                }
                 if (is_bool($v)) {
-                    $extraAttr .= " :{$k}=\"" . ($v ? 'true' : 'false') . "\"";
+                    $extraAttr .= " :{$k}=\"" . ($v ? 'true' : 'false') . '"';
                 } elseif (is_numeric($v)) {
                     $extraAttr .= " :{$k}=\"{$v}\"";
                 } elseif (is_string($v)) {
@@ -1311,7 +1341,7 @@ VUE;
                 }
             }
 
-            $control = match($viewType) {
+            $control = match ($viewType) {
                 'input'      => "<el-input v-model=\"form.{$colName}\" clearable placeholder=\"请输入{$colComment}\"{$extraAttr} />",
                 'password'   => "<el-input v-model=\"form.{$colName}\" type=\"password\" clearable show-password placeholder=\"请输入{$colComment}\"{$extraAttr} />",
                 'textarea'   => "<el-input v-model=\"form.{$colName}\" type=\"textarea\" :rows=\"3\" placeholder=\"请输入{$colComment}\"{$extraAttr} />",
@@ -1425,30 +1455,36 @@ VUE;
         ] = $ctx;
 
         $formItems = [];
-        $imports = [];
+        $imports   = [];
 
         foreach ($columns as $col) {
-            if ((int)($col['is_query'] ?? 0) !== ToolGenerateColumn::FLAG_YES) continue;
-
-            $colName = $col['column_name'] ?? '';
-            $colComment = $col['column_comment'] ?? $colName;
-            $viewType = $col['view_type'] ?? 'text';
-            $dictType = $col['dict_type'] ?? '';
-            $dictAttr = $dictType ? " dict=\"{$dictType}\"" : '';
-            $queryType = $col['query_type'] ?? 'eq';
-
-            switch ($viewType) {
-                case 'saSelect':   $imports['SaSelect'] = "import SaSelect from '@/components/sai/sa-select/index.vue'"; break;
-                case 'radio':      $imports['SaRadio'] = "import SaRadio from '@/components/sai/sa-radio/index.vue'"; break;
-                case 'checkbox':   $imports['SaCheckbox'] = "import SaCheckbox from '@/components/sai/sa-checkbox/index.vue'"; break;
-                case 'userSelect': $imports['SaUser'] = "import SaUser from '@/components/sai/sa-user/index.vue'"; break;
+            if ((int) ($col['is_query'] ?? 0) !== ToolGenerateColumn::FLAG_YES) {
+                continue;
             }
 
-            $control = match($viewType) {
+            $colName    = $col['column_name']    ?? '';
+            $colComment = $col['column_comment'] ?? $colName;
+            $viewType   = $col['view_type']      ?? 'text';
+            $dictType   = $col['dict_type']      ?? '';
+            $dictAttr   = $dictType ? " dict=\"{$dictType}\"" : '';
+            $queryType  = $col['query_type'] ?? 'eq';
+
+            switch ($viewType) {
+                case 'saSelect':   $imports['SaSelect'] = "import SaSelect from '@/components/sai/sa-select/index.vue'";
+                    break;
+                case 'radio':      $imports['SaRadio'] = "import SaRadio from '@/components/sai/sa-radio/index.vue'";
+                    break;
+                case 'checkbox':   $imports['SaCheckbox'] = "import SaCheckbox from '@/components/sai/sa-checkbox/index.vue'";
+                    break;
+                case 'userSelect': $imports['SaUser'] = "import SaUser from '@/components/sai/sa-user/index.vue'";
+                    break;
+            }
+
+            $control = match ($viewType) {
                 'select', 'saSelect' => "<sa-select v-model=\"formData.{$colName}\"{$dictAttr} clearable placeholder=\"请选择{$colComment}\" style=\"width: 100%\" />",
-                'radio' => "<sa-radio v-model=\"formData.{$colName}\"{$dictAttr} />",
-                'checkbox' => "<sa-checkbox v-model=\"formData.{$colName}\"{$dictAttr} />",
-                'date' => $queryType === 'between' 
+                'radio'              => "<sa-radio v-model=\"formData.{$colName}\"{$dictAttr} />",
+                'checkbox'           => "<sa-checkbox v-model=\"formData.{$colName}\"{$dictAttr} />",
+                'date'               => $queryType === 'between'
                     ? "<el-date-picker v-model=\"formData.{$colName}\" type=\"datetimerange\" range-separator=\"至\" start-placeholder=\"开始时间\" end-placeholder=\"结束时间\" format=\"YYYY-MM-DD HH:mm:ss\" value-format=\"YYYY-MM-DD HH:mm:ss\" clearable style=\"width: 100%\" />"
                     : "<el-date-picker v-model=\"formData.{$colName}\" type=\"datetime\" format=\"YYYY-MM-DD HH:mm:ss\" value-format=\"YYYY-MM-DD HH:mm:ss\" clearable placeholder=\"请选择{$colComment}\" style=\"width: 100%\" />",
                 'time' => $queryType === 'between'
@@ -1543,7 +1579,7 @@ VUE;
     // ==================== 工具方法 ====================
 
     /**
-     * 更新字段配置（全量替换）
+     * 更新字段配置（全量替换）.
      *
      * @param array<int, array<string, mixed>> $columns
      */
@@ -1573,7 +1609,7 @@ VUE;
                 'dict_type'      => $col['dict_type']     ?? null,
                 'allow_roles'    => $col['allow_roles']   ?? null,
                 'options'        => isset($col['options']) ? (is_array($col['options']) ? json_encode($col['options'], JSON_UNESCAPED_UNICODE) : $col['options']) : null,
-                'sort'           => (int)($col['sort']    ?? $sort),
+                'sort'           => (int) ($col['sort']    ?? $sort),
                 'remark'         => $col['remark']        ?? null,
                 'created_by'     => $operatorId,
                 'updated_by'     => $operatorId,
@@ -1583,13 +1619,13 @@ VUE;
             $rows[] = $row;
         }
 
-        if (!empty($rows)) {
+        if (! empty($rows)) {
             $this->columnDao->batchInsert($rows);
         }
     }
 
     /**
-     * boolean / int 统一转换为 smallint 标志（1=否, 2=是）
+     * boolean / int 统一转换为 smallint 标志（1=否, 2=是）.
      */
     protected function boolToFlag(mixed $value, bool $reverseDefault = false): int
     {
@@ -1597,9 +1633,11 @@ VUE;
             return $value ? ToolGenerateColumn::FLAG_YES : ToolGenerateColumn::FLAG_NO;
         }
         if (is_int($value) || is_numeric($value)) {
-            $int = (int)$value;
+            $int = (int) $value;
             // 已是 1/2 标志
-            if ($int === 1 || $int === 2) return $int;
+            if ($int === 1 || $int === 2) {
+                return $int;
+            }
             // 0/1 bool-like
             return $int ? ToolGenerateColumn::FLAG_YES : ToolGenerateColumn::FLAG_NO;
         }
@@ -1607,9 +1645,9 @@ VUE;
     }
 
     /**
-     * 格式化表记录（时间字段处理）
+     * 格式化表记录（时间字段处理）.
      *
-     * @param array<string, mixed> $row
+     * @param  array<string, mixed> $row
      * @return array<string, mixed>
      */
     protected function formatTableRow(array $row): array
@@ -1619,9 +1657,9 @@ VUE;
                 $row[$field] = $row[$field]->format('Y-m-d H:i:s');
             }
         }
-        
+
         // 修复 generate_menus 被多次转义 JSON 编码的问题
-        if (!empty($row['generate_menus'])) {
+        if (! empty($row['generate_menus'])) {
             $menusStr = $row['generate_menus'];
             while (is_string($menusStr) && str_starts_with(trim($menusStr), '[') && str_ends_with(trim($menusStr), ']')) {
                 $decoded = json_decode($menusStr, true);
@@ -1639,7 +1677,7 @@ VUE;
                 }
             }
             // 确保最后去掉可能的引号和外层符号，如果被破坏严重
-            $menusStr = str_replace(['"', '[', ']', '\\'], '', $menusStr);
+            $menusStr              = str_replace(['"', '[', ']', '\\'], '', $menusStr);
             $row['generate_menus'] = $menusStr;
         }
 
@@ -1647,9 +1685,9 @@ VUE;
     }
 
     /**
-     * 格式化字段记录（布尔值转换）
+     * 格式化字段记录（布尔值转换）.
      *
-     * @param array<string, mixed> $row
+     * @param  array<string, mixed> $row
      * @return array<string, mixed>
      */
     protected function formatColumnRow(array $row): array
@@ -1661,7 +1699,7 @@ VUE;
         }
         // options 解码
         if (isset($row['options']) && is_string($row['options'])) {
-            $decoded = json_decode($row['options'], true);
+            $decoded        = json_decode($row['options'], true);
             $row['options'] = is_array($decoded) ? $decoded : null;
         }
         return $row;
@@ -1669,7 +1707,7 @@ VUE;
 
     /**
      * 表名转类名（去前缀，驼峰）
-     * sa_system_user -> SysUser, sa_tool_generate_tables -> ToolGenerateTables
+     * sa_system_user -> SysUser, sa_tool_generate_tables -> ToolGenerateTables.
      */
     protected function tableNameToClassName(string $tableName): string
     {
@@ -1681,7 +1719,7 @@ VUE;
     }
 
     /**
-     * 表名转业务名（去前缀，小驼峰）
+     * 表名转业务名（去前缀，小驼峰）.
      */
     protected function tableNameToBusinessName(string $tableName): string
     {
@@ -1693,7 +1731,7 @@ VUE;
 
     /**
      * 类名转路由段（驼峰转连字符）
-     * UserCenter -> user-center
+     * UserCenter -> user-center.
      */
     protected function classNameToRouteName(string $className): string
     {
@@ -1703,7 +1741,7 @@ VUE;
     // ==================== 菜单 SQL 语句模板 ====================
 
     /**
-     * 渲染菜单 SQL 语句
+     * 渲染菜单 SQL 语句.
      *
      * @param array<string, mixed> $ctx
      */
@@ -1720,26 +1758,26 @@ VUE;
 
         $routeName = strtolower($businessName ?: $this->classNameToRouteName($className));
         $now       = date('Y-m-d H:i:s');
-        
+
         $sql  = "-- ----------------------------\n";
         $sql .= "-- 菜单 SQL 语句 for {$menuName}\n";
         $sql .= "-- ----------------------------\n\n";
 
         // 主菜单（type = 2 菜单）
         $parentPath = '/' . $routeName;
-        $component  = "{$routeName}/index"; 
+        $component  = "{$routeName}/index";
         $slug       = "{$routeName}:index";
-        
+
         $sql .= "INSERT INTO `sa_system_menu` (`parent_id`, `name`, `type`, `path`, `component`, `slug`, `icon`, `status`, `create_time`, `update_time`) VALUES\n";
         $sql .= "({$belongMenuId}, '{$menuName}', 2, '{$parentPath}', '{$component}', '{$slug}', 'ri:table-line', 1, '{$now}', '{$now}');\n\n";
-        
+
         // 记录刚才插入的父级菜单ID
         $sql .= "-- 将父级菜单ID存储到变量中以便子菜单使用\n";
         $sql .= "SET @parentId = LAST_INSERT_ID();\n\n";
 
         // 子菜单（按钮 type = 3 按钮）
         $buttons = [];
-        
+
         // 构建按钮权限
         $btnMap = [
             'index'    => '列表',
@@ -1753,14 +1791,16 @@ VUE;
 
         foreach ($generateMenus as $menuKey) {
             $menuKey = trim($menuKey);
-            if (empty($menuKey) || $menuKey === 'index') continue;
+            if (empty($menuKey) || $menuKey === 'index') {
+                continue;
+            }
 
-            $btnName = $btnMap[$menuKey] ?? ucfirst($menuKey);
-            $btnSlug = "{$routeName}:{$menuKey}";
+            $btnName   = $btnMap[$menuKey] ?? ucfirst($menuKey);
+            $btnSlug   = "{$routeName}:{$menuKey}";
             $buttons[] = "(@parentId, '{$btnName}', 3, '', '', '{$btnSlug}', '', 1, '{$now}', '{$now}')";
         }
-        
-        if (!empty($buttons)) {
+
+        if (! empty($buttons)) {
             $sql .= "INSERT INTO `sa_system_menu` (`parent_id`, `name`, `type`, `path`, `component`, `slug`, `icon`, `status`, `create_time`, `update_time`) VALUES\n";
             $sql .= implode(",\n", $buttons) . ";\n";
         }

@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 代码生成业务字段 DAO
- *
- * @package App\Dao
- * @author  Genie
- * @date    2026-03-29
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;
@@ -17,15 +14,9 @@ use Framework\Basic\BaseDao;
 
 class ToolGenerateColumnDao extends BaseDao
 {
-    protected function setModel(): string
-    {
-        return ToolGenerateColumn::class;
-    }
-
     /**
-     * 获取某表的所有字段配置
+     * 获取某表的所有字段配置.
      *
-     * @param int $tableId
      * @return array<array-key, mixed>
      */
     public function getByTableId(int $tableId): array
@@ -39,22 +30,20 @@ class ToolGenerateColumnDao extends BaseDao
     }
 
     /**
-     * 批量插入字段配置
+     * 批量插入字段配置.
      *
      * @param array<array-key, mixed> $rows
-     * @return bool
      */
     public function batchInsert(array $rows): bool
     {
-        if (empty($rows)) return true;
+        if (empty($rows)) {
+            return true;
+        }
         return ToolGenerateColumn::query()->insert($rows);
     }
 
     /**
-     * 删除某表的所有字段配置
-     *
-     * @param int $tableId
-     * @return int
+     * 删除某表的所有字段配置.
      */
     public function deleteByTableId(int $tableId): int
     {
@@ -64,10 +53,9 @@ class ToolGenerateColumnDao extends BaseDao
     }
 
     /**
-     * 批量删除（按 table_id 数组）
+     * 批量删除（按 table_id 数组）.
      *
      * @param array<array-key, mixed> $tableIds
-     * @return int
      */
     public function deleteByTableIds(array $tableIds): int
     {
@@ -77,12 +65,11 @@ class ToolGenerateColumnDao extends BaseDao
     }
 
     /**
-     * 同步字段：新增不存在的字段，删除已移除的字段，保留现有配置
+     * 同步字段：新增不存在的字段，删除已移除的字段，保留现有配置.
      *
-     * @param int   $tableId     业务表ID
-     * @param array<array-key, mixed> $dbColumns   从数据库读取的最新列 [{column_name, column_type, column_comment, ...}]
-     * @param int   $operatorId  操作人ID
-     * @return void
+     * @param int                     $tableId    业务表ID
+     * @param array<array-key, mixed> $dbColumns  从数据库读取的最新列 [{column_name, column_type, column_comment, ...}]
+     * @param int                     $operatorId 操作人ID
      */
     public function syncColumns(int $tableId, array $dbColumns, int $operatorId = 0): void
     {
@@ -97,7 +84,7 @@ class ToolGenerateColumnDao extends BaseDao
 
         // 删除数据库中已不存在的字段
         $toDelete = array_diff(array_keys($existing), $dbColNames);
-        if (!empty($toDelete)) {
+        if (! empty($toDelete)) {
             ToolGenerateColumn::query()
                 ->where('table_id', $tableId)
                 ->whereIn('column_name', array_values($toDelete))
@@ -133,11 +120,9 @@ class ToolGenerateColumnDao extends BaseDao
     }
 
     /**
-     * 构建默认字段配置（初始化时使用）
+     * 构建默认字段配置（初始化时使用）.
      *
-     * @param array<array-key, mixed> $col       数据库列信息
-     * @param int   $tableId
-     * @param int   $sort
+     * @param  array<array-key, mixed> $col 数据库列信息
      * @return array<array-key, mixed>
      */
     public static function buildDefaultColumn(array $col, int $tableId, int $sort = 0): array
@@ -180,5 +165,10 @@ class ToolGenerateColumnDao extends BaseDao
             'sort'           => $sort,
             'remark'         => null,
         ];
+    }
+
+    protected function setModel(): string
+    {
+        return ToolGenerateColumn::class;
     }
 }

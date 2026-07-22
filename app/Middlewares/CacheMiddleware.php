@@ -3,47 +3,34 @@
 declare(strict_types=1);
 
 /**
- * This file is part of eqrayphp Framework.
- *
- * @link     https://github.com/xuey490/project
- * @license  https://github.com/xuey490/project/blob/main/LICENSE
- *
- * @Filename: CacheMiddleware.php
- * @Date: 2025-12-17
- * @Developer: xuey863toy
- * @Email: xuey863toy@gmail.com
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Middlewares;
 
+use Framework\Attributes\Cache;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Framework\Attributes\Cache;
 
 class CacheMiddleware
 {
     /**
-     * 处理缓存逻辑
-     *
-     * @param Request $request
-     * @param callable $next
-     * @return Response
+     * 处理缓存逻辑.
      */
     public function handle(Request $request, callable $next): Response
     {
         // 1. 获取 Cache 注解配置
         // 假设 Router 已将注解注入 request attributes
-        /** @var Cache|null $cacheAttr */
-        //$cacheAttr = $request->attributes->get(Cache::class);
-		
+        /** @var null|Cache $cacheAttr */
+        // $cacheAttr = $request->attributes->get(Cache::class);
+
         $cacheAttr = $request->attributes->get('_attributes', []); // $request->attributes->get(Role::class);
-		
-		$attr = $cacheAttr[Cache::class] ?? null;
-		
-		
+
+        $attr = $cacheAttr[Cache::class] ?? null;
 
         // 如果没有配置注解（理论上不会进来，但为了健壮性）或者是非 GET 请求，通常不缓存
-        if (!$attr || !$request->isMethod('GET')) {
+        if (! $attr || ! $request->isMethod('GET')) {
             return $next($request);
         }
 
@@ -53,8 +40,6 @@ class CacheMiddleware
 
         // 3. [尝试读取缓存]
         $cachedData = app('cache')->get($cacheKey);
-
-
 
         if ($cachedData) {
             // ✅ 命中缓存：直接构造 Response 返回，不再执行控制器
@@ -80,7 +65,7 @@ class CacheMiddleware
             ];
 
             app('cache')->set($cacheKey, $dataToCache, $attr->ttl);
-            
+
             // 可选：在响应头里加个标记，调试用
             $response->headers->set('X-Cache-Status', 'MISS');
         }

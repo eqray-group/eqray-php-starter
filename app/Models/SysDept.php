@@ -3,55 +3,73 @@
 declare(strict_types=1);
 
 /**
- * 系统部门模型
- *
- * @package App\Models
- * @author  Genie
- * @date    2026-03-12
- 
-*/
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
 
 namespace App\Models;
 
 use Framework\Basic\BaseLaORMModel;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * SysDept 系统部门模型
+ * SysDept 系统部门模型.
  *
  * 部门表模型，支持无限级层级结构，支持多租户隔离
  *
- * @property int         $id          部门ID
- * @property int         $parent_id   父部门ID，0为根节点
- * @property string      $name        部门名称
- * @property string|null $code        部门编码
- * @property int|null    $leader_id   部门负责人ID
- * @property string      $level       祖级列表，格式: 0,1,5,
- * @property int         $sort        排序
- * @property int         $status      状态: 1启用 0禁用
- * @property string|null $remark      备注
- * @property int|null    $created_by  创建人ID
- * @property int|null    $updated_by  更新人ID
- * @property \DateTime   $created_at  创建时间
- * @property \DateTime   $updated_at  更新时间
- * @property \DateTime|null $deleted_at 删除时间
+ * @property int            $id         部门ID
+ * @property int            $parent_id  父部门ID，0为根节点
+ * @property string         $name       部门名称
+ * @property null|string    $code       部门编码
+ * @property null|int       $leader_id  部门负责人ID
+ * @property string         $level      祖级列表，格式: 0,1,5,
+ * @property int            $sort       排序
+ * @property int            $status     状态: 1启用 0禁用
+ * @property null|string    $remark     备注
+ * @property null|int       $created_by 创建人ID
+ * @property null|int       $updated_by 更新人ID
+ * @property \DateTime      $created_at 创建时间
+ * @property \DateTime      $updated_at 更新时间
+ * @property null|\DateTime $deleted_at 删除时间
  *
- * @property-read SysDept     $parent    父部门
- * @property-read SysDept[]   $children  子部门
- * @property-read SysUser[]   $users     部门下的用户
- * @property-read SysUser     $leader    部门负责人
- * @property-read SysRole[]   $roles     关联的角色（通过 role_dept）
- 
+ * @property SysDept   $parent   父部门
+ * @property SysDept[] $children 子部门
+ * @property SysUser[] $users    部门下的用户
+ * @property SysUser   $leader   部门负责人
+ * @property SysRole[] $roles    关联的角色（通过 role_dept）
+ *
  * @property mixed $create_time
  * @property mixed $update_time
  * @property mixed $delete_time
-*/
+ */
 class SysDept extends BaseLaORMModel
 {
     use SoftDeletes;
+
+    /**
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    // ==================== 状态常量 ====================
+
+    /** @var int 禁用状态 */
+    public const STATUS_DISABLED = 0;
+
+    /** @var int 启用状态 */
+    public const STATUS_ENABLED = 1;
+
+    /**
+     * @return mixed
+     */
+    public $incrementing = true;
 
     /**
      * @return mixed
@@ -59,23 +77,11 @@ class SysDept extends BaseLaORMModel
     protected $table = 'sa_system_dept';
 
     /**
-     * @return mixed
-     */
-    public $incrementing = true;
-    
-    /**
-     * 主键
-     * @var string
+     * 主键.
+     * @var    string
      * @return mixed
      */
     protected $primaryKey = 'id';
-
-    /**
-     * 自定义时间戳字段名
-     */
-    const CREATED_AT = 'create_time';
-    const UPDATED_AT = 'update_time';
-    const DELETED_AT = 'delete_time';
 
     /**
      * @return mixed
@@ -95,27 +101,19 @@ class SysDept extends BaseLaORMModel
 
     /** @var array<string, string> */
     protected $casts = [
-        'id' => 'integer',
-        'parent_id' => 'integer',
-        'leader_id' => 'integer',
-        'sort' => 'integer',
-        'status' => 'integer',
+        'id'         => 'integer',
+        'parent_id'  => 'integer',
+        'leader_id'  => 'integer',
+        'sort'       => 'integer',
+        'status'     => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
 
-    // ==================== 状态常量 ====================
-
-    /** @var int 禁用状态 */
-    public const STATUS_DISABLED = 0;
-
-    /** @var int 启用状态 */
-    public const STATUS_ENABLED = 1;
-
     // ==================== 关联关系 ====================
 
     /**
-     * 父部门
+     * 父部门.
      *
      * @return BelongsTo<SysDept, $this>
      */
@@ -125,7 +123,7 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 子部门
+     * 子部门.
      *
      * @return HasMany<SysDept, $this>
      */
@@ -135,7 +133,7 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 部门下的用户
+     * 部门下的用户.
      *
      * @return HasMany<SysUser, $this>
      */
@@ -145,7 +143,7 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 部门负责人
+     * 部门负责人.
      *
      * @return BelongsTo<SysUser, $this>
      */
@@ -155,7 +153,7 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 关联的角色（数据权限自定义部门）
+     * 关联的角色（数据权限自定义部门）.
      *
      * @return BelongsToMany<SysRole, $this>
      */
@@ -172,7 +170,7 @@ class SysDept extends BaseLaORMModel
     // ==================== 业务方法 ====================
 
     /**
-     * 检查部门是否被禁用
+     * 检查部门是否被禁用.
      */
     public function isDisabled(): bool
     {
@@ -180,7 +178,7 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 检查部门是否启用
+     * 检查部门是否启用.
      */
     public function isEnabled(): bool
     {
@@ -188,7 +186,7 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * @param bool $enabledOnly 是否只返回启用的部门
+     * @param  bool                    $enabledOnly 是否只返回启用的部门
      * @return array<array-key, mixed>
      */
     public static function getDeptTree(int $parentId = 0, ?int $tenantId = null, bool $enabledOnly = true): array
@@ -204,9 +202,9 @@ class SysDept extends BaseLaORMModel
         $depts = $query->get()->toArray();
 
         foreach ($depts as &$dept) {
-            $leader = $dept['leader'] ?? null;
+            $leader              = $dept['leader']     ?? null;
             $dept['leader_name'] = $leader['realname'] ?? $leader['username'] ?? null;
-            $dept['children'] = self::getDeptTree($dept['id'], null, $enabledOnly);
+            $dept['children']    = self::getDeptTree($dept['id'], null, $enabledOnly);
         }
 
         return $depts;
@@ -226,13 +224,13 @@ class SysDept extends BaseLaORMModel
         $tree = [];
         foreach ($depts as $dept) {
             $node = [
-                'id' => $dept->id,
-                'value' => $dept->id,
-                'label' => $dept->name,
-                'name' => $dept->name,
-                'code' => $dept->code,
+                'id'        => $dept->id,
+                'value'     => $dept->id,
+                'label'     => $dept->name,
+                'name'      => $dept->name,
+                'code'      => $dept->code,
                 'parent_id' => $dept->parent_id,
-                'children' => self::getSelectTree($dept->id),
+                'children'  => self::getSelectTree($dept->id),
             ];
             $tree[] = $node;
         }
@@ -241,14 +239,14 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 获取所有子部门ID (包含自己)
+     * 获取所有子部门ID (包含自己).
      *
-     * @param int|string $deptId 部门ID
+     * @param  int|string              $deptId 部门ID
      * @return array<array-key, mixed>
      */
     public static function getAllChildIds(int|string $deptId): array
     {
-        $ids = [$deptId];
+        $ids      = [$deptId];
         $children = self::where('parent_id', $deptId)->pluck('id')->toArray();
 
         foreach ($children as $childId) {
@@ -259,18 +257,18 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 获取部门层级路径
+     * 获取部门层级路径.
      *
      * @return array<array-key, mixed>
      */
     public function getPath(): array
     {
-        $path = [];
+        $path    = [];
         $current = $this;
 
         while ($current) {
             array_unshift($path, [
-                'id' => $current->id,
+                'id'   => $current->id,
                 'name' => $current->name,
             ]);
             $current = $current->parent;
@@ -284,7 +282,6 @@ class SysDept extends BaseLaORMModel
      *
      * @param string $deptCode  部门编码
      * @param int    $excludeId 排除的部门ID
-     * @return bool
      */
     public static function isCodeUnique(string $deptCode, int $excludeId = 0): bool
     {
@@ -294,11 +291,11 @@ class SysDept extends BaseLaORMModel
             $query->where('id', '!=', $excludeId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 
     /**
-     * 检查是否有子部门
+     * 检查是否有子部门.
      */
     public function hasChildren(): bool
     {
@@ -306,7 +303,7 @@ class SysDept extends BaseLaORMModel
     }
 
     /**
-     * 检查部门下是否有用户
+     * 检查部门下是否有用户.
      */
     public function hasUsers(): bool
     {

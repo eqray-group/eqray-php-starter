@@ -3,9 +3,8 @@
 declare(strict_types=1);
 
 /**
- * 定时任务DAO
- *
- * @package App\Dao
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Dao;

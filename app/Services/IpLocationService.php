@@ -3,11 +3,8 @@
 declare(strict_types=1);
 
 /**
- * IP地理位置服务
- *
- * @package App\Services
- * @author  Genie
- * @date    2026-03-12
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Services;
@@ -24,23 +21,20 @@ class IpLocationService extends BaseService
 {
     /**
      * 缓存前缀
-     * @var string
      * @return mixed
      */
     protected string $cachePrefix = 'ip_location:';
 
     /**
-     * 缓存时间(秒)
-     * @var int
+     * 缓存时间(秒).
      * @return mixed
      */
     protected int $cacheTtl = 86400;
 
     /**
-     * 根据IP获取地理位置
+     * 根据IP获取地理位置.
      *
      * @param string $ip IP地址
-     * @return string
      */
     public function getLocation(string $ip): string
     {
@@ -61,10 +55,26 @@ class IpLocationService extends BaseService
     }
 
     /**
-     * 检查是否本地IP
+     * 批量获取IP地理位置.
+     *
+     * @param  array<array-key, mixed> $ips IP数组
+     * @return array<array-key, mixed>
+     */
+    public function getLocations(array $ips): array
+    {
+        $locations = [];
+
+        foreach ($ips as $ip) {
+            $locations[$ip] = $this->getLocation($ip);
+        }
+
+        return $locations;
+    }
+
+    /**
+     * 检查是否本地IP.
      *
      * @param string $ip IP地址
-     * @return bool
      */
     protected function isLocalIp(string $ip): bool
     {
@@ -83,10 +93,9 @@ class IpLocationService extends BaseService
     }
 
     /**
-     * 调用IP定位API
+     * 调用IP定位API.
      *
      * @param string $ip IP地址
-     * @return string
      */
     protected function fetchLocation(string $ip): string
     {
@@ -103,7 +112,7 @@ class IpLocationService extends BaseService
             }
         } catch (\Throwable $e) {
             app('log')->warning('IpLocationService fetchLocation exception', [
-                'ip' => $ip,
+                'ip'    => $ip,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -115,7 +124,7 @@ class IpLocationService extends BaseService
     {
         try {
             $cached = app('cache')->get($this->cachePrefix . $ip);
-            if (!is_string($cached) || trim($cached) === '') {
+            if (! is_string($cached) || trim($cached) === '') {
                 return null;
             }
 
@@ -146,13 +155,13 @@ class IpLocationService extends BaseService
 
     protected function requestIpApi(string $ip): ?string
     {
-        $url = "http://ip-api.com/json/{$ip}?lang=zh-CN";
+        $url                                            = "http://ip-api.com/json/{$ip}?lang=zh-CN";
         [$response, $httpCode, $curlErrNo, $curlErrMsg] = $this->httpGet($url);
 
         if ($curlErrNo !== 0 || $httpCode !== 200 || $response === '') {
             app('log')->warning('IpLocationService ip-api request failed', [
-                'ip' => $ip,
-                'http_code' => $httpCode,
+                'ip'         => $ip,
+                'http_code'  => $httpCode,
                 'curl_errno' => $curlErrNo,
                 'curl_error' => $curlErrMsg,
             ]);
@@ -160,30 +169,30 @@ class IpLocationService extends BaseService
         }
 
         $data = json_decode($response, true);
-        if (!is_array($data) || ($data['status'] ?? '') !== 'success') {
+        if (! is_array($data) || ($data['status'] ?? '') !== 'success') {
             app('log')->warning('IpLocationService ip-api response invalid', [
-                'ip' => $ip,
+                'ip'       => $ip,
                 'response' => $response,
             ]);
             return null;
         }
 
         return $this->formatLocation(
-            (string)($data['country'] ?? ''),
-            (string)($data['regionName'] ?? ''),
-            (string)($data['city'] ?? '')
+            (string) ($data['country'] ?? ''),
+            (string) ($data['regionName'] ?? ''),
+            (string) ($data['city'] ?? '')
         );
     }
 
     protected function requestIpWhois(string $ip): ?string
     {
-        $url = "https://ipwho.is/{$ip}?lang=zh";
+        $url                                            = "https://ipwho.is/{$ip}?lang=zh";
         [$response, $httpCode, $curlErrNo, $curlErrMsg] = $this->httpGet($url);
 
         if ($curlErrNo !== 0 || $httpCode !== 200 || $response === '') {
             app('log')->warning('IpLocationService ipwho.is request failed', [
-                'ip' => $ip,
-                'http_code' => $httpCode,
+                'ip'         => $ip,
+                'http_code'  => $httpCode,
                 'curl_errno' => $curlErrNo,
                 'curl_error' => $curlErrMsg,
             ]);
@@ -191,18 +200,18 @@ class IpLocationService extends BaseService
         }
 
         $data = json_decode($response, true);
-        if (!is_array($data) || ($data['success'] ?? false) !== true) {
+        if (! is_array($data) || ($data['success'] ?? false) !== true) {
             app('log')->warning('IpLocationService ipwho.is response invalid', [
-                'ip' => $ip,
+                'ip'       => $ip,
                 'response' => $response,
             ]);
             return null;
         }
 
         return $this->formatLocation(
-            (string)($data['country'] ?? ''),
-            (string)($data['region'] ?? ''),
-            (string)($data['city'] ?? '')
+            (string) ($data['country'] ?? ''),
+            (string) ($data['region'] ?? ''),
+            (string) ($data['city'] ?? '')
         );
     }
 
@@ -219,33 +228,16 @@ class IpLocationService extends BaseService
         curl_setopt($ch, CURLOPT_USERAGENT, 'NovaPHP-IpLocationService/1.0');
 
         $response = curl_exec($ch);
-        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $errno = curl_errno($ch);
-        $error = curl_error($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $errno    = curl_errno($ch);
+        $error    = curl_error($ch);
 
         return [is_string($response) ? $response : '', $httpCode, $errno, $error];
     }
 
     protected function formatLocation(string $country, string $region, string $city): string
     {
-        $location = trim(implode(' ', array_filter([$country, $region, $city], fn($v) => trim($v) !== '')));
+        $location = trim(implode(' ', array_filter([$country, $region, $city], fn ($v) => trim($v) !== '')));
         return $location !== '' ? $location : '未知';
-    }
-
-    /**
-     * 批量获取IP地理位置
-     *
-     * @param array<array-key, mixed> $ips IP数组
-     * @return array<array-key, mixed>
-     */
-    public function getLocations(array $ips): array
-    {
-        $locations = [];
-
-        foreach ($ips as $ip) {
-                $locations[$ip] = $this->getLocation($ip);
-            }
-
-        return $locations;
     }
 }

@@ -3,25 +3,24 @@
 declare(strict_types=1);
 
 /**
- * 文章管理控制器
- *
- * @package App\Controllers
- * @author  Genie
- * @date    2026-03-19
+ * @Developer: ck
+ * @Email: ck@eqray.com
  */
 
 namespace App\Controllers;
 
+use App\Models\SysArticle;
+use App\Models\SysUser;
 use App\Services\SysArticleService;
-use Framework\Basic\BaseController;
-use Framework\Basic\BaseJsonResponse;
-use Framework\Attributes\Route;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Permission;
+use Framework\Attributes\Route;
+use Framework\Basic\BaseController;
+use Framework\Basic\BaseJsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * ArticleController 文章管理控制器
+ * ArticleController 文章管理控制器.
  *
  * 处理文章的增删改查等操作
  */
@@ -29,24 +28,14 @@ class ArticleController extends BaseController
 {
     /**
      * 文章服务
-     * @var SysArticleService
      * @return mixed
      */
     protected SysArticleService $articleService;
 
     /**
-     * 初始化
-     */
-    protected function initialize(): void
-    {
-        $this->articleService = new SysArticleService();
-    }
-
-    /**
-     * 获取文章列表
+     * 获取文章列表.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/article/list', methods: ['GET'], name: 'article.list')]
     #[Auth(required: true)]
@@ -55,13 +44,13 @@ class ArticleController extends BaseController
     {
         $params = [
             'category_id' => $this->input('category_id', '', true, $request),
-            'title' => $this->input('title', '', true, $request),
-            'author' => $this->input('author', '', true, $request),
-            'status' => $this->input('status', '', true, $request),
-            'is_hot' => $this->input('is_hot', '', true, $request),
+            'title'       => $this->input('title', '', true, $request),
+            'author'      => $this->input('author', '', true, $request),
+            'status'      => $this->input('status', '', true, $request),
+            'is_hot'      => $this->input('is_hot', '', true, $request),
         ];
 
-        $page = (int) $this->input('page', 1, true, $request);
+        $page     = (int) $this->input('page', 1, true, $request);
         $pageSize = (int) $this->input('page_size', 10, true, $request);
 
         $result = $this->articleService->getList($params, $page, $pageSize);
@@ -70,10 +59,9 @@ class ArticleController extends BaseController
     }
 
     /**
-     * 获取文章详情
+     * 获取文章详情.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/article/detail/{id}', methods: ['GET'], name: 'article.detail')]
     #[Auth(required: true)]
@@ -81,25 +69,24 @@ class ArticleController extends BaseController
     public function detail(Request $request): BaseJsonResponse
     {
         $id = (int) $request->attributes->get('id');
-        
+
         $article = $this->articleService->getDetail($id);
 
-        if (!$article) {
+        if (! $article) {
             return $this->fail('文章不存在', 404);
         }
 
         // 增加浏览次数
-        $articleModel = \App\Models\SysArticle::find($id);
+        $articleModel = SysArticle::find($id);
         $articleModel?->incrementViewCount();
 
         return $this->success($article);
     }
 
     /**
-     * 创建文章
+     * 创建文章.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/article/create', methods: ['POST'], name: 'article.create')]
     #[Auth(required: true)]
@@ -120,17 +107,16 @@ class ArticleController extends BaseController
     }
 
     /**
-     * 更新文章
+     * 更新文章.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/article/update/{id}', methods: ['PUT'], name: 'article.update')]
     #[Auth(required: true)]
     #[Permission('cms:article:update')]
     public function update(Request $request): BaseJsonResponse
     {
-        $id = (int) $request->attributes->get('id');
+        $id     = (int) $request->attributes->get('id');
         $userId = $this->getOperatorId($request);
 
         $data = $this->getRequestData($request);
@@ -144,10 +130,9 @@ class ArticleController extends BaseController
     }
 
     /**
-     * 删除文章
+     * 删除文章.
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/article/delete/{id}', methods: ['DELETE'], name: 'article.delete')]
     #[Auth(required: true)]
@@ -168,15 +153,14 @@ class ArticleController extends BaseController
      * 更新文章状态
      *
      * @param Request $request 请求对象
-     * @return BaseJsonResponse
      */
     #[Route(path: '/api/article/status/{id}', methods: ['PUT'], name: 'article.status')]
     #[Auth(required: true)]
     #[Permission('cms:article:update')]
     public function updateStatus(Request $request): BaseJsonResponse
     {
-        $id = (int) $request->attributes->get('id');
-        $data = $this->getRequestData($request);
+        $id     = (int) $request->attributes->get('id');
+        $data   = $this->getRequestData($request);
         $status = array_key_exists('status', $data) ? (int) $data['status'] : 1;
 
         $result = $this->articleService->updateStatus($id, $status);
@@ -187,16 +171,24 @@ class ArticleController extends BaseController
     }
 
     /**
-     * 获取请求数据（支持 JSON 和 form-data）
+     * 初始化.
+     */
+    protected function initialize(): void
+    {
+        $this->articleService = new SysArticleService();
+    }
+
+    /**
+     * 获取请求数据（支持 JSON 和 form-data）.
      *
-     * @param Request $request 请求对象
+     * @param  Request                 $request 请求对象
      * @return array<array-key, mixed>
      */
     protected function getRequestData(Request $request): array
     {
         $jsonBody = [];
-        $content = $request->getContent();
-        if (!empty($content)) {
+        $content  = $request->getContent();
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
                 $jsonBody = $decoded;
@@ -206,10 +198,9 @@ class ArticleController extends BaseController
     }
 
     /**
-     * 获取操作人ID
+     * 获取操作人ID.
      *
      * @param Request $request 请求对象
-     * @return int
      */
     protected function getOperatorId(Request $request): int
     {
@@ -218,18 +209,17 @@ class ArticleController extends BaseController
     }
 
     /**
-     * 获取当前用户部门ID
+     * 获取当前用户部门ID.
      *
      * @param Request $request 请求对象
-     * @return int
      */
     protected function getCurrentUserDeptId(Request $request): int
     {
         $userId = $this->getOperatorId($request);
-        if (!$userId) {
+        if (! $userId) {
             return 0;
         }
-        $user = \App\Models\SysUser::find($userId);
+        $user = SysUser::find($userId);
         return $user->dept_id ?? 0;
     }
 }
