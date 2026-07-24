@@ -328,12 +328,6 @@ final class Framework
                 return $response;
             }
 
-            if ($this->isEasterEggRoute($route)) {
-                $response = $this->handleEasterEgg($route);
-                $this->logRequestAndResponse($this->request, $response, $start);
-                return $response;
-            }
-
             $this->request->attributes->set('_route', $route);
 
             $response = $this->middlewareDispatcher->dispatch(
@@ -751,36 +745,6 @@ final class Framework
         }
 
         return new Response($content, $statusCode);
-    }
-
-    /**
-     * 彩蛋路由判断.
-     *
-     * @param array<string,mixed> $route
-     */
-    private function isEasterEggRoute(array $route): bool
-    {
-        if (! isset($route['controller'], $route['method'])) {
-            return false;
-        }
-
-        return
-            ($route['controller'] === '__FrameworkVersionController__' && $route['method'] === '__showVersion__')
-            || ($route['controller'] === '__FrameworkTeamController__' && $route['method'] === '__showTeam__');
-    }
-
-    /**
-     * 处理彩蛋响应.
-     *
-     * @param array<string,mixed> $route
-     */
-    private function handleEasterEgg(array $route): Response
-    {
-        if (isset($route['controller']) && $route['controller'] === '__FrameworkVersionController__') {
-            return EasterEgg::getResponse();
-        }
-
-        return EasterEgg::getTeamResponse();
     }
 
     /**

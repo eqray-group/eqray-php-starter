@@ -187,15 +187,7 @@ class Router
             return $this->restoreFromCache($request, $cachedResult);
         }
 
-        // 3. 彩蛋逻辑 (保持原版)
-        if (EasterEgg::isTriggeredVersion($request)) {
-            return EasterEgg::getRouteMarker();
-        }
-        if (EasterEgg::isTriggeredTeam($request)) {
-            return EasterEgg::getTeamRouteMarker();
-        }
-
-        // 准备路由上下文
+        // 3. 准备路由上下文
         $context      = (new RequestContext())->fromRequest($request);
         $path         = $request->getPathInfo();
         $matchedRoute = null;

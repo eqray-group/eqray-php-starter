@@ -20,48 +20,6 @@ class DatabaseFactory
     public function table(string $table): mixed {}
 }
 
-namespace think\db;
-
-class Query extends BaseQuery
-{
-    /**
-     * @param array<int|string, mixed> $bind
-     */
-    public function orderRaw(string $field, array $bind = []): self {}
-
-    public function dec(string $field, int $step = 1): self {}
-
-    public function inc(string $field, int $step = 1): self {}
-}
-
-abstract class BaseQuery
-{
-    /**
-     * @param array<int|string, mixed> $bind
-     */
-    public function orderRaw(string $field, array $bind = []): self {}
-
-    public function dec(string $field, int $step = 1): self {}
-
-    public function inc(string $field, int $step = 1): self {}
-}
-
-namespace think\facade;
-
-class Db
-{
-    /**
-     * @param array<int|string, mixed> $bindings
-     * @return array<int, mixed>
-     */
-    public static function query(string $sql, array $bindings = []): array {}
-
-    /**
-     * @param array<int|string, mixed> $bindings
-     */
-    public static function execute(string $sql, array $bindings = []): int {}
-}
-
 namespace Illuminate\Database\Capsule;
 
 class Manager
