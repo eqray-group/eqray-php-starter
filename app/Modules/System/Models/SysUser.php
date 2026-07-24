@@ -299,15 +299,15 @@ class SysUser extends BaseLaORMModel
      */
     public function getMenuTree(): array
     {
-        $cacheKey = 'user_menu_tree_v' . self::getMenuTreeVersion() . '_' . $this->id;
-
-        /** @var CacheInterface $cache */
-        $cache = app('cache');
-
-        $cached = $cache->get($cacheKey);
-        if ($cached !== null) {
-            return $cached;
-        }
+//        $cacheKey = 'user_menu_tree_v' . self::getMenuTreeVersion() . '_' . $this->id;
+//
+//        /** @var CacheInterface $cache */
+//        $cache = app('cache');
+//
+//        $cached = $cache->get($cacheKey);
+//        if ($cached !== null) {
+//            return $cached;
+//        }
 
         $menuIds = $this->getMergedMenuIds();
 
@@ -333,7 +333,7 @@ class SysUser extends BaseLaORMModel
         $tree = $this->buildMenuTree($menus, 0);
 
         // Cache the tree for 300 seconds
-        $cache->set($cacheKey, $tree, 600);
+//        $cache->set($cacheKey, $tree, 600);
 
         return $tree;
     }

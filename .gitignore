@@ -9,6 +9,8 @@ vendor
 /.kiro/*
 /.trae/*
 
+/runtime/**
+
 # 但不要忽略 .gitkeep 文件，
 
 !/storage/cache/.gitkeep

@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 // ✅ 修复：定义项目根目录常量（必须添加这行）
 define('BASE_PATH', __DIR__);
-define('eqrayphp_VERSION', '0.8.0');
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -35,15 +34,21 @@ App::setContainer(Container::getInstance());
 
 $application = new Application('Novaphp Framework', '0.8.1');
 
-// ============ 原有命令 ============
-$application->add(new MakeControllerCommand());
-$application->add(new MakeModelCommand());
-$application->add(new MakeMiddlewareCommand());
-$application->add(new MakeEventCommand());
-$application->add(new MakeListenerCommand());
-
-// ============ 路由命令 ============
-$application->add(new RouteListCommand());
+// ============ 注册命令 ============
+// Symfony Console 7.3 起 add() 更名为 addCommand()，此处做兼容判断
+$commands = [
+    new MakeControllerCommand(),
+    new MakeModelCommand(),
+    new MakeMiddlewareCommand(),
+    new MakeEventCommand(),
+    new MakeListenerCommand(),
+    new RouteListCommand(),
+];
+foreach ($commands as $cmd) {
+    method_exists($application, 'addCommand')
+        ? $application->addCommand($cmd)
+        : $application->add($cmd);
+}
 
 $application->run();
 
