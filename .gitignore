@@ -1,23 +1,87 @@
-# 忽略 storage/cache/ 目录下的所有内容
+# ============================================================
+# 依赖 / 包管理
+# ============================================================
+/vendor/
+node_modules/
+/ui/node_modules/
+
+# ============================================================
+# 环境变量 / 敏感配置
+# ============================================================
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# ============================================================
+# 运行时 / 日志 / 缓存
+# ============================================================
+# Workerman 运行日志与全局日志
+workerman.log
+*.log
+
+# 运行时目录（保留目录，忽略内容）
+/runtime/**
+
+# storage 运行时产物（保留目录结构，忽略内容）
 /storage/cache/*
 /storage/logs/*
 /storage/view/*
-vendor
+/storage/session/*
+/storage/debugbar/*
+/storage/framework/*
 /storage/vendor/*
-/.codebuddy/*
-/.genie/*
-/.kiro/*
-/.trae/*
-
-/runtime/**
-
-# 但不要忽略 .gitkeep 文件，
-
 !/storage/cache/.gitkeep
 !/storage/logs/.gitkeep
 !/storage/view/.gitkeep
-!/vendor/.gitkeep
+!/storage/session/.gitkeep
+!/storage/debugbar/.gitkeep
+!/storage/framework/.gitkeep
 
-workerman.log
+# 用户上传文件（保留目录，忽略上传内容）
+/public/uploads/*
+!/public/uploads/.gitkeep
 
+# 框架 / 工具缓存
 .php-cs-fixer.cache
+.php-cs-fixer.php
+.phpstan.cache
+.phpunit.result.cache
+/.cache/
+
+# 代码覆盖率 / 测试报告
+/coverage/
+/build/
+/reports/
+
+# ============================================================
+# 前端构建产物（ui/ 源码保留，忽略依赖与打包结果）
+# ============================================================
+/ui/dist/
+/ui/.vite/
+/ui/dist/**
+/ui/node_modules/**
+
+# ============================================================
+# IDE / 编辑器
+# ============================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+
+# ============================================================
+# 操作系统
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# AI 助手工作区
+# ============================================================
+/.codebuddy/
+/.genie/
+/.kiro/
+/.trae/
