@@ -1,0 +1,89 @@
+2026-07-24 07:54:14 pid:1 Error: Class "App\Modules\Auth\Models\SysUser" not found in E:\eqray\eqray-php-starter\app\Modules\Auth\Models\Users.php:19
+Stack trace:
+#0 E:\eqray\eqray-php-starter\vendor\composer\ClassLoader.php(576): include()
+#1 E:\eqray\eqray-php-starter\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('E:\\eqray\\eqray-...')
+#2 [internal function]: Composer\Autoload\ClassLoader->loadClass('App\\Modules\\Aut...')
+#3 E:\eqray\eqray-php-starter\framework\Container\Compiler\AttributeInjectionPass.php(51): class_exists('App\\Modules\\Aut...')
+#4 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\Compiler\Compiler.php(73): Framework\Container\Compiler\AttributeInjectionPass->process(Object(Symfony\Component\DependencyInjection\ContainerBuilder))
+#5 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(825): Symfony\Component\DependencyInjection\Compiler\Compiler->compile(Object(Symfony\Component\DependencyInjection\ContainerBuilder))
+#6 E:\eqray\eqray-php-starter\framework\Container\Container.php(81): Symfony\Component\DependencyInjection\ContainerBuilder->compile()
+#7 E:\eqray\eqray-php-starter\framework\Container\Container.php(328): Framework\Container\Container::init()
+#8 E:\eqray\eqray-php-starter\framework\helpers.php(202): Framework\Container\Container::getInstance()
+#9 E:\eqray\eqray-php-starter\framework\Core\Framework.php(149): config('app.dir_permiss...', 493)
+#10 E:\eqray\eqray-php-starter\framework\Core\Framework.php(60): Framework\Core\Framework->createRequiredDirs()
+#11 E:\eqray\eqray-php-starter\framework\Core\Framework.php(87): Framework\Core\Framework->__construct()
+#12 E:\eqray\eqray-php-starter\server3.php(396): Framework\Core\Framework::getInstance()
+#13 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2641): {closure:E:\eqray\eqray-php-starter\server3.php:393}(Object(Workerman\Worker))
+#14 [internal function]: Workerman\Worker->{closure:Workerman\Worker::run():2639}()
+#15 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2659): Fiber->start()
+#16 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1619): Workerman\Worker->run()
+#17 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1536): Workerman\Worker::forkWorkersForWindows()
+#18 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(603): Workerman\Worker::forkWorkers()
+#19 E:\eqray\eqray-php-starter\server3.php(572): Workerman\Worker::runAll()
+#20 {main}
+2026-07-24 07:54:17 pid:1 Error: Class "App\Modules\Auth\Models\SysUser" not found in E:\eqray\eqray-php-starter\app\Modules\Auth\Models\Users.php:19
+Stack trace:
+#0 E:\eqray\eqray-php-starter\vendor\composer\ClassLoader.php(576): include()
+#1 E:\eqray\eqray-php-starter\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('E:\\eqray\\eqray-...')
+#2 [internal function]: Composer\Autoload\ClassLoader->loadClass('App\\Modules\\Aut...')
+#3 E:\eqray\eqray-php-starter\framework\Container\Compiler\AttributeInjectionPass.php(51): class_exists('App\\Modules\\Aut...')
+#4 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\Compiler\Compiler.php(73): Framework\Container\Compiler\AttributeInjectionPass->process(Object(Symfony\Component\DependencyInjection\ContainerBuilder))
+#5 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(825): Symfony\Component\DependencyInjection\Compiler\Compiler->compile(Object(Symfony\Component\DependencyInjection\ContainerBuilder))
+#6 E:\eqray\eqray-php-starter\framework\Container\Container.php(81): Symfony\Component\DependencyInjection\ContainerBuilder->compile()
+#7 E:\eqray\eqray-php-starter\framework\Container\Container.php(328): Framework\Container\Container::init()
+#8 E:\eqray\eqray-php-starter\framework\helpers.php(202): Framework\Container\Container::getInstance()
+#9 E:\eqray\eqray-php-starter\framework\Core\Framework.php(149): config('app.dir_permiss...', 493)
+#10 E:\eqray\eqray-php-starter\framework\Core\Framework.php(60): Framework\Core\Framework->createRequiredDirs()
+#11 E:\eqray\eqray-php-starter\framework\Core\Framework.php(87): Framework\Core\Framework->__construct()
+#12 E:\eqray\eqray-php-starter\server3.php(396): Framework\Core\Framework::getInstance()
+#13 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2641): {closure:E:\eqray\eqray-php-starter\server3.php:393}(Object(Workerman\Worker))
+#14 [internal function]: Workerman\Worker->{closure:Workerman\Worker::run():2639}()
+#15 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2659): Fiber->start()
+#16 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1619): Workerman\Worker->run()
+#17 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1536): Workerman\Worker::forkWorkersForWindows()
+#18 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(603): Workerman\Worker::forkWorkers()
+#19 E:\eqray\eqray-php-starter\server3.php(572): Workerman\Worker::runAll()
+#20 {main}
+2026-07-24 07:54:19 pid:1 Error: Class "App\Modules\Auth\Models\SysUser" not found in E:\eqray\eqray-php-starter\app\Modules\Auth\Models\Users.php:19
+Stack trace:
+#0 E:\eqray\eqray-php-starter\vendor\composer\ClassLoader.php(576): include()
+#1 E:\eqray\eqray-php-starter\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('E:\\eqray\\eqray-...')
+#2 [internal function]: Composer\Autoload\ClassLoader->loadClass('App\\Modules\\Aut...')
+#3 E:\eqray\eqray-php-starter\framework\Container\Compiler\AttributeInjectionPass.php(51): class_exists('App\\Modules\\Aut...')
+#4 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\Compiler\Compiler.php(73): Framework\Container\Compiler\AttributeInjectionPass->process(Object(Symfony\Component\DependencyInjection\ContainerBuilder))
+#5 E:\eqray\eqray-php-starter\vendor\symfony\dependency-injection\ContainerBuilder.php(825): Symfony\Component\DependencyInjection\Compiler\Compiler->compile(Object(Symfony\Component\DependencyInjection\ContainerBuilder))
+#6 E:\eqray\eqray-php-starter\framework\Container\Container.php(81): Symfony\Component\DependencyInjection\ContainerBuilder->compile()
+#7 E:\eqray\eqray-php-starter\framework\Container\Container.php(328): Framework\Container\Container::init()
+#8 E:\eqray\eqray-php-starter\framework\helpers.php(202): Framework\Container\Container::getInstance()
+#9 E:\eqray\eqray-php-starter\framework\Core\Framework.php(149): config('app.dir_permiss...', 493)
+#10 E:\eqray\eqray-php-starter\framework\Core\Framework.php(60): Framework\Core\Framework->createRequiredDirs()
+#11 E:\eqray\eqray-php-starter\framework\Core\Framework.php(87): Framework\Core\Framework->__construct()
+#12 E:\eqray\eqray-php-starter\server3.php(396): Framework\Core\Framework::getInstance()
+#13 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2641): {closure:E:\eqray\eqray-php-starter\server3.php:393}(Object(Workerman\Worker))
+#14 [internal function]: Workerman\Worker->{closure:Workerman\Worker::run():2639}()
+#15 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(2659): Fiber->start()
+#16 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1619): Workerman\Worker->run()
+#17 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(1536): Workerman\Worker::forkWorkersForWindows()
+#18 E:\eqray\eqray-php-starter\vendor\workerman\workerman\src\Worker.php(603): Workerman\Worker::forkWorkers()
+#19 E:\eqray\eqray-php-starter\server3.php(572): Workerman\Worker::runAll()
+#20 {main}
+2026-07-24 15:55:08 pid:1 [2026-07-24 15:55:08] 内存占用 -> 进程ID: 0, 占用: 18MB, 阈值: 512MB
+2026-07-24 15:55:28 pid:1 [2026-07-24 15:55:28] 内存占用 -> 进程ID: 0, 占用: 18MB, 阈值: 512MB
+2026-07-24 15:55:48 pid:1 [2026-07-24 15:55:48] 内存占用 -> 进程ID: 0, 占用: 18MB, 阈值: 512MB
+2026-07-24 15:56:08 pid:1 [2026-07-24 15:56:08] 内存占用 -> 进程ID: 0, 占用: 18MB, 阈值: 512MB
+2026-07-24 15:56:28 pid:1 [2026-07-24 15:56:28] 内存占用 -> 进程ID: 0, 占用: 18MB, 阈值: 512MB
+2026-07-24 15:56:48 pid:1 [2026-07-24 15:56:48] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-24 15:57:08 pid:1 [2026-07-24 15:57:08] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-24 15:57:28 pid:1 [2026-07-24 15:57:28] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-24 15:57:48 pid:1 [2026-07-24 15:57:48] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-24 15:58:08 pid:1 [2026-07-24 15:58:08] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-24 15:58:28 pid:1 [2026-07-24 15:58:28] 内存占用 -> 进程ID: 0, 占用: 28MB, 阈值: 512MB
+2026-07-24 15:58:48 pid:1 [2026-07-24 15:58:48] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-24 15:59:08 pid:1 [2026-07-24 15:59:08] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-24 15:59:28 pid:1 [2026-07-24 15:59:28] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-24 15:59:48 pid:1 [2026-07-24 15:59:48] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-24 16:00:08 pid:1 [2026-07-24 16:00:08] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-24 16:00:28 pid:1 [2026-07-24 16:00:28] 内存占用 -> 进程ID: 0, 占用: 30MB, 阈值: 512MB
+2026-07-24 16:00:38 pid:1 [2026-07-24 16:00:38] 文件变化 -> E:\eqray\eqray-php-starter\app\Modules\Content\Controllers\ArticleController.php
+2026-07-24 16:00:38 pid:1 [System] Windows下检测到变更/内存溢出，正在停止服务(等待bat重启)...
+2026-07-24 16:00:59 pid:1 [2026-07-24 16:00:59] 内存占用 -> 进程ID: 0, 占用: 18MB, 阈值: 512MB

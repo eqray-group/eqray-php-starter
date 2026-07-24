@@ -1,0 +1,377 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
+namespace App\Modules\User\Services;
+
+use App\Modules\User\Models\SysMenu;
+use App\Modules\User\Models\SysRole;
+use App\Modules\User\Models\SysRoleDept;
+use App\Modules\User\Models\SysRoleMenu;
+use App\Modules\User\Models\SysUser;
+use App\Modules\User\Models\SysUserRole;
+use App\Modules\Auth\Services\Casbin\CasbinService;
+use Framework\Basic\BaseService;
+
+/**
+ * SysRoleService 角色服务
+ *
+ * 处理角色相关的业务逻辑
+ */
+class SysRoleService extends BaseService
+{
+    protected const SYSTEM_PROTECTED_ROLE_ID = 1;
+
+    protected CasbinService $casbinService;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->casbinService = new CasbinService();
+    }
+
+    /**
+     * 获取角色列表.
+     *
+     * @param  array<array-key, mixed> $params 查询参数
+     * @return array<array-key, mixed>
+     */
+    public function getList(array $params): array
+    {
+        $page     = (int) ($params['page'] ?? 1);
+        $limit    = (int) ($params['limit'] ?? 20);
+        $roleName = $params['name']   ?? '';
+        $roleCode = $params['code']   ?? '';
+        $status   = $params['status'] ?? '';
+
+        $query = SysRole::query();
+
+        if ($roleName !== '') {
+            $query->where('name', 'LIKE', "%{$roleName}%");
+        }
+
+        if ($roleCode !== '') {
+            $query->where('code', 'LIKE', "%{$roleCode}%");
+        }
+
+        if ($status !== '') {
+            $query->where('status', $this->normalizeStatusFilter($status));
+        }
+
+        $total = $query->count();
+        $list  = $query->orderBy('sort')
+            ->offset(($page - 1) * $limit)
+            ->limit($limit)
+            ->get()
+            ->toArray();
+
+        // 格式化数据
+        foreach ($list as &$item) {
+            $item = $this->formatRole($item);
+        }
+
+        return [
+            'list'  => $list,
+            'total' => $total,
+            'page'  => $page,
+            'size'  => $limit,
+        ];
+    }
+
+    /**
+     * 获取所有启用的角色.
+     *
+     * @return array<array-key, mixed>
+     */
+    public function getAllEnabled(): array
+    {
+        return SysRole::where('status', SysRole::STATUS_ENABLED)
+            ->orderBy('sort')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * 获取可访问的角色列表（供用户编辑弹窗下拉选择使用）.
+     *
+     * 返回包含 id、name 字段的扁平数组
+     *
+     * @return array<array-key, mixed>
+     */
+    public function getAccessRoleList(): array
+    {
+        return SysRole::query()
+            ->where('status', SysRole::STATUS_ENABLED)
+            ->orderBy('sort')
+            ->get()
+            ->map(fn ($role) => [
+                'id'   => $role->id,
+                'name' => $role->name,
+                'code' => $role->code,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * 获取角色树.
+     *
+     * @return array<array-key, mixed>
+     */
+    public function getRoleTree(): array
+    {
+        return SysRole::getRoleTree();
+    }
+
+    /**
+     * 获取角色详情.
+     *
+     * @param  int                          $roleId 角色ID
+     * @return null|array<array-key, mixed>
+     */
+    public function getDetail(int $roleId): ?array
+    {
+        $role = SysRole::find($roleId);
+
+        if (! $role) {
+            return null;
+        }
+
+        $data             = $this->formatRole($role);
+        $data['menu_ids'] = SysRoleMenu::getMenuIdsByRoleId($roleId);
+        $data['dept_ids'] = SysRoleDept::getDeptIdsByRole($roleId);
+
+        return $data;
+    }
+
+    /**
+     * 创建角色.
+     *
+     * @param array<array-key, mixed> $data     角色数据
+     * @param int                     $operator 操作人ID
+     */
+    public function create(array $data, int $operator = 0): ?SysRole
+    {
+        return $this->transaction(function () use ($data, $operator) {
+            // 检查角色编码是否存在
+            if (SysRole::where('code', $data['code'])->exists()) {
+                throw new \Exception('角色编码已存在');
+            }
+
+            // 设置审计字段
+            $data['created_by'] = $operator;
+            $data['updated_by'] = $operator;
+
+            // 创建角色
+            $role = SysRole::create($data);
+
+            if (! empty($data['menu_ids'])) {
+                SysRoleMenu::syncRoleMenus($role->id, $data['menu_ids'], $operator);
+            }
+
+            // Clear menu tree cache for affected users
+            SysUser::clearAllMenuTreeCache();
+
+            // 同步自定义数据权限部门
+            if ((int) ($data['data_scope'] ?? 1) === 5) {
+                SysRoleDept::syncRoleDepts($role->id, $data['dept_ids'] ?? []);
+            } else {
+                SysRoleDept::deleteByRoleId($role->id);
+            }
+
+            return $role;
+        });
+    }
+
+    /**
+     * 更新角色.
+     *
+     * @param int                     $roleId   角色ID
+     * @param array<array-key, mixed> $data     角色数据
+     * @param int                     $operator 操作人ID
+     */
+    public function update(int $roleId, array $data, int $operator = 0): bool
+    {
+        if ($roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
+            throw new \Exception('系统内置角色不允许编辑');
+        }
+        return $this->transaction(function () use ($roleId, $data, $operator) {
+            $role = SysRole::find($roleId);
+            if (! $role) {
+                throw new \Exception('角色不存在');
+            }
+
+            // 检查角色编码是否重复
+            if (isset($data['code']) && $data['code'] !== $role->code) {
+                if (SysRole::where('code', $data['code'])->where('id', '!=', $roleId)->exists()) {
+                    throw new \Exception('角色编码已存在');
+                }
+            }
+
+            // 设置审计字段
+            $data['updated_by'] = $operator;
+
+            // 更新角色
+            $role->fill($data);
+            $role->save();
+
+            if (isset($data['menu_ids'])) {
+                SysRoleMenu::syncRoleMenus($roleId, $data['menu_ids'], $operator);
+                $this->casbinService->syncRoleMenuPermissions($roleId);
+            }
+
+            // Clear menu tree cache for affected users
+            SysUser::clearAllMenuTreeCache();
+
+            // 同步自定义数据权限部门
+            if (isset($data['data_scope'])) {
+                if ((int) $data['data_scope'] === SysRole::DATA_SCOPE_CUSTOM) {
+                    SysRoleDept::syncRoleDepts($roleId, $data['dept_ids'] ?? []);
+                } else {
+                    SysRoleDept::deleteByRoleId($roleId);
+                }
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * 删除角色.
+     *
+     * @param int $roleId 角色ID
+     */
+    public function delete(int|string $roleId): bool
+    {
+        if ((int) $roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
+            throw new \Exception('系统内置角色不允许删除');
+        }
+        $role = SysRole::find($roleId);
+        if (! $role) {
+            return false;
+        }
+
+        // 检查是否有关联用户
+        $userCount = SysUserRole::where('role_id', $roleId)->count();
+        if ($userCount > 0) {
+            throw new \Exception('该角色下存在用户，无法删除');
+        }
+
+        // 软删除角色
+        $role->delete();
+
+        // 删除角色菜单关联
+        SysRoleMenu::deleteByRoleId($roleId);
+
+        // 删除自定义数据权限部门
+        if ((int) $role->data_scope === SysRole::DATA_SCOPE_CUSTOM) {
+            SysRoleDept::deleteByRoleId($roleId);
+        }
+
+        // 删除 Casbin 权限
+        $this->casbinService->deletePermissionsForRole($role->code);
+
+        return true;
+    }
+
+    /**
+     * 更新角色状态
+     *
+     * @param int $roleId 角色ID
+     * @param int $status 状态
+     */
+    public function updateStatus(int $roleId, int $status): bool
+    {
+        if ($roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
+            throw new \Exception('系统内置角色状态不允许修改');
+        }
+        return SysRole::where('id', $roleId)->update(['status' => $status]) > 0;
+    }
+
+    /**
+     * 获取角色菜单ID列表.
+     *
+     * @param  int                     $roleId 角色ID
+     * @return array<array-key, mixed>
+     */
+    public function getMenuIds(int $roleId): array
+    {
+        return SysRoleMenu::getMenuIdsByRoleId($roleId);
+    }
+
+    /**
+     * 分配菜单给角色.
+     *
+     * @param array<array-key, mixed> $menuIds  菜单ID数组
+     * @param int                     $operator 操作人ID
+     */
+    public function assignMenus(int $roleId, array $menuIds, int $operator = 0): bool
+    {
+        if ($roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
+            throw new \Exception('系统内置角色菜单权限不允许修改');
+        }
+        $menuIds = SysMenu::expandWithParentIds($menuIds);
+
+        SysRoleMenu::syncRoleMenus($roleId, $menuIds, $operator);
+
+        // 同步 Casbin 权限
+        $this->casbinService->syncRoleMenuPermissions($roleId);
+
+        // Clear menu tree cache for affected users
+        SysUser::clearAllMenuTreeCache();
+
+        return true;
+    }
+
+    // ==================== 辅助方法 ====================
+
+    /**
+     * 格式化角色数据.
+     *
+     * @param  array<string, mixed>|SysRole $role 角色
+     * @return array<array-key, mixed>
+     */
+    protected function formatRole(array|SysRole $role): array
+    {
+        if ($role instanceof SysRole) {
+            $data = $role->toArray();
+        } else {
+            $data = $role;
+        }
+
+        // 格式化时间
+        if (isset($data['created_at'])) {
+            $data['created_at'] = is_string($data['created_at'])
+                ? $data['created_at']
+                : $data['created_at']->format('Y-m-d H:i:s');
+        }
+
+        if (isset($data['updated_at'])) {
+            $data['updated_at'] = is_string($data['updated_at'])
+                ? $data['updated_at']
+                : $data['updated_at']->format('Y-m-d H:i:s');
+        }
+
+        // 状态文本
+        $data['status_text'] = (int) ($data['status'] ?? 0) === 1 ? '启用' : '禁用';
+
+        return $data;
+    }
+
+    /**
+     * 统一状态过滤语义：1=启用，0=禁用（兼容历史字典值 2）.
+     */
+    protected function normalizeStatusFilter(mixed $status): int
+    {
+        $value = (int) $status;
+        if ($value === 2) {
+            return 0;
+        }
+
+        return $value === 0 ? 0 : 1;
+    }
+}
