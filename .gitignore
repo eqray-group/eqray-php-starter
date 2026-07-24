@@ -15,3 +15,7 @@ vendor
 !/storage/logs/.gitkeep
 !/storage/view/.gitkeep
 !/vendor/.gitkeep
+
+workerman.log
+
+.php-cs-fixer.cache
