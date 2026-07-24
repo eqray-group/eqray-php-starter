@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysAttachmentCategoryDao;
-use App\Dao\SysAttachmentDao;
 use App\Models\SysAttachment;
 use App\Models\SysAttachmentCategory;
 use App\Models\SysConfig;
@@ -19,28 +17,12 @@ use Illuminate\Database\Eloquent\Collection;
 
 /**
  * SysAttachmentService 附件管理服务
- * @extends BaseService<SysAttachmentDao>
  */
 class SysAttachmentService extends BaseService
 {
-    /**
-     * @return mixed
-     */
-    protected SysAttachmentDao $attachmentDao;
-
-    /**
-     * @return mixed
-     */
-    protected SysAttachmentCategoryDao $categoryDao;
-
-    /**
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->attachmentDao = new SysAttachmentDao();
-        $this->categoryDao   = new SysAttachmentCategoryDao();
     }
 
     // ==================== 分类管理 ====================
@@ -231,7 +213,7 @@ class SysAttachmentService extends BaseService
 
     /**
      * 上传附件（接收 Symfony UploadedFile）
-     * 校验规则从 sa_system_config group_id=2 读取.
+     * 校验规则从 system_config group_id=2 读取.
      *
      * @param  mixed                   $file       Symfony UploadedFile
      * @param  int                     $categoryId 分类ID
@@ -329,7 +311,7 @@ class SysAttachmentService extends BaseService
         $hash       = md5_file($file->getPathname());
 
         // 秒传：相同文件直接返回
-        $existing = $this->attachmentDao->findByHash($hash);
+        $existing = SysAttachment::where('hash', $hash)->first();
         if ($existing) {
             return $existing->toArray();
         }

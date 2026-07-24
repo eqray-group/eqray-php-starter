@@ -58,7 +58,7 @@ class SysUserPost extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_user_post';
+    protected $table = 'system_user_post';
 
     /**
      * 主键.

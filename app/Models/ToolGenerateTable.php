@@ -55,7 +55,7 @@ class ToolGenerateTable extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_tool_generate_tables';
+    protected $table = 'tool_generate_tables';
 
     /**
      * @return mixed

@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysPostDao;
 use App\Models\SysPost;
 use App\Models\SysUserPost;
 use Framework\Basic\BaseService;
@@ -18,24 +17,12 @@ use Framework\Basic\BaseService;
  * SysPostService 岗位服务
  *
  * 处理岗位相关的业务逻辑
- * @extends BaseService<SysPostDao>
  */
 class SysPostService extends BaseService
 {
-    /**
-     * DAO 实例.
-     * @return mixed
-     */
-    protected SysPostDao $postDao;
-
-    /**
-     * 构造函数.
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->postDao = new SysPostDao();
     }
 
     /**
@@ -116,7 +103,7 @@ class SysPostService extends BaseService
     public function create(array $data, int $operator = 0): ?SysPost
     {
         // 检查岗位编码是否存在
-        if ($this->postDao->isPostCodeExists($data['code'])) {
+        if (SysPost::where('code', $data['code'])->exists()) {
             throw new \Exception('岗位编码已存在');
         }
 
@@ -143,7 +130,7 @@ class SysPostService extends BaseService
 
         // 检查岗位编码是否重复
         if (isset($data['code']) && $data['code'] !== $post->code) {
-            if ($this->postDao->isPostCodeExists($data['code'], $postId)) {
+            if (SysPost::where('code', $data['code'])->where('id', '!=', $postId)->exists()) {
                 throw new \Exception('岗位编码已存在');
             }
         }
@@ -184,7 +171,7 @@ class SysPostService extends BaseService
      */
     public function updateEnabled(int $postId, int $enabled): bool
     {
-        return $this->postDao->updateEnabled($postId, $enabled);
+        return SysPost::where('id', $postId)->update(['enabled' => $enabled]) > 0;
     }
 
     /**
@@ -194,7 +181,10 @@ class SysPostService extends BaseService
      */
     public function getAllEnabled(): array
     {
-        return $this->postDao->getAllEnabled();
+        return SysPost::where('status', SysPost::ENABLED_ENABLED)
+            ->orderBy('sort')
+            ->get()
+            ->toArray();
     }
 
     /**

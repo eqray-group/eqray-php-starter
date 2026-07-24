@@ -46,7 +46,7 @@ class SysRoleDept extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_system_role_dept';
+    protected $table = 'system_role_dept';
 
     /**
      * @return mixed

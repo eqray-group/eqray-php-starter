@@ -9,13 +9,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysLoginLogDao;
 use App\Models\SysLoginLog;
 use Framework\Basic\BaseService;
 
-/**
- * @extends BaseService<SysLoginLogDao>
- */
 class LoginLogService extends BaseService
 {
     /**

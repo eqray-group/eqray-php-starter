@@ -9,12 +9,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Framework\Basic\BaseDao;
 use Framework\Basic\BaseService;
 
-/**
- * @extends BaseService<BaseDao>
- */
 class DatabaseMaintainService extends BaseService
 {
     /**

@@ -13,7 +13,7 @@ use Framework\Basic\BaseLaORMModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * SysLoginLog 登录日志模型（对应 sa_system_login_log 表）.
+ * SysLoginLog 登录日志模型（对应 $table = 'system_login_log 表）.
  *
  * @property int       $id
  * @property string    $username    用户名
@@ -68,7 +68,7 @@ class SysLoginLog extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_system_login_log';
+    protected $table = 'system_login_log';
 
     /**
      * @return mixed

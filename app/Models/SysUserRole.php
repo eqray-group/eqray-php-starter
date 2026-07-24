@@ -59,7 +59,7 @@ class SysUserRole extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_user_role';
+    protected $table = 'system_user_role';
 
     /**
      * 主键.

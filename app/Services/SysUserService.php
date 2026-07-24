@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysUserDao;
 use App\Models\SysMenu;
 use App\Models\SysPost;
 use App\Models\SysRole;
@@ -25,32 +24,16 @@ use Framework\Basic\BaseService;
  * SysUserService 用户服务
  *
  * 处理用户相关的业务逻辑
- * @extends BaseService<SysUserDao>
  */
 class SysUserService extends BaseService
 {
     protected const SYSTEM_PROTECTED_USER_ID = 1;
 
-    /**
-     * DAO 实例.
-     * @return mixed
-     */
-    protected SysUserDao $userDao;
-
-    /**
-     * Casbin 服务
-     * @return mixed
-     */
     protected CasbinService $casbinService;
 
-    /**
-     * 构造函数.
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->userDao       = new SysUserDao();
         $this->casbinService = new CasbinService();
     }
 
@@ -67,24 +50,24 @@ class SysUserService extends BaseService
     public function login(string $username, string $password, string $ip = ''): ?array
     {
         // 查找用户
-        $user = $this->userDao->findByUsername($username);
+        $user = SysUser::where('username', $username)->first();
 
         if (! $user) {
             return null;
         }
 
-        // 检查用户状态
         if ($user->status === SysUser::STATUS_DISABLED) {
             return null;
         }
 
-        // 验证密码
         if (! password_verify($password, $user->password)) {
             return null;
         }
 
-        // 更新最后登录信息
-        $this->userDao->updateLoginInfo($user->id, $ip);
+        SysUser::where('id', $user->id)->update([
+            'login_ip'   => $ip,
+            'login_time' => date('Y-m-d H:i:s'),
+        ]);
 
         // 同步用户角色到 Casbin
         $this->casbinService->syncUserRolesFromDatabase($user->id);
@@ -280,14 +263,11 @@ class SysUserService extends BaseService
     public function create(array $data, int $operator = 0): ?SysUser
     {
         return $this->transaction(function () use ($data, $operator) {
-            // 检查用户名是否存在
-
-            if ($this->userDao->isUsernameExists($data['username'])) {
+            if (SysUser::where('username', $data['username'])->exists()) {
                 throw new \Exception('用户名已存在');
             }
 
-            // 检查手机号是否存在
-            if (! empty($data['phone']) && $this->userDao->isMobileExists($data['phone'])) {
+            if (! empty($data['phone']) && SysUser::where('phone', $data['phone'])->exists()) {
                 throw new \Exception('手机号已存在');
             }
 
@@ -354,16 +334,14 @@ class SysUserService extends BaseService
                 throw new \Exception('用户不存在');
             }
 
-            // 检查用户名是否重复
             if (isset($data['username']) && $data['username'] !== $user->username) {
-                if ($this->userDao->isUsernameExists($data['username'], $userId)) {
+                if (SysUser::where('username', $data['username'])->where('id', '!=', $userId)->exists()) {
                     throw new \Exception('用户名已存在');
                 }
             }
 
-            // 检查手机号是否重复
             if (isset($data['phone']) && $data['phone'] !== $user->phone) {
-                if ($this->userDao->isMobileExists($data['phone'], $userId)) {
+                if (SysUser::where('phone', $data['phone'])->where('id', '!=', $userId)->exists()) {
                     throw new \Exception('手机号已存在');
                 }
             }
@@ -454,7 +432,7 @@ class SysUserService extends BaseService
         if ($userId === self::SYSTEM_PROTECTED_USER_ID) {
             throw new \Exception('系统内置用户状态不允许修改');
         }
-        return $this->userDao->updateStatus($userId, $status);
+        return SysUser::where('id', $userId)->update(['status' => $status]) > 0;
     }
 
     /**

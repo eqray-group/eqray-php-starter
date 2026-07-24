@@ -117,9 +117,6 @@ class QueryConditionBuilder
             unset($criteria['lock']);
         }
     }
-            unset($criteria['lock']);
-        }
-    }
 
     /**
      * 处理JOIN操作.

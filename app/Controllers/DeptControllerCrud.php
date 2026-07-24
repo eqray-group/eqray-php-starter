@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Dao\SysDeptDao;
 use App\Services\SysDeptService;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Route;

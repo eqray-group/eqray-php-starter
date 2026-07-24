@@ -54,7 +54,7 @@ class SysArticleCategory extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_article_category';
+    protected $table = 'article_category';
 
     /**
      * 主键.

@@ -62,7 +62,7 @@ class SysDictType extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_dict_type';
+    protected $table = 'system_dict_type';
 
     /**
      * 主键.

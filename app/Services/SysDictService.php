@@ -9,39 +9,18 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysDictDataDao;
-use App\Dao\SysDictTypeDao;
 use App\Models\SysDictData;
 use App\Models\SysDictType;
 use Framework\Basic\BaseService;
 
 /**
  * SysDictService 数据字典服务
- * @extends BaseService<SysDictTypeDao>
  */
 class SysDictService extends BaseService
 {
-    /**
-     * 字典类型DAO.
-     * @return mixed
-     */
-    protected SysDictTypeDao $dictTypeDao;
-
-    /**
-     * 字典数据DAO.
-     * @return mixed
-     */
-    protected SysDictDataDao $dictDataDao;
-
-    /**
-     * 构造函数.
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->dictTypeDao = new SysDictTypeDao();
-        $this->dictDataDao = new SysDictDataDao();
     }
 
     // ==================== 字典类型管理 ====================
@@ -110,7 +89,7 @@ class SysDictService extends BaseService
     public function createType(array $data, int $operator = 0): ?SysDictType
     {
         // 检查编码是否存在
-        if ($this->dictTypeDao->isDictCodeExists($data['code'])) {
+        if (SysDictType::where('code', $data['code'])->exists()) {
             throw new \Exception('字典编码已存在');
         }
 
@@ -139,7 +118,7 @@ class SysDictService extends BaseService
 
         // 检查编码是否重复
         if (isset($data['code']) && $data['code'] !== $dictType->code) {
-            if ($this->dictTypeDao->isDictCodeExists($data['code'], $id)) {
+            if (SysDictType::where('code', $data['code'])->where('id', '!=', $id)->exists()) {
                 throw new \Exception('字典编码已存在');
             }
         }

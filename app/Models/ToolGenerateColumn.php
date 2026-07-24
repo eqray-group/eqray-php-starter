@@ -51,7 +51,7 @@ class ToolGenerateColumn extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_tool_generate_columns';
+    protected $table = 'tool_generate_columns';
 
     /**
      * @return mixed

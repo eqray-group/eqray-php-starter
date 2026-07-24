@@ -56,7 +56,7 @@ class SysAttachmentCategory extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_system_category';
+    protected $table = 'system_category';
 
     /**
      * @return mixed

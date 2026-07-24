@@ -91,7 +91,7 @@ class SysRole extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_role';
+    protected $table = 'system_role';
 
     /**
      * 主键.
@@ -150,7 +150,7 @@ class SysRole extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysUser::class,
-            'sa_system_user_role',
+            'system_user_role',
             'role_id',
             'user_id'
         )->withTimestamps();
@@ -165,7 +165,7 @@ class SysRole extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysMenu::class,
-            'sa_system_role_menu',
+            'system_role_menu',
             'role_id',
             'menu_id'
         )->withTimestamps();
@@ -200,7 +200,7 @@ class SysRole extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysDept::class,
-            'sa_system_role_dept',
+            'system_role_dept',
             'role_id',
             'dept_id'
         );
@@ -231,7 +231,7 @@ class SysRole extends BaseLaORMModel
      */
     public function getMenuIds(): array
     {
-        return $this->menus()->pluck('sa_system_menu.id')->toArray();
+        return $this->menus()->pluck('system_menu.id')->toArray();
     }
 
     /**
@@ -326,7 +326,7 @@ class SysRole extends BaseLaORMModel
      */
     public function getDataScopeDeptIds(): array
     {
-        return $this->dataScopeDepts()->pluck('sa_system_dept.id')->toArray();
+        return $this->dataScopeDepts()->pluck('system_dept.id')->toArray();
     }
 
     /**

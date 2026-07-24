@@ -52,7 +52,7 @@ class SysRoleMenu extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_role_menu';
+    protected $table = 'system_role_menu';
 
     /**
      * 主键.

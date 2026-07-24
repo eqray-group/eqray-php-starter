@@ -9,14 +9,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysConfigGroupDao;
 use App\Models\SysConfig;
 use App\Models\SysConfigGroup;
 use Framework\Basic\BaseService;
 
-/**
- * @extends BaseService<SysConfigGroupDao>
- */
 class SysConfigGroupService extends BaseService
 {
     /**

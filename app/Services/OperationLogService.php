@@ -9,13 +9,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysOperationLogDao;
 use App\Models\SysOperationLog;
 use Framework\Basic\BaseService;
 
-/**
- * @extends BaseService<SysOperationLogDao>
- */
 class OperationLogService extends BaseService
 {
     /**

@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysArticleDao;
 use App\Models\SysArticle;
 use Framework\Basic\BaseService;
 
@@ -17,24 +16,12 @@ use Framework\Basic\BaseService;
  * SysArticleService 文章服务
  *
  * 处理文章相关的业务逻辑
- * @extends BaseService<SysArticleDao>
  */
 class SysArticleService extends BaseService
 {
-    /**
-     * DAO 实例.
-     * @return mixed
-     */
-    protected SysArticleDao $articleDao;
-
-    /**
-     * 构造函数.
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->articleDao = new SysArticleDao();
     }
 
     /**
@@ -208,7 +195,7 @@ class SysArticleService extends BaseService
      */
     public function updateStatus(int $articleId, int $status): bool
     {
-        return $this->articleDao->updateStatus($articleId, $status);
+        return SysArticle::where('id', $articleId)->update(['status' => $status]) > 0;
     }
 
     /**

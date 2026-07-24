@@ -9,28 +9,17 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\ToolGenerateColumnDao;
-use App\Dao\ToolGenerateTableDao;
 use App\Models\ToolGenerateColumn;
 use App\Models\ToolGenerateTable;
 use Framework\Basic\BaseService;
 
-/**
- * @extends BaseService<ToolGenerateColumnDao>
- */
 class ToolGenerateService extends BaseService
 {
-    protected ToolGenerateTableDao $tableDao;
-
-    protected ToolGenerateColumnDao $columnDao;
-
     protected DatabaseMaintainService $dbService;
 
     public function __construct()
     {
         parent::__construct();
-        $this->tableDao  = new ToolGenerateTableDao();
-        $this->columnDao = new ToolGenerateColumnDao();
         $this->dbService = new DatabaseMaintainService();
     }
 
@@ -44,10 +33,28 @@ class ToolGenerateService extends BaseService
      */
     public function getPageList(array $params): array
     {
-        $result = $this->tableDao->getPageList($params);
-        // 格式化时间字段
-        $items = array_map([$this, 'formatTableRow'], $result['list']);
-        return ['items' => $items, 'total' => $result['total']];
+        $tableName = $params['table_name'] ?? '';
+        $source    = $params['source']     ?? '';
+        $page      = max(1, (int) ($params['page'] ?? 1));
+        $limit     = min(100, max(1, (int) ($params['limit'] ?? 15)));
+
+        $model = ToolGenerateTable::query();
+
+        if (! empty($tableName)) {
+            $model->where('table_name', 'like', "%{$tableName}%");
+        }
+        if (! empty($source)) {
+            $model->where('source', $source);
+        }
+
+        $total = $model->count();
+        $list  = $model->orderBy('id', 'desc')
+            ->forPage($page, $limit)
+            ->get()
+            ->toArray();
+
+        $items = array_map([$this, 'formatTableRow'], $list);
+        return ['items' => $items, 'total' => $total];
     }
 
     /**
@@ -58,14 +65,13 @@ class ToolGenerateService extends BaseService
      */
     public function getDetail(int $id): array
     {
-        $table = $this->tableDao->findById($id);
+        $table = ToolGenerateTable::query()->find($id);
         if (! $table) {
             throw new \Exception('记录不存在');
         }
 
         $tableArr = $this->formatTableRow($table->toArray());
 
-        // 解析 options
         $options = [];
         if (! empty($tableArr['options'])) {
             $decoded = is_array($tableArr['options'])
@@ -75,8 +81,12 @@ class ToolGenerateService extends BaseService
         }
         $tableArr['options'] = $options;
 
-        // 获取字段配置
-        $columns             = $this->columnDao->getByTableId($id);
+        $columns = ToolGenerateColumn::query()
+            ->where('table_id', $id)
+            ->orderBy('sort', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->toArray();
         $tableArr['columns'] = array_map([$this, 'formatColumnRow'], $columns);
 
         return $tableArr;
@@ -90,7 +100,7 @@ class ToolGenerateService extends BaseService
      */
     public function updateConfig(int $id, array $data, int $operatorId): void
     {
-        $table = $this->tableDao->findById($id);
+        $table = ToolGenerateTable::query()->find($id);
         if (! $table) {
             throw new \Exception('记录不存在');
         }
@@ -169,9 +179,9 @@ class ToolGenerateService extends BaseService
         $count = 0;
         $this->transaction(function () use ($ids, &$count) {
             // 级联删除字段
-            $this->columnDao->deleteByTableIds($ids);
+            ToolGenerateColumn::query()->whereIn('table_id', $ids)->delete();
             // 删除主表
-            $count = $this->tableDao->batchDeleteByIds($ids);
+            $count = ToolGenerateTable::query()->whereIn('id', $ids)->delete();
         });
 
         return $count;
@@ -185,11 +195,16 @@ class ToolGenerateService extends BaseService
      */
     public function getColumns(int $tableId): array
     {
-        $table = $this->tableDao->findById($tableId);
+        $table = ToolGenerateTable::query()->find($tableId);
         if (! $table) {
             throw new \Exception('记录不存在');
         }
-        $columns = $this->columnDao->getByTableId($tableId);
+        $columns = ToolGenerateColumn::query()
+            ->where('table_id', $tableId)
+            ->orderBy('sort', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->toArray();
         return array_map([$this, 'formatColumnRow'], $columns);
     }
 
@@ -213,7 +228,7 @@ class ToolGenerateService extends BaseService
                 continue;
             }
 
-            if ($this->tableDao->isTableLoaded($tableName, $source)) {
+            if (ToolGenerateTable::query()->where('table_name', $tableName)->when($source, fn($q) => $q->where('source', $source))->exists()) {
                 $failed[] = ['name' => $tableName, 'reason' => '已装载，请勿重复添加'];
                 continue;
             }
@@ -266,19 +281,48 @@ class ToolGenerateService extends BaseService
                     // 3. 批量插入字段配置
                     $rows = [];
                     foreach ($dbColumns as $sort => $col) {
-                        $isPk = ! empty($col['column_key']) && strtolower($col['column_key']) === 'pri';
-                        $row  = ToolGenerateColumnDao::buildDefaultColumn(
-                            array_merge($col, ['is_pk' => $isPk]),
-                            $tableRecord->id,
-                            $sort
-                        );
-                        $row['created_by'] = $operatorId;
-                        $row['updated_by'] = $operatorId;
-                        $row['create_time']= $now;
-                        $row['update_time']= $now;
-                        $rows[]            = $row;
+                        $colName    = $col['column_name'] ?? '';
+                        $columnType = strtolower($col['column_type'] ?? '');
+                        $isPk       = ! empty($col['column_key']) && strtolower($col['column_key']) === 'pri';
+                        $skipFields = in_array($colName, ['id', 'created_by', 'updated_by', 'create_time', 'update_time', 'delete_time']);
+
+                        $viewType = 'input';
+                        if (str_contains($columnType, 'text') || str_contains($columnType, 'longtext')) {
+                            $viewType = 'textarea';
+                        } elseif (str_contains($columnType, 'tinyint') || str_contains($columnType, 'smallint')) {
+                            $viewType = 'select';
+                        } elseif (str_contains($columnType, 'datetime') || str_contains($columnType, 'date')) {
+                            $viewType = 'date';
+                        }
+
+                        $row = [
+                            'table_id'       => $tableRecord->id,
+                            'column_name'    => $colName,
+                            'column_comment' => $col['column_comment'] ?? '',
+                            'column_type'    => $col['column_type']    ?? '',
+                            'default_value'  => $col['default_value']  ?? null,
+                            'is_pk'          => $isPk ? ToolGenerateColumn::IS_PK_YES : ToolGenerateColumn::IS_PK_NO,
+                            'is_required'    => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_NO,
+                            'is_insert'      => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_YES,
+                            'is_edit'        => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_YES,
+                            'is_list'        => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_YES,
+                            'is_query'       => ToolGenerateColumn::FLAG_NO,
+                            'is_sort'        => ToolGenerateColumn::FLAG_NO,
+                            'query_type'     => 'eq',
+                            'view_type'      => $viewType,
+                            'dict_type'      => null,
+                            'allow_roles'    => null,
+                            'options'        => null,
+                            'sort'           => $sort,
+                            'remark'         => null,
+                            'created_by'     => $operatorId,
+                            'updated_by'     => $operatorId,
+                            'create_time'    => $now,
+                            'update_time'    => $now,
+                        ];
+                        $rows[] = $row;
                     }
-                    $this->columnDao->batchInsert($rows);
+                    ToolGenerateColumn::query()->insert($rows);
 
                     $success[] = $tableName;
                 });
@@ -297,7 +341,7 @@ class ToolGenerateService extends BaseService
      */
     public function syncTable(int $id, int $operatorId): void
     {
-        $table = $this->tableDao->findById($id);
+        $table = ToolGenerateTable::query()->find($id);
         if (! $table) {
             throw new \Exception('记录不存在');
         }
@@ -305,7 +349,7 @@ class ToolGenerateService extends BaseService
         $dbColumns = $this->dbService->getTableDetailed($table->table_name);
 
         $this->transaction(function () use ($id, $dbColumns, $operatorId) {
-            $this->columnDao->syncColumns($id, $dbColumns, $operatorId);
+            $this->syncColumns($id, $dbColumns, $operatorId);
         });
     }
 
@@ -482,12 +526,6 @@ class ToolGenerateService extends BaseService
                 'code'     => $this->renderService($ctx),
             ],
             [
-                'name'     => 'dao',
-                'tab_name' => "{$className}Dao.php",
-                'lang'     => 'php',
-                'code'     => $this->renderDao($ctx),
-            ],
-            [
                 'name'     => 'model',
                 'tab_name' => "{$className}.php",
                 'lang'     => 'php',
@@ -531,18 +569,15 @@ class ToolGenerateService extends BaseService
         $className    = $detail['class_name']    ?? $this->tableNameToClassName($detail['table_name'] ?? '');
         $packageName  = $detail['package_name']  ?? '';
         $businessName = $detail['business_name'] ?? strtolower($className);
-        $generatePath = $detail['generate_path'] ?? 'saiadmin-artd';
 
         $controllerDir = 'app/Controllers' . ($packageName ? "/{$packageName}" : '');
         $serviceDir    = 'app/Services';
-        $daoDir        = 'app/Dao';
         $modelDir      = 'app/Models';
         $vueDir        = "web/src/views/{$businessName}";
 
         return [
             'controller' => "{$controllerDir}/{$className}Controller.php",
             'service'    => "{$serviceDir}/{$className}Service.php",
-            'dao'        => "{$daoDir}/{$className}Dao.php",
             'model'      => "{$modelDir}/{$className}.php",
             'vue_index'  => "{$vueDir}/index.vue",
             'vue_form'   => "{$vueDir}/modules/form.vue",
@@ -702,12 +737,10 @@ PHP;
             'columns'      => $columns,
         ] = $ctx;
 
-        $daoClass  = "{$className}Dao";
         $serviceNS = $namespace . '\Services';
-        $daoNS     = $namespace . '\Dao\\' . $daoClass;
+        $modelNS   = $namespace . '\Models\\' . $className;
         $date      = date('Y-m-d');
 
-        // 构建搜索条件
         $whereLines = [];
         foreach ($columns as $col) {
             if ((int) ($col['is_query'] ?? 0) === ToolGenerateColumn::FLAG_YES) {
@@ -716,34 +749,34 @@ PHP;
 
                 switch ($queryType) {
                     case 'eq':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', '=', \$params['{$colName}']];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->where('{$colName}', \$params['{$colName}']);";
                         break;
                     case 'neq':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', '<>', \$params['{$colName}']];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->where('{$colName}', '<>', \$params['{$colName}']);";
                         break;
                     case 'gt':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', '>', \$params['{$colName}']];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->where('{$colName}', '>', \$params['{$colName}']);";
                         break;
                     case 'gte':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', '>=', \$params['{$colName}']];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->where('{$colName}', '>=', \$params['{$colName}']);";
                         break;
                     case 'lt':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', '<', \$params['{$colName}']];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->where('{$colName}', '<', \$params['{$colName}']);";
                         break;
                     case 'lte':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', '<=', \$params['{$colName}']];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->where('{$colName}', '<=', \$params['{$colName}']);";
                         break;
                     case 'like':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', 'like', '%' . \$params['{$colName}'] . '%'];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->where('{$colName}', 'like', '%' . \$params['{$colName}'] . '%');";
                         break;
                     case 'in':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', 'in', is_array(\$params['{$colName}']) ? \$params['{$colName}'] : explode(',', \$params['{$colName}'])];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->whereIn('{$colName}', is_array(\$params['{$colName}']) ? \$params['{$colName}'] : explode(',', \$params['{$colName}']));";
                         break;
                     case 'notin':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$where[] = ['{$colName}', 'not in', is_array(\$params['{$colName}']) ? \$params['{$colName}'] : explode(',', \$params['{$colName}'])];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && \$params['{$colName}'] !== '') \$query->whereNotIn('{$colName}', is_array(\$params['{$colName}']) ? \$params['{$colName}'] : explode(',', \$params['{$colName}']));";
                         break;
                     case 'between':
-                        $whereLines[] = "        if (isset(\$params['{$colName}']) && is_array(\$params['{$colName}']) && count(\$params['{$colName}']) === 2) \$where[] = ['{$colName}', 'between', \$params['{$colName}']];";
+                        $whereLines[] = "        if (isset(\$params['{$colName}']) && is_array(\$params['{$colName}']) && count(\$params['{$colName}']) === 2) \$query->whereBetween('{$colName}', \$params['{$colName}']);";
                         break;
                 }
             }
@@ -758,30 +791,26 @@ declare(strict_types=1);
 
 namespace {$serviceNS};
 
-use {$daoNS};
+use {$modelNS};
 use Framework\\Basic\\BaseService;
 
 class {$className}Service extends BaseService
 {
-    protected {$daoClass} \${$className}dao;
-
-    public function __construct()
-    {
-        parent::__construct();
-        \$this->{$className}dao = new {$daoClass}();
-    }
-
     /**
      * 分页列表
      */
     public function getPageList(array \$params): array
     {
         [\$page, \$limit] = \$this->PageParams(\$params);
-        \$where = [];
+        \$query = {$className}::query();
 {$whereStr}
-        \$result = \$this->{$className}dao->selectList(\$where, '*', \$page, \$limit, 'id desc');
-        \$total  = \$this->{$className}dao->count(\$where);
-        return ['items' => \$result, 'total' => \$total];
+        \$total = \$query->count();
+        \$list  = \$query->orderBy('id', 'desc')
+            ->skip((\$page - 1) * \$limit)
+            ->take(\$limit)
+            ->get()
+            ->toArray();
+        return ['items' => \$list, 'total' => \$total];
     }
 
     /**
@@ -789,7 +818,7 @@ class {$className}Service extends BaseService
      */
     public function getDetail(int \$id): array
     {
-        \$record = \$this->{$className}dao->get(\$id);
+        \$record = {$className}::find(\$id);
         if (!\$record) throw new \\Exception('记录不存在');
         return (array)\$record;
     }
@@ -804,19 +833,17 @@ class {$className}Service extends BaseService
         \$data['updated_by'] = \$operatorId;
         \$data['create_time']= \$now;
         \$data['update_time']= \$now;
-        return \$this->{$className}dao->save(\$data);
+        return {$className}::create(\$data);
     }
 
     /**
      * 更新
      */
-        /**
-         */
     public function update(int \$id, array \$data, int \$operatorId): void
     {
         \$data['updated_by'] = \$operatorId;
         \$data['update_time']= date('Y-m-d H:i:s');
-        \$this->{$className}dao->update(\$id, \$data);
+        {$className}::where('id', \$id)->update(\$data);
     }
 
     /**
@@ -824,48 +851,15 @@ class {$className}Service extends BaseService
      */
     public function deleteByIds(array \$ids, int \$operatorId = 0): int
     {
-        return \$this->{$className}dao->delete(\$ids);
+        return {$className}::destroy(\$ids);
     }
 }
 PHP;
     }
 
-    /**
-     * 渲染 Dao 代码
-     *
-     * @param array<string, mixed> $ctx
-     */
     protected function renderDao(array $ctx): string
     {
-        [
-            'className'    => $className,
-            'namespace'    => $namespace,
-            'tableComment' => $tableComment,
-        ] = $ctx;
-
-        $modelNS = $namespace . '\Models\\' . $className;
-        $daoNS   = $namespace . '\Dao';
-        $date    = date('Y-m-d');
-
-        return <<<PHP
-<?php
-
-declare(strict_types=1);
-
-
-namespace {$daoNS};
-
-use {$modelNS};
-use Framework\\Basic\\BaseDao;
-
-class {$className}Dao extends BaseDao
-{
-    protected function setModel(): string
-    {
-        return {$className}::class;
-    }
-}
-PHP;
+        return ''; // 已移除 DAO 层，由 Service 直接使用 Eloquent Model
     }
 
     /**
@@ -1586,9 +1580,8 @@ VUE;
     protected function updateColumns(int $tableId, array $columns, int $operatorId, string $now): void
     {
         // 先删除所有旧字段
-        $this->columnDao->deleteByTableId($tableId);
+        ToolGenerateColumn::query()->where('table_id', $tableId)->delete();
 
-        // 批量插入新字段
         $rows = [];
         foreach ($columns as $sort => $col) {
             $row = [
@@ -1620,7 +1613,86 @@ VUE;
         }
 
         if (! empty($rows)) {
-            $this->columnDao->batchInsert($rows);
+            ToolGenerateColumn::query()->insert($rows);
+        }
+    }
+
+    /**
+     * 同步字段配置：新增不存在的字段，删除已移除的字段，保留现有配置.
+     */
+    protected function syncColumns(int $tableId, array $dbColumns, int $operatorId = 0): void
+    {
+        $existing = ToolGenerateColumn::query()
+            ->where('table_id', $tableId)
+            ->get()
+            ->keyBy('column_name')
+            ->toArray();
+
+        $dbColNames = array_column($dbColumns, 'column_name');
+
+        $toDelete = array_diff(array_keys($existing), $dbColNames);
+        if (! empty($toDelete)) {
+            ToolGenerateColumn::query()
+                ->where('table_id', $tableId)
+                ->whereIn('column_name', array_values($toDelete))
+                ->delete();
+        }
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($dbColumns as $sort => $col) {
+            $colName = $col['column_name'];
+            if (isset($existing[$colName])) {
+                ToolGenerateColumn::query()
+                    ->where('table_id', $tableId)
+                    ->where('column_name', $colName)
+                    ->update([
+                        'column_type'    => $col['column_type']    ?? '',
+                        'column_comment' => $col['column_comment'] ?? '',
+                        'default_value'  => $col['default_value']  ?? null,
+                        'updated_by'     => $operatorId,
+                        'update_time'    => $now,
+                    ]);
+            } else {
+                $colName    = $col['column_name'] ?? '';
+                $columnType = strtolower($col['column_type'] ?? '');
+                $isPk       = ! empty($col['column_key']) && strtolower($col['column_key']) === 'pri';
+                $skipFields = in_array($colName, ['id', 'created_by', 'updated_by', 'create_time', 'update_time', 'delete_time']);
+
+                $viewType = 'input';
+                if (str_contains($columnType, 'text') || str_contains($columnType, 'longtext')) {
+                    $viewType = 'textarea';
+                } elseif (str_contains($columnType, 'tinyint') || str_contains($columnType, 'smallint')) {
+                    $viewType = 'select';
+                } elseif (str_contains($columnType, 'datetime') || str_contains($columnType, 'date')) {
+                    $viewType = 'date';
+                }
+
+                ToolGenerateColumn::query()->create([
+                    'table_id'       => $tableId,
+                    'column_name'    => $colName,
+                    'column_comment' => $col['column_comment'] ?? '',
+                    'column_type'    => $col['column_type']    ?? '',
+                    'default_value'  => $col['default_value']  ?? null,
+                    'is_pk'          => $isPk ? ToolGenerateColumn::IS_PK_YES : ToolGenerateColumn::IS_PK_NO,
+                    'is_required'    => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_NO,
+                    'is_insert'      => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_YES,
+                    'is_edit'        => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_YES,
+                    'is_list'        => $skipFields ? ToolGenerateColumn::FLAG_NO : ToolGenerateColumn::FLAG_YES,
+                    'is_query'       => ToolGenerateColumn::FLAG_NO,
+                    'is_sort'        => ToolGenerateColumn::FLAG_NO,
+                    'query_type'     => 'eq',
+                    'view_type'      => $viewType,
+                    'dict_type'      => null,
+                    'allow_roles'    => null,
+                    'options'        => null,
+                    'sort'           => $sort,
+                    'remark'         => null,
+                    'created_by'     => $operatorId,
+                    'updated_by'     => $operatorId,
+                    'create_time'    => $now,
+                    'update_time'    => $now,
+                ]);
+            }
         }
     }
 
@@ -1707,12 +1779,10 @@ VUE;
 
     /**
      * 表名转类名（去前缀，驼峰）
-     * sa_system_user -> SysUser, sa_tool_generate_tables -> ToolGenerateTables.
+     * system_user -> SysUser, tool_generate_tables -> ToolGenerateTables.
      */
     protected function tableNameToClassName(string $tableName): string
     {
-        // 去除 sa_ 前缀
-        $name = preg_replace('/^sa_/', '', $tableName);
         // 将 system_ 缩写为 Sys，tool_ 保留
         $segments = explode('_', $name);
         return implode('', array_map('ucfirst', $segments));
@@ -1723,7 +1793,6 @@ VUE;
      */
     protected function tableNameToBusinessName(string $tableName): string
     {
-        $name     = preg_replace('/^sa_/', '', $tableName);
         $segments = explode('_', $name);
         $first    = array_shift($segments);
         return $first . implode('', array_map('ucfirst', $segments));
@@ -1768,7 +1837,7 @@ VUE;
         $component  = "{$routeName}/index";
         $slug       = "{$routeName}:index";
 
-        $sql .= "INSERT INTO `sa_system_menu` (`parent_id`, `name`, `type`, `path`, `component`, `slug`, `icon`, `status`, `create_time`, `update_time`) VALUES\n";
+        $sql .= "INSERT INTO `system_menu` (`parent_id`, `name`, `type`, `path`, `component`, `slug`, `icon`, `status`, `create_time`, `update_time`) VALUES\n";
         $sql .= "({$belongMenuId}, '{$menuName}', 2, '{$parentPath}', '{$component}', '{$slug}', 'ri:table-line', 1, '{$now}', '{$now}');\n\n";
 
         // 记录刚才插入的父级菜单ID
@@ -1801,7 +1870,7 @@ VUE;
         }
 
         if (! empty($buttons)) {
-            $sql .= "INSERT INTO `sa_system_menu` (`parent_id`, `name`, `type`, `path`, `component`, `slug`, `icon`, `status`, `create_time`, `update_time`) VALUES\n";
+            $sql .= "INSERT INTO `system_menu` (`parent_id`, `name`, `type`, `path`, `component`, `slug`, `icon`, `status`, `create_time`, `update_time`) VALUES\n";
             $sql .= implode(",\n", $buttons) . ";\n";
         }
 

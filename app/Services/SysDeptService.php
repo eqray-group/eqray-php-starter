@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysDeptDao;
 use App\Models\SysDept;
 use App\Models\SysUser;
 use Framework\Basic\BaseService;
@@ -19,25 +18,12 @@ use Symfony\Component\HttpFoundation\Request;
  * SysDeptService 部门服务
  *
  * 处理部门相关的业务逻辑
- * @extends BaseService<SysDeptDao>
  */
 class SysDeptService extends BaseService
 {
-    /**
-     * DAO 实例.
-     * @return mixed
-     */
-    protected SysDeptDao $deptDao;
-
-    /**
-     * 构造函数.
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->deptDao = new SysDeptDao();
-        $this->setDao($this->deptDao);
     }
 
     /**
@@ -182,7 +168,7 @@ class SysDeptService extends BaseService
     public function create(array $data, int $operator = 0): ?SysDept
     {
         // 检查部门编码是否存在
-        if ($this->deptDao->isDeptCodeExists($data['code'])) {
+        if (SysDept::where('code', $data['code'])->exists()) {
             throw new \Exception('部门编码已存在');
         }
 
@@ -222,7 +208,7 @@ class SysDeptService extends BaseService
 
         // 检查部门编码是否重复
         if (isset($data['code']) && $data['code'] !== $dept->code) {
-            if ($this->deptDao->isDeptCodeExists($data['code'], $deptId)) {
+            if (SysDept::where('code', $data['code'])->where('id', '!=', $deptId)->exists()) {
                 throw new \Exception('部门编码已存在');
             }
         }
@@ -295,7 +281,7 @@ class SysDeptService extends BaseService
      */
     public function updateStatus(int $deptId, int $status): bool
     {
-        return $this->deptDao->updateStatus($deptId, $status);
+        return SysDept::where('id', $deptId)->update(['status' => $status]) > 0;
     }
 
     /**

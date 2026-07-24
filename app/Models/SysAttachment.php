@@ -77,7 +77,7 @@ class SysAttachment extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_attachment';
+    protected $table = 'system_attachment';
 
     /**
      * 主键.

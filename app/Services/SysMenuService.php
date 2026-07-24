@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysMenuDao;
 use App\Models\SysMenu;
 use App\Models\SysRoleMenu;
 use App\Models\SysUser;
@@ -21,30 +20,14 @@ use Framework\Basic\BaseService;
  * SysMenuService 菜单服务
  *
  * 处理菜单相关的业务逻辑
- * @extends BaseService<SysMenuDao>
  */
 class SysMenuService extends BaseService
 {
-    /**
-     * DAO 实例.
-     * @return mixed
-     */
-    protected SysMenuDao $menuDao;
-
-    /**
-     * Casbin 服务
-     * @return mixed
-     */
     protected CasbinService $casbinService;
 
-    /**
-     * 构造函数.
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->menuDao       = new SysMenuDao();
         $this->casbinService = new CasbinService();
     }
 
@@ -218,7 +201,7 @@ class SysMenuService extends BaseService
      */
     public function updateStatus(int $menuId, int $status): bool
     {
-        $result = $this->menuDao->updateStatus($menuId, $status);
+        $result = SysMenu::where('id', $menuId)->update(['status' => $status]) > 0;
         SysUser::clearAllMenuTreeCache();
 
         return $result;

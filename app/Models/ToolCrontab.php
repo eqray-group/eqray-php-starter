@@ -68,7 +68,7 @@ class ToolCrontab extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_tool_crontab';
+    protected $table = 'tool_crontab';
 
     /**
      * @return mixed

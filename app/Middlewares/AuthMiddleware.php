@@ -59,7 +59,7 @@ class AuthMiddleware
             $exp  = $claims->get('exp')->getTimestamp();
 
             // 2.加载用户并校验状态（必须在角色门禁之前，授权以数据库为准）
-            // 注意：不再预加载 dept 关系，因为部门信息现在从 sa_system_user_dept 表获取
+            // 注意：不再预加载 dept 关系，因为部门信息现在从 $table = 'system_user_dept 表获取
             $currentUser = SysUser::with(['roles', 'roles.dataScopeDepts', 'roles.menus'])->find($uid);
             if (! $currentUser) {
                 return BaseJsonResponse::unauthorized('用户不存在');

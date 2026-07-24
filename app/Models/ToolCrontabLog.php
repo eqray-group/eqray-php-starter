@@ -57,7 +57,7 @@ class ToolCrontabLog extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_tool_crontab_log';
+    protected $table = 'tool_crontab_log';
 
     /**
      * @return mixed

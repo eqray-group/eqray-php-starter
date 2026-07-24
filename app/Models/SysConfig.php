@@ -53,7 +53,7 @@ class SysConfig extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_system_config';
+    protected $table = 'system_config';
 
     /**
      * @return mixed

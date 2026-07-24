@@ -35,7 +35,7 @@ class SysMailLog extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_system_mail';
+    protected $table = 'system_mail';
 
     /**
      * @return mixed

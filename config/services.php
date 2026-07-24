@@ -27,12 +27,6 @@ return function (ContainerConfigurator $configurator) {
 
 
 
-	//$services->load('App\\Dao\\', '../app/Dao/');
-
-	$services->load('App\\Dao\\', BASE_PATH. '/app/Dao/**/*.php')
-		->autowire()
-		->autoconfigure()
-		->public();	
 	
 	// Eloquent BaseModel alias
 	class_alias(

@@ -119,7 +119,7 @@ class SysOperationLog extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_oper_log';
+    protected $table = 'system_oper_log';
 
     /**
      * 主键.

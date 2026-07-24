@@ -77,7 +77,7 @@ class SysUser extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_user';
+    protected $table = 'system_user';
 
     /**
      * 主键.
@@ -157,7 +157,7 @@ class SysUser extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysRole::class,
-            'sa_system_user_role',
+            'system_user_role',
             'user_id',
             'role_id'
         )->withTimestamps();
@@ -172,7 +172,7 @@ class SysUser extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysMenu::class,
-            'sa_system_user_menu',
+            'system_user_menu',
             'user_id',
             'menu_id'
         )->withTimestamps();
@@ -187,7 +187,7 @@ class SysUser extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysPost::class,
-            'sa_system_user_post',
+            'system_user_post',
             'user_id',
             'post_id'
         );
@@ -246,7 +246,7 @@ class SysUser extends BaseLaORMModel
      */
     public function getRoleCodes(): array
     {
-        return $this->roles()->where('sa_system_role.status', SysRole::STATUS_ENABLED)->pluck('sa_system_role.code')->toArray();
+        return $this->roles()->where('system_role.status', SysRole::STATUS_ENABLED)->pluck('system_role.code')->toArray();
     }
 
     /**
@@ -256,7 +256,7 @@ class SysUser extends BaseLaORMModel
      */
     public function getRoleIds(): array
     {
-        return $this->roles()->where('sa_system_role.status', SysRole::STATUS_ENABLED)->pluck('sa_system_role.id')->toArray();
+        return $this->roles()->where('system_role.status', SysRole::STATUS_ENABLED)->pluck('system_role.id')->toArray();
     }
 
     /**

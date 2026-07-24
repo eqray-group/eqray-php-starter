@@ -74,7 +74,7 @@ class SysDept extends BaseLaORMModel
     /**
      * @return mixed
      */
-    protected $table = 'sa_system_dept';
+    protected $table = 'system_dept';
 
     /**
      * 主键.
@@ -161,7 +161,7 @@ class SysDept extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysRole::class,
-            'sa_system_role_dept',
+            'system_role_dept',
             'dept_id',
             'role_id'
         );

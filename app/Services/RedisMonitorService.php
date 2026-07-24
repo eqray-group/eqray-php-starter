@@ -9,13 +9,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Framework\Basic\BaseDao;
 use Framework\Basic\BaseService;
 
 /**
  * RedisMonitorService Redis监控服务
- *
- * @extends BaseService<BaseDao>
  */
 class RedisMonitorService extends BaseService
 {

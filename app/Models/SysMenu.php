@@ -105,7 +105,7 @@ class SysMenu extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_menu';
+    protected $table = 'system_menu';
 
     /**
      * 主键.
@@ -195,7 +195,7 @@ class SysMenu extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysRole::class,
-            'sa_system_role_menu',
+            'system_role_menu',
             'menu_id',
             'role_id'
         )->withTimestamps();

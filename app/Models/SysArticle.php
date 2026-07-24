@@ -86,7 +86,7 @@ class SysArticle extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_article';
+    protected $table = 'article';
 
     /**
      * 主键.

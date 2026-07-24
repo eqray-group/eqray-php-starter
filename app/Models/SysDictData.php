@@ -85,7 +85,7 @@ class SysDictData extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_dict_data';
+    protected $table = 'system_dict_data';
 
     /**
      * 主键.

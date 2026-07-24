@@ -64,7 +64,7 @@ class SysPost extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_post';
+    protected $table = 'system_post';
 
     /**
      * 主键.
@@ -117,7 +117,7 @@ class SysPost extends BaseLaORMModel
     {
         return $this->belongsToMany(
             SysUser::class,
-            'sa_system_user_post',
+            'system_user_post',
             'post_id',
             'user_id'
         )->withTimestamps();

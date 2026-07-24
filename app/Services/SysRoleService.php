@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\SysRoleDao;
 use App\Models\SysMenu;
 use App\Models\SysRole;
 use App\Models\SysRoleDept;
@@ -23,32 +22,16 @@ use Framework\Basic\BaseService;
  * SysRoleService 角色服务
  *
  * 处理角色相关的业务逻辑
- * @extends BaseService<SysRoleDao>
  */
 class SysRoleService extends BaseService
 {
     protected const SYSTEM_PROTECTED_ROLE_ID = 1;
 
-    /**
-     * DAO 实例.
-     * @return mixed
-     */
-    protected SysRoleDao $roleDao;
-
-    /**
-     * Casbin 服务
-     * @return mixed
-     */
     protected CasbinService $casbinService;
 
-    /**
-     * 构造函数.
-     * @return mixed
-     */
     public function __construct()
     {
         parent::__construct();
-        $this->roleDao       = new SysRoleDao();
         $this->casbinService = new CasbinService();
     }
 
@@ -107,7 +90,10 @@ class SysRoleService extends BaseService
      */
     public function getAllEnabled(): array
     {
-        return $this->roleDao->getAllEnabled();
+        return SysRole::where('status', SysRole::STATUS_ENABLED)
+            ->orderBy('sort')
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -172,7 +158,7 @@ class SysRoleService extends BaseService
     {
         return $this->transaction(function () use ($data, $operator) {
             // 检查角色编码是否存在
-            if ($this->roleDao->isRoleCodeExists($data['code'])) {
+            if (SysRole::where('code', $data['code'])->exists()) {
                 throw new \Exception('角色编码已存在');
             }
 
@@ -221,7 +207,7 @@ class SysRoleService extends BaseService
 
             // 检查角色编码是否重复
             if (isset($data['code']) && $data['code'] !== $role->code) {
-                if ($this->roleDao->isRoleCodeExists($data['code'], $roleId)) {
+                if (SysRole::where('code', $data['code'])->where('id', '!=', $roleId)->exists()) {
                     throw new \Exception('角色编码已存在');
                 }
             }
@@ -303,7 +289,7 @@ class SysRoleService extends BaseService
         if ($roleId === self::SYSTEM_PROTECTED_ROLE_ID) {
             throw new \Exception('系统内置角色状态不允许修改');
         }
-        return $this->roleDao->updateStatus($roleId, $status);
+        return SysRole::where('id', $roleId)->update(['status' => $status]) > 0;
     }
 
     /**

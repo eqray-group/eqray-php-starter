@@ -47,7 +47,7 @@ class SysUserDept extends BaseLaORMModel
      * @var    string
      * @return mixed
      */
-    protected $table = 'sa_system_user_dept';
+    protected $table = 'system_user_dept';
 
     /**
      * 主键.

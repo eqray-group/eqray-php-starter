@@ -10,31 +10,16 @@ declare(strict_types=1);
 namespace Framework\Basic;
 
 use Framework\DI\Injectable;
-use Framework\ORM\Trait\ServicesTrait;
 use Illuminate\Database\Capsule\Manager;
 
 /**
- * BaseService - 泛型服务基类.
+ * BaseService - 服务基类.
  *
- * 提供以下核心功能：
- * - DAO 注入与代理
- * - 框架无关的事务处理
- * - 分页参数规范化
- *
- * 子类可指定具体 DAO 类型：
- * @template T of BaseDao
- * @method getModel()
+ * 提供事务处理和分页参数规范化。
  */
 abstract class BaseService
 {
-    use ServicesTrait;
     use Injectable;
-
-    /**
-     * 模型注入：使用泛型类型.
-     * @var ?T
-     */
-    protected ?BaseDao $dao = null;
 
     /**
      * 当前使用的事务连接
@@ -58,41 +43,6 @@ abstract class BaseService
         $db = app('db');
         $this->inject();
         $this->initialize();
-    }
-
-    // =========================================================================
-    //  方法代理
-    // =========================================================================
-
-    /**
-     * 代理 DAO 调用.
-     *
-     * 当调用不存在的方法时，自动转发给 DAO 处理。
-     *
-     * @param  string                  $name      方法名
-     * @param  array<mixed>            $arguments 方法参数
-     * @return mixed                   方法返回值
-     * @throws \RuntimeException       DAO 未初始化时抛出
-     * @throws \BadMethodCallException 方法不存在时抛出
-     */
-    public function __call(string $name, array $arguments): mixed
-    {
-        if (! $this->dao) {
-            throw new \RuntimeException('BaseService: DAO not initialized in service.');
-        }
-
-        try {
-            // 支持返回引用调用语法，也支持 PHP 8 call
-            return $this->dao->{$name}(...$arguments);
-        } catch (\BadMethodCallException $e) {
-            // DAO 及其适配器都不支持该方法
-            throw new \BadMethodCallException(
-                "BaseService: Method {$name} not found in DAO adapter (" . get_class($this->dao) . ' / adapter: ' . get_class($this->dao->getAdapter()) . '): ' . $e->getMessage()
-            );
-        } catch (\Throwable $e) {
-            // 其它异常（例如 ORM 内部抛出的），直接向上抛或包装
-            throw $e;
-        }
     }
 
     // =========================================================================
@@ -168,30 +118,6 @@ abstract class BaseService
             $this->rollback();
             throw $e;
         }
-    }
-
-    // =========================================================================
-    //  DAO 管理
-    // =========================================================================
-
-    /**
-     * 设置 DAO 实例.
-     *
-     * @param BaseDao $dao DAO 实例
-     */
-    public function setDao(BaseDao $dao): void
-    {
-        $this->dao = $dao;
-    }
-
-    /**
-     * 获取 DAO 实例.
-     *
-     * @return null|BaseDao DAO 实例
-     */
-    public function getDao(): ?BaseDao
-    {
-        return $this->dao;
     }
 
     /**

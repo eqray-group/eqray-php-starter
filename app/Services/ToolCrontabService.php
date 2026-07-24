@@ -9,14 +9,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dao\ToolCrontabDao;
 use App\Models\ToolCrontab;
 use App\Models\ToolCrontabLog;
 use Framework\Basic\BaseService;
 
-/**
- * @extends BaseService<ToolCrontabDao>
- */
 class ToolCrontabService extends BaseService
 {
     /**
