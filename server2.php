@@ -532,12 +532,7 @@ if (isWorkerProcess()) {
 
 		if (defined('WORKERMAN_ENV')) {
 			// 设置扫描目录和命名空间
-			SchemaWarmup::setScanPath(base_path('app/Models'), 'App\Models');
-
-			// 可选：忽略某些模型
-			SchemaWarmup::ignore([
-				\App\Models\TempView::class,
-			]);
+			SchemaWarmup::setScanPath(base_path('app/Modules'), 'App\\Modules');
 
 			// 启动时自动扫描 warmup
 			SchemaWarmup::warmupAll();

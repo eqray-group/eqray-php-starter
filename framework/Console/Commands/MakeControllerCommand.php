@@ -58,6 +58,13 @@ class MakeControllerCommand extends Command
                 'name',
                 InputArgument::REQUIRED,
                 '控制器名称（例如：Users 会生成 UsersController）'
+            )
+            // 模块选项：生成的控制器归属 app/<module>/Controllers
+            ->addOption(
+                'module',
+                'm',
+                InputOption::VALUE_OPTIONAL,
+                '所属模块（默认 Home），例如 --module=User 生成 app/User/Controllers'
             );
     }
 
@@ -79,7 +86,9 @@ class MakeControllerCommand extends Command
     {
         $controllerBaseName = $input->getArgument('name');
         $controllerName     = ucfirst($controllerBaseName) . 'Controller';
-        $directory          = __DIR__ . '/../../../app/Controllers';
+        $module             = ucfirst((string) ($input->getOption('module') ?: 'Home'));
+        $namespace          = 'App\\Modules\\' . $module . '\\Controllers';
+        $directory          = __DIR__ . '/../../../app/Modules/' . $module . '/Controllers';
         $filePath           = $directory . '/' . $controllerName . '.php';
 
         // 检查文件是否已存在
@@ -96,7 +105,7 @@ class MakeControllerCommand extends Command
             $filesystem->mkdir($directory);
 
             // 生成控制器内容
-            $content = $this->generateControllerContent($controllerName);
+            $content = $this->generateControllerContent($controllerName, $namespace);
 
             // 写入文件
             $filesystem->dumpFile($filePath, $content);
@@ -120,15 +129,16 @@ class MakeControllerCommand extends Command
      * 生成的方法包括：index, create, save, show, edit, update, delete。
      *
      * @param string $controllerName 控制器类名
+     * @param string $namespace       控制器命名空间
      *
      * @return string 生成的控制器 PHP 代码
      */
-    private function generateControllerContent(string $controllerName): string
+    private function generateControllerContent(string $controllerName, string $namespace): string
     {
         return <<<PHP
 <?php
 
-namespace App\\Controllers;
+namespace {$namespace};
 
 use Symfony\\Component\\HttpFoundation\\Request;
 use Symfony\\Component\\HttpFoundation\\Response;

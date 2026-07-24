@@ -64,6 +64,12 @@ class MakeListenerCommand extends Command
                 'event',
                 InputArgument::OPTIONAL,
                 '关联的事件类名称（例如：UserRegistered），将生成 handle(UserRegisteredEvent $event) 方法'
+            )
+            ->addOption(
+                'module',
+                'm',
+                InputOption::VALUE_OPTIONAL,
+                '所属模块（不填则为公共 app/Listeners），例如 --module=User 生成 app/Modules/User/Listeners'
             );
     }
 
@@ -86,8 +92,16 @@ class MakeListenerCommand extends Command
         $listenerBaseName = $input->getArgument('name');
         $listenerName     = ucfirst($listenerBaseName);
         $eventArg         = $input->getArgument('event');
-        $directory        = __DIR__ . '/../../../app/Listeners';
-        $filePath         = $directory . '/' . $listenerName . '.php';
+        $module           = $input->getOption('module');
+        if ($module !== null && $module !== '') {
+            $module    = ucfirst((string) $module);
+            $namespace = 'App\\Modules\\' . $module . '\\Listeners';
+            $directory = __DIR__ . '/../../../app/Modules/' . $module . '/Listeners';
+        } else {
+            $namespace = 'App\\Listeners';
+            $directory = __DIR__ . '/../../../app/Listeners';
+        }
+        $filePath = $directory . '/' . $listenerName . '.php';
 
         if (file_exists($filePath)) {
             $output->writeln("<error>错误：监听器 {$listenerName} 已存在于 {$filePath}</error>");
@@ -99,7 +113,7 @@ class MakeListenerCommand extends Command
         try {
             $filesystem->mkdir($directory);
 
-            $content = $this->generateListenerContent($listenerName, $eventArg);
+            $content = $this->generateListenerContent($listenerName, $eventArg, $namespace);
 
             $filesystem->dumpFile($filePath, $content);
 
@@ -123,10 +137,11 @@ class MakeListenerCommand extends Command
      *
      * @param string      $listenerName 监听器类名
      * @param null|string $eventArg     可选的事件类名（不含 Event 后缀）
+     * @param string      $namespace    监听器命名空间
      *
      * @return string 生成的监听器 PHP 代码
      */
-    private function generateListenerContent(string $listenerName, ?string $eventArg): string
+    private function generateListenerContent(string $listenerName, ?string $eventArg, string $namespace): string
     {
         $eventClass = $eventArg ? ucfirst($eventArg) . 'Event' : 'EventInterface';
         $eventParam = $eventArg
@@ -146,7 +161,7 @@ class MakeListenerCommand extends Command
 
 declare(strict_types=1);
 
-namespace App\\Listeners;
+namespace {$namespace};
 
 use Framework\\Event\\ListenerInterface;
 {$useStatement}

@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace Framework\Core;
 
-use Composer\Autoload\ClassLoader;
 use Framework\Container\Container;
 use Framework\Middleware\MiddlewareDispatcher;
 use Framework\Utils\ReflectionTypes;
@@ -29,10 +28,10 @@ use Symfony\Component\Routing\RouteCollection;
  */
 final class Framework
 {
-    // 核心路径常量（可通过配置覆盖）
-    private const MAIN_CONTROLLER_DIR = BASE_PATH . '/app/Controllers';
+    // 模块根目录常量
+    private const MODULES_DIR = BASE_PATH . '/app/Modules';
 
-    private const MAIN_CONTROLLER_NAMESPACE = 'App\Controllers';
+    private const MAIN_CONTROLLER_NAMESPACE = 'App\Modules';
 
     private const ROUTE_CACHE_FILE = BASE_PATH . '/storage/cache/routes.php';
 
@@ -59,9 +58,6 @@ final class Framework
     {
         $this->initializeBasePath();
         $this->createRequiredDirs();
-        // 动态注册 app 命名空间到 Composer 自动加载器
-        // 新增应用只需在 config/apps.php 中配置，无需修改 composer.json 和 dump-autoload
-        $this->registerAppAutoloadNamespaces();
         $this->initializeConfigAndContainer();
         $this->initializeDependencies();
     }
@@ -163,67 +159,8 @@ final class Framework
     }
 
     /**
-     * 动态注册应用命名空间到 Composer PSR-4 自动加载器.
-     *
-     * 从 config/apps.php 读取所有应用配置，自动注册 namespace → dir 映射。
-     * 新增应用只需在 apps.php 中配置即可，无需修改 composer.json 和 dump-autoload。
-     *
-     * 注意：如果找不到 Composer ClassLoader（极端情况），会通过 error_log 记录警告，
-     * 此时需要回退到手动修改 composer.json + dump-autoload。
+     * 多模块控制器由 composer.json 的 "App\\" => "app/" PSR-4 覆盖自动加载，无需动态注册。
      */
-    private function registerAppAutoloadNamespaces(): void
-    {
-        // 查找 Composer 的 ClassLoader 实例
-        $composerLoader = null;
-        foreach (spl_autoload_functions() as $func) {
-            if (is_array($func) && $func[0] instanceof ClassLoader) {
-                $composerLoader = $func[0];
-                break;
-            }
-        }
-        if ($composerLoader === null) {
-            error_log('[Framework] 找不到 Composer ClassLoader，动态注册 PSR-4 命名空间失败。'
-                . '请确保 vendor/autoload.php 已加载。'
-                . '如问题持续，请在 composer.json 中手动添加命名空间映射并执行 composer dump-autoload。');
-            return;
-        }
-
-        $apps       = $this->getAppsConfig();
-        $registered = [];
-        foreach ($apps as $key => $app) {
-            if ($key === 'default') {
-                continue;
-            }
-            $namespace = rtrim($app['namespace'] ?? '', '\\');
-            $dir       = $app['dir'] ?? '';
-
-            if ($namespace === '' || $dir === '') {
-                continue;
-            }
-
-            // 推导基础命名空间和基础目录（去掉 \Controllers 后缀）
-            // 例如 App\Admin\Controllers → App\Admin,  app/admin/Controllers → app/admin
-            // 这样注册后，App\Admin\Models\、App\Admin\Providers\ 等均自动加载
-            $baseNamespace = preg_replace('/\\\Controllers$/', '', $namespace);
-            $baseDir       = preg_replace('/\/Controllers$/D', '', $dir);
-
-            if ($baseNamespace !== $namespace && $baseDir !== $dir && $baseDir !== '' && is_dir($baseDir)) {
-                // 注册宽泛映射: App\Admin\ → app/admin/
-                $prefix = $baseNamespace . '\\';
-                $path   = $baseDir . '/';
-                $composerLoader->addPsr4($prefix, $path);
-                $registered[] = "{$prefix} => {$path}";
-            } elseif (is_dir($dir)) {
-                // fallback: 仅注册控制器命名空间（原行为）
-                $prefix = $namespace . '\\';
-                $composerLoader->addPsr4($prefix, $dir);
-                $registered[] = "{$prefix} => {$dir}";
-            }
-        }
-        if (! empty($registered)) {
-            $this->logger?->info('[Framework] 动态注册 PSR-4 命名空间: ' . implode('; ', $registered));
-        }
-    }
 
     /**
      * 初始化配置和容器（核心流程）.
@@ -290,12 +227,6 @@ final class Framework
             requireExplicitAction: false,
             blacklist: []
         );
-
-        // 7. 注入应用自动路由映射（/admin/xxx, /api/xxx 风格）
-        $appNamespaces = $this->getAppAutoRouteNamespaces();
-        if (! empty($appNamespaces)) {
-            $this->router->setAppAutoRouteNamespaces($appNamespaces);
-        }
     }
 
     /**
@@ -312,10 +243,6 @@ final class Framework
             $this->logRequestAndResponse($request, $response, $start);
             return $response;
         }
-
-        // 域名绑定解析：匹配 config/apps.php 中的 domain 字段
-        // 命中后自动激活对应应用，URL 无需 prefix 前缀
-        $this->resolveDomainApp($request);
 
         $response = new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
 
@@ -391,50 +318,21 @@ final class Framework
             }
         }
 
-        // 1. 加载手动路由
-        $manualRoutes = null;
-        $manualCount  = 0;
-        $allRoutes    = new RouteCollection();
-
-        $routesFile = BASE_PATH . '/config/routes.php';
-        if (file_exists($routesFile)) {
-            $manualRoutes = require $routesFile;
-            if ($manualRoutes instanceof RouteCollection) {
-                $allRoutes->addCollection($manualRoutes);
-                $manualCount = $manualRoutes->count();
-            }
-        }
-
-        // 2. 加载 Attribute 注解路由（多应用 + 主应用）
-        $appConfigs     = $this->getAppsConfig();
+        // 加载 Attribute 注解路由（自动发现的多模块）
+        $allRoutes      = new RouteCollection();
         $annotatedCount = 0;
 
-        // 构建多应用控制器目录映射 [namespace => dir]
-        $appControllerDirs = [];
-        foreach ($appConfigs as $appKey => $app) {
-            $dir = $app['dir']       ?? '';
-            $ns  = $app['namespace'] ?? '';
-            if ($dir && $ns && is_dir($dir)) {
-                $nsKey = rtrim($ns, '\\');
-                if (! isset($appControllerDirs[$nsKey])) {
-                    $appControllerDirs[$nsKey] = $dir;
-                }
-            }
-        }
-
-        // 始终包含默认应用目录（兜底）
-        if (! isset($appControllerDirs[self::MAIN_CONTROLLER_NAMESPACE])) {
-            $appControllerDirs[self::MAIN_CONTROLLER_NAMESPACE] = self::MAIN_CONTROLLER_DIR;
-        }
+        // 自动发现 app/Modules 下的多模块控制器目录 [namespace => dir]
+        $moduleDirs = $this->discoverModuleControllers();
 
         $attrLoader = new AttributeRouteLoader(
-            self::MAIN_CONTROLLER_DIR,
+            self::MODULES_DIR,
             self::MAIN_CONTROLLER_NAMESPACE
         );
 
         $annotatedRoutes = match (true) {
-            count($appControllerDirs) === 1 => $attrLoader->loadRoutes(),
-            default                         => $attrLoader->loadRoutesFromMultipleDirs($appControllerDirs),
+            count($moduleDirs) <= 1 => $attrLoader->loadRoutes(),
+            default                 => $attrLoader->loadRoutesFromMultipleDirs($moduleDirs),
         };
 
         $allRoutes->addCollection($annotatedRoutes);
@@ -446,101 +344,52 @@ final class Framework
         }
 
         $this->logger?->info(sprintf(
-            '[Route Loaded] Loaded %d routes (manual: %d, annotated: %d)',
+            '[Route Loaded] Loaded %d routes (annotated: %d) from %d module(s)',
             $allRoutes->count(),
-            $manualCount,
-            $annotatedCount
+            $annotatedCount,
+            count($moduleDirs)
         ));
 
         return $allRoutes;
     }
 
     /**
-     * 获取多应用配置.
+     * 自动发现 app/ 下的多模块控制器目录.
      *
-     * @return array<string, array{dir: string, namespace: string, prefix: string}>
-     */
-    private function getAppsConfig(): array
-    {
-        static $apps = null;
-        if ($apps !== null) {
-            return $apps;
-        }
-
-        $configFile = BASE_PATH . '/config/apps.php';
-        if (file_exists($configFile)) {
-            $apps = require $configFile;
-        }
-
-        if (! is_array($apps)) {
-            $apps = [];
-        }
-
-        // 始终保证 default 应用存在（向后兼容）
-        if (! isset($apps['default'])) {
-            $apps = array_merge([
-                'default' => [
-                    'dir'       => self::MAIN_CONTROLLER_DIR,
-                    'namespace' => self::MAIN_CONTROLLER_NAMESPACE,
-                    'prefix'    => '',
-                ],
-            ], $apps);
-        }
-
-        return $apps;
-    }
-
-    /**
-     * 获取应用自动路由命名空间映射.
+     * 扫描 app/ 下的每个子目录，若存在 Controllers/ 子目录则视为一个模块，
+     * 返回 [namespace => dir] 映射。模块无需在 config/apps.php 中配置：
      *
-     * 格式: [ 'admin' => 'App\Admin\Controllers', 'api' => 'App\Api\Controllers' ]
-     * 用于 Router 自动路由解析 /admin/xxx → App\Admin\Controllers\XxxController
+     * - app/Home/Controllers    → App\Home\Controllers
+     * - app/System/Controllers  → App\System\Controllers
+     * - app/Controllers（扁平兜底）→ App\Controllers
      *
      * @return array<string, string>
      */
-    private function getAppAutoRouteNamespaces(): array
+    private function discoverModuleControllers(): array
     {
-        $apps = $this->getAppsConfig();
-        $map  = [];
+        $map      = [];
+        $modulesDir = self::MODULES_DIR;
 
-        foreach ($apps as $key => $app) {
-            // default 应用无前缀，不加入自动路由映射（作为最终兜底）
-            if ($key === 'default') {
+        if (! is_dir($modulesDir)) {
+            return $map;
+        }
+
+        foreach (array_diff(scandir($modulesDir), ['.', '..']) as $entry) {
+            $entryPath = $modulesDir . '/' . $entry;
+
+            if (! is_dir($entryPath)) {
                 continue;
             }
-            $prefix = $app['prefix'] ?? $key;
-            if ($prefix === '') {
-                $prefix = $key;
+
+            $ctrlDir = $entryPath . '/Controllers';
+            if (! is_dir($ctrlDir)) {
+                continue;
             }
-            $ns     = $app['namespace'] ?? '';
-            if (is_string($prefix) && $prefix !== '' && $ns !== '') {
-                $map[strtolower(trim($prefix))] = rtrim($ns, '\\');
-            }
+
+            $map['App\\Modules\\' . $entry . '\\Controllers'] = $ctrlDir;
         }
 
         return $map;
-    }
-
-    /**
-     * 解析域名绑定：根据请求 Host 匹配 config/apps.php 中的 domain 配置.
-     *
-     * 匹配成功后，将 app key 写入请求属性 _domain_app，
-     * Router 据此可在无 URL prefix 的情况下直接路由到对应应用。
-     */
-    private function resolveDomainApp(Request $request): void
-    {
-        $host = $request->getHost();
-        if ($host === '') {
-            return;
-        }
-
-        $apps = $this->getAppsConfig();
-        foreach ($apps as $key => $app) {
-            if ($key === 'default') {
-                continue;
-            }
-            $domain = $app['domain'] ?? '';
-        }
     }
 
     /**

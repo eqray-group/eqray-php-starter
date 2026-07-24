@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace App\Middlewares;
 
-use App\Models\SysAccessLog;
+use App\Modules\System\Models\SysAccessLog;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 

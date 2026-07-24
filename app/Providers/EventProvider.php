@@ -27,11 +27,28 @@ final class EventProvider implements ServiceProviderInterface
     public function register(ContainerConfigurator $configurator): void
     {
         $services = $configurator->services();
+        $appDir    = \dirname(__DIR__);
 
-        $services->load('App\Listeners\\', \dirname(__DIR__) . '/Listeners/**/*.php')
+        // 1. 公共监听器（跨模块共享）
+        $services->load('App\Listeners\\', $appDir . '/Listeners/**/*.php')
             ->autowire()
             ->autoconfigure()
             ->public();
+
+        // 2. 各模块私有监听器 app/Modules/<Module>/Listeners
+        $modulesDir = $appDir . '/modules';
+        if (is_dir($modulesDir)) {
+            foreach (array_diff(scandir($modulesDir), ['.', '..']) as $entry) {
+                $listenerDir = $modulesDir . '/' . $entry . '/Listeners';
+                if (! is_dir($listenerDir)) {
+                    continue;
+                }
+                $services->load('App\\Modules\\' . $entry . '\\Listeners\\', $listenerDir . '/**/*.php')
+                    ->autowire()
+                    ->autoconfigure()
+                    ->public();
+            }
+        }
 
         // 2. 注册核心服务
         $services->set(ListenerScanner::class)->autowire()->public();

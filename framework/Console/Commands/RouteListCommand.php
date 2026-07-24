@@ -17,7 +17,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Routing\Route;
-use Symfony\Component\Routing\RouteCollection;
 
 /**
  * 路由列表命令.
@@ -48,7 +47,7 @@ class RouteListCommand extends Command
     {
         $this->setName('route:list') // ✅ 关键修复
             ->setDescription('列出所有路由')
-            ->setHelp('此命令显示系统中所有注册的路由，包括手动路由和注解路由。')
+            ->setHelp('此命令显示系统中所有模块通过 Attribute 注解注册的路由。')
             ->addOption('method', 'm', InputOption::VALUE_OPTIONAL, '按 HTTP 方法筛选')
             ->addOption('path', 'p', InputOption::VALUE_OPTIONAL, '按路径前缀筛选')
             ->addOption('name', null, InputOption::VALUE_OPTIONAL, '按路由名称筛选')
@@ -71,34 +70,13 @@ class RouteListCommand extends Command
         // 收集所有路由
         $allRoutes = [];
 
-        // 1. 加载手动路由
-        $manualRoutes = $this->loadManualRoutes();
-        foreach ($manualRoutes as $name => $route) {
-            $allRoutes[] = $this->formatRoute($name, $route, '手动路由');
-        }
-
-        // 2. 加载主应用注解路由
-        $mainRoutes = $this->loadAnnotatedRoutes(
-            BASE_PATH . '/app/Controllers',
-            'App\Controllers'
-        );
-        foreach ($mainRoutes as $name => $route) {
-            $allRoutes[] = $this->formatRoute($name, $route, '主应用');
-        }
-
-        // 2.1 加载多应用注解路由（从 apps.php 配置读取）
-        $appsConfig = $this->loadAppsConfig();
-        foreach ($appsConfig as $appName => $appConfig) {
-            // 跳过默认应用（已在上面加载）
-            if ($appName === 'default') {
-                continue;
-            }
-            $appRoutes = $this->loadAnnotatedRoutes(
-                $appConfig['dir'],
-                $appConfig['namespace']
-            );
-            foreach ($appRoutes as $name => $route) {
-                $allRoutes[] = $this->formatRoute($name, $route, $appName);
+        // 1. 自动发现多模块注解路由
+        $moduleDirs = $this->discoverModuleControllers();
+        foreach ($moduleDirs as $namespace => $dir) {
+            $moduleRoutes = $this->loadAnnotatedRoutes($dir, $namespace);
+            $source       = $this->moduleNameFromNamespace($namespace);
+            foreach ($moduleRoutes as $name => $route) {
+                $allRoutes[] = $this->formatRoute($name, $route, $source);
             }
         }
 
@@ -122,46 +100,43 @@ class RouteListCommand extends Command
     }
 
     /**
-     * 加载手动路由.
+     * 自动发现 app/ 下的多模块控制器目录 [namespace => dir].
      *
-     * @return array<mixed> */
-    private function loadManualRoutes(): array
+     * @return array<string, string> */
+    private function discoverModuleControllers(): array
     {
-        $routesFile = BASE_PATH . '/config/routes.php';
-        if (! file_exists($routesFile)) {
-            return [];
+        $map        = [];
+        $modulesDir = BASE_PATH . '/app/Modules';
+
+        if (! is_dir($modulesDir)) {
+            return $map;
         }
 
-        $routes = require $routesFile;
-        if (! $routes instanceof RouteCollection) {
-            return [];
+        foreach (array_diff(scandir($modulesDir), ['.', '..']) as $entry) {
+            $entryPath = $modulesDir . '/' . $entry;
+
+            if (! is_dir($entryPath)) {
+                continue;
+            }
+
+            $ctrlDir = $entryPath . '/Controllers';
+            if (! is_dir($ctrlDir)) {
+                continue;
+            }
+
+            $map['App\\Modules\\' . $entry . '\\Controllers'] = $ctrlDir;
         }
 
-        $result = [];
-        foreach ($routes->all() as $name => $route) {
-            $result[$name] = $route;
-        }
-
-        return $result;
+        return $map;
     }
 
     /**
-     * 加载多应用配置.
-     *
-     * @return array<mixed> */
-    private function loadAppsConfig(): array
+     * 从命名空间推导模块展示名（取第二段）.
+     */
+    private function moduleNameFromNamespace(string $namespace): string
     {
-        $appsFile = BASE_PATH . '/config/apps.php';
-        if (! file_exists($appsFile)) {
-            return [];
-        }
-
-        $config = require $appsFile;
-        if (! is_array($config)) {
-            return [];
-        }
-
-        return $config;
+        $parts = explode('\\', trim($namespace, '\\'));
+        return $parts[1] ?? $parts[0] ?? $namespace;
     }
 
     /**

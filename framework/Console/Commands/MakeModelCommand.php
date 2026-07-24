@@ -59,6 +59,13 @@ class MakeModelCommand extends Command
                 'name',
                 InputArgument::REQUIRED,
                 '模型名称（例如：User 会生成 User 模型）'
+            )
+            // 模块选项：生成的模型归属 app/Modules/<module>/Models
+            ->addOption(
+                'module',
+                'm',
+                InputOption::VALUE_OPTIONAL,
+                '所属模块（默认 User），例如 --module=Content 生成 app/Modules/Content/Models'
             );
     }
 
@@ -80,7 +87,9 @@ class MakeModelCommand extends Command
     {
         $modelName = $input->getArgument('name');
         $className = ucfirst($modelName);
-        $directory = __DIR__ . '/../../../app/Models';
+        $module    = ucfirst((string) ($input->getOption('module') ?: 'User'));
+        $namespace = 'App\\Modules\\' . $module . '\\Models';
+        $directory = __DIR__ . '/../../../app/Modules/' . $module . '/Models';
         $filePath  = $directory . '/' . $className . '.php';
 
         // 检查文件是否已存在
@@ -97,7 +106,7 @@ class MakeModelCommand extends Command
             $filesystem->mkdir($directory);
 
             // 生成模型内容
-            $content = $this->generateModelContent($className);
+            $content = $this->generateModelContent($className, $namespace);
 
             // 写入文件
             $filesystem->dumpFile($filePath, $content);
@@ -122,10 +131,11 @@ class MakeModelCommand extends Command
      * 例如：UserOrder -> user_orders
      *
      * @param string $className 模型类名
+     * @param string $namespace 模型命名空间
      *
      * @return string 生成的模型 PHP 代码
      */
-    private function generateModelContent(string $className): string
+    private function generateModelContent(string $className, string $namespace): string
     {
         // 自动生成表名（类名转小写复数形式）
         $tableName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $className)) . 's';
@@ -133,7 +143,7 @@ class MakeModelCommand extends Command
         return <<<PHP
 <?php
 
-namespace App\\Models;
+namespace {$namespace};
 
 use Framework\\Basic\\BaseLaORMModel;
 

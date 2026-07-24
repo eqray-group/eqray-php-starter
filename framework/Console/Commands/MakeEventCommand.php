@@ -55,6 +55,12 @@ class MakeEventCommand extends Command
                 'name',
                 InputArgument::REQUIRED,
                 '事件类名称（例如：UserRegistered 会生成 UserRegisteredEvent）'
+            )
+            ->addOption(
+                'module',
+                'm',
+                InputOption::VALUE_OPTIONAL,
+                '所属模块（不填则为公共 app/Events），例如 --module=User 生成 app/Modules/User/Events'
             );
     }
 
@@ -76,8 +82,16 @@ class MakeEventCommand extends Command
     {
         $eventBaseName = $input->getArgument('name');
         $eventName     = ucfirst($eventBaseName) . 'Event';
-        $directory     = __DIR__ . '/../../../app/Events';
-        $filePath      = $directory . '/' . $eventName . '.php';
+        $module        = $input->getOption('module');
+        if ($module !== null && $module !== '') {
+            $module    = ucfirst((string) $module);
+            $namespace = 'App\\Modules\\' . $module . '\\Events';
+            $directory = __DIR__ . '/../../../app/Modules/' . $module . '/Events';
+        } else {
+            $namespace = 'App\\Events';
+            $directory = __DIR__ . '/../../../app/Events';
+        }
+        $filePath = $directory . '/' . $eventName . '.php';
 
         if (file_exists($filePath)) {
             $output->writeln("<error>错误：事件 {$eventName} 已存在于 {$filePath}</error>");
@@ -89,7 +103,7 @@ class MakeEventCommand extends Command
         try {
             $filesystem->mkdir($directory);
 
-            $content = $this->generateEventContent($eventName);
+            $content = $this->generateEventContent($eventName, $namespace);
 
             $filesystem->dumpFile($filePath, $content);
 
@@ -112,17 +126,18 @@ class MakeEventCommand extends Command
      * 模板包含基础构造函数，可根据需要添加事件数据属性。
      *
      * @param string $eventName 事件类名
+     * @param string $namespace 事件命名空间
      *
      * @return string 生成的事件 PHP 代码
      */
-    private function generateEventContent(string $eventName): string
+    private function generateEventContent(string $eventName, string $namespace): string
     {
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-namespace App\\Events;
+namespace {$namespace};
 
 use Framework\\Event\\EventInterface;
 

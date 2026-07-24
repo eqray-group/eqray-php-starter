@@ -9,9 +9,9 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
-use App\Models\SysDept as Dept;
-use App\Models\SysRole;
-use App\Models\SysRoleDept as RoleDept;
+use App\Modules\User\Models\SysDept as Dept;
+use App\Modules\User\Models\SysRole;
+use App\Modules\User\Models\SysRoleDept as RoleDept;
 use Illuminate\Database\Eloquent\Builder;
 
 trait DataScopeTrait

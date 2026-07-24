@@ -14,15 +14,38 @@ use Framework\Utils\ReflectionTypes;
 
 class ListenerScanner
 {
-    private string $listenerDir;
+    /**
+     * @var array<int, string> 待扫描的监听器目录列表
+     */
+    private array $listenerDirs;
 
     private int $cacheTtl = 3600; // 1小时
 
     private string $cacheKey = 'event.subscribers';
 
-    public function __construct(?string $listenerDir = null)
+    /**
+     * 支持传入单个目录（字符串）或多个目录（数组）。
+     * @param string|array<int, string>|null $listenerDir
+     * @return array<mixed>
+     */
+    public function __construct(string|array|null $listenerDir = null)
     {
-        $this->listenerDir = $listenerDir ?? BASE_PATH . '/app/Listeners';
+        if ($listenerDir === null) {
+            $dirs = [BASE_PATH . '/app/Listeners'];
+            $modulesDir = BASE_PATH . '/app/Modules';
+            if (is_dir($modulesDir)) {
+                foreach (array_diff(scandir($modulesDir), ['.', '..']) as $entry) {
+                    $d = $modulesDir . '/' . $entry . '/Listeners';
+                    if (is_dir($d)) {
+                        $dirs[] = $d;
+                    }
+                }
+            }
+            $this->listenerDirs = $dirs;
+            return;
+        }
+
+        $this->listenerDirs = is_array($listenerDir) ? $listenerDir : [$listenerDir];
     }
 
     /**
@@ -69,68 +92,70 @@ class ListenerScanner
      */
     private function scanAndBuild(): array
     {
-        if (! is_dir($this->listenerDir)) {
-            return [];
-        }
-
         $subscribers = [];
 
-        // 1. 改为递归扫描，支持子目录
-        $dirIterator = new \RecursiveDirectoryIterator($this->listenerDir);
-        $iterator    = new \RecursiveIteratorIterator($dirIterator);
-
-        foreach ($iterator as $file) {
-            if ($file->getExtension() !== 'php') {
+        foreach ($this->listenerDirs as $listenerDir) {
+            if (! is_dir($listenerDir)) {
                 continue;
             }
 
-            // 假设命名空间符合 PSR-4 规范，这里简单推导（实际项目中建议用 composer classmap 或 symfony finder）
-            // 这里为了演示，假设文件名即类名，且都在 App\Listeners 下
-            // 更好的方式是解析文件内容获取 namespace
-            $className = $this->getClassFromFile($file->getPathname());
+            // 1. 改为递归扫描，支持子目录
+            $dirIterator = new \RecursiveDirectoryIterator($listenerDir);
+            $iterator    = new \RecursiveIteratorIterator($dirIterator);
 
-            if (! $className || ! class_exists($className)) {
-                continue;
-            }
+            foreach ($iterator as $file) {
+                if ($file->getExtension() !== 'php') {
+                    continue;
+                }
 
-            $ref = new \ReflectionClass($className);
-            if (! $ref->isInstantiable()) {
-                continue;
-            }
+                // 假设命名空间符合 PSR-4 规范，这里简单推导（实际项目中建议用 composer classmap 或 symfony finder）
+                // 这里为了演示，假设文件名即类名，且都在 App\Listeners 下
+                // 更好的方式是解析文件内容获取 namespace
+                $className = $this->getClassFromFile($file->getPathname());
 
-            // 方式 A: 传统的 ListenerInterface
-            if ($ref->implementsInterface(ListenerInterface::class)) {
-                $subscribers['interface'][] = $className;
-                continue; // 如果实现了接口，通常不需要再扫注解，避免重复
-            }
+                if (! $className || ! class_exists($className)) {
+                    continue;
+                }
 
-            // 方式 B: 扫描 #[EventListener] 注解
-            foreach ($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-                $attributes = $method->getAttributes(EventListener::class);
-                foreach ($attributes as $attribute) {
-                    $instance = $attribute->newInstance();
+                $ref = new \ReflectionClass($className);
+                if (! $ref->isInstantiable()) {
+                    continue;
+                }
 
-                    // 尝试推断事件类型
-                    $eventClass = $instance->event;
-                    if ($eventClass === null) {
-                        // 从方法参数获取: handle(UserLogin $event)
-                        $params = $method->getParameters();
-                        if (isset($params[0])) {
-                            $namedType = ReflectionTypes::asNamed($params[0]->getType());
-                            if ($namedType !== null && ! $namedType->isBuiltin()) {
-                                $eventClass = $namedType->getName();
+                // 方式 A: 传统的 ListenerInterface
+                if ($ref->implementsInterface(ListenerInterface::class)) {
+                    $subscribers['interface'][] = $className;
+                    continue; // 如果实现了接口，通常不需要再扫注解，避免重复
+                }
+
+                // 方式 B: 扫描 #[EventListener] 注解
+                foreach ($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+                    $attributes = $method->getAttributes(EventListener::class);
+                    foreach ($attributes as $attribute) {
+                        $instance = $attribute->newInstance();
+
+                        // 尝试推断事件类型
+                        $eventClass = $instance->event;
+                        if ($eventClass === null) {
+                            // 从方法参数获取: handle(UserLogin $event)
+                            $params = $method->getParameters();
+                            if (isset($params[0])) {
+                                $namedType = ReflectionTypes::asNamed($params[0]->getType());
+                                if ($namedType !== null && ! $namedType->isBuiltin()) {
+                                    $eventClass = $namedType->getName();
+                                }
                             }
                         }
-                    }
 
-                    if ($eventClass) {
-                        // 结构化存储注解配置
-                        $subscribers['attribute'][] = [
-                            'class'    => $className,
-                            'method'   => $method->getName(),
-                            'event'    => $eventClass,
-                            'priority' => $instance->priority,
-                        ];
+                        if ($eventClass) {
+                            // 结构化存储注解配置
+                            $subscribers['attribute'][] = [
+                                'class'    => $className,
+                                'method'   => $method->getName(),
+                                'event'    => $eventClass,
+                                'priority' => $instance->priority,
+                            ];
+                        }
                     }
                 }
             }
@@ -158,22 +183,34 @@ class ListenerScanner
      */
     private function generateFingerprint(): string
     {
-        $listenerDir = $this->listenerDir;
-        if (! is_dir($listenerDir)) {
+        $hashParts = [];
+        $found     = false;
+
+        foreach ($this->listenerDirs as $listenerDir) {
+            if (! is_dir($listenerDir)) {
+                continue;
+            }
+            $found = true;
+
+            $files = glob($listenerDir . '/*.php');
+            if (! $files) {
+                continue;
+            }
+
+            // 按文件名排序，确保顺序一致
+            sort($files);
+
+            foreach ($files as $file) {
+                $hashParts[] = filemtime($file) . ':' . filesize($file); // 更健壮：mtime + size
+            }
+        }
+
+        if (! $found) {
             return md5('no_dir');
         }
 
-        $files = glob($listenerDir . '/*.php');
-        if (! $files) {
+        if ($hashParts === []) {
             return md5('no_files');
-        }
-
-        // 按文件名排序，确保顺序一致
-        sort($files);
-
-        $hashParts = [];
-        foreach ($files as $file) {
-            $hashParts[] = filemtime($file) . ':' . filesize($file); // 更健壮：mtime + size
         }
 
         return md5(implode('|', $hashParts));

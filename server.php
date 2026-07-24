@@ -522,10 +522,7 @@ $httpWorker->onWorkerStart = function(Worker $worker) use (&$framework) {
 
     // Schema 预热
     if (defined('WORKERMAN_ENV')) {
-        SchemaWarmup::setScanPath(base_path('app/Models'), 'App\Models');
-        SchemaWarmup::ignore([
-            \App\Models\TempView::class,
-        ]);
+        SchemaWarmup::setScanPath(base_path('app/Modules'), 'App\\Modules');
         SchemaWarmup::warmupAll();
         SchemaRegistry::freeze();
     }

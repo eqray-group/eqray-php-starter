@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace App\Middlewares;
 
-use App\Models\SysLoginLog;
-use App\Services\IpLocationService;
+use App\Modules\System\Models\SysLoginLog;
+use App\Modules\System\Services\IpLocationService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 

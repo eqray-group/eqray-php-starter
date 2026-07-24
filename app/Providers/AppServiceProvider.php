@@ -12,26 +12,24 @@ namespace App\Providers;
 use Framework\Container\ServiceProviderInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 
 /**
- * 统一注册 App 目录下的所有服务（带路径合法性检查）
- * 替代原有的 ControllersProvider、MiddlewaresProvider、ModelsProvider.
+ * 统一注册 App 目录下的所有服务（带路径合法性检查）.
+ *
+ * - 共享层（Models / Services / Middlewares 等）按固定命名空间注册；
+ * - 多模块控制器 app/<Module>/Controllers 自动发现并注册，无需手动配置。
  */
 final class AppServiceProvider implements ServiceProviderInterface
 {
     /**
-     * 定义需要自动注册的模块配置
-     * 格式：[命名空间前缀 => 相对路径].
+     * 公共（跨模块）共享层配置 [命名空间前缀 => 相对路径].
+     *
+     * 注意：每个模块自己的 Models/Services/Events/Listeners 已随模块自动发现注册，
+     * 此处仅注册真正全局共享的层（如 Middlewares）。
      */
-    private const MODULES = [
-        'App\Controllers\\' 			=> '/Controllers',
-        'App\Middlewares\\' 			=> '/Middlewares',
-        'App\Models\\'      			=> '/Models',
-        'App\Dao\\'      	 			 => '/Dao',
-        // 如需新增模块，直接在这里添加即可
-        'App\Repository\\' 			  => '/Repository',
-        'App\Services\\'     			=> '/Services',
-        'App\Validate\\'     			=> '/Validate',
+    private const SHARED_MODULES = [
+        'App\Middlewares\\' => '/Middlewares',
     ];
 
     /**
@@ -39,32 +37,67 @@ final class AppServiceProvider implements ServiceProviderInterface
      */
     public function register(ContainerConfigurator $configurator): void
     {
-        $services = $configurator->services();
-        $appDir   = \dirname(__DIR__); // 获取 App 目录的绝对路径
+        $services  = $configurator->services();
+        $appDir    = \dirname(__DIR__); // 获取 App 目录的绝对路径
+        $modulesDir = $appDir . '/modules';
 
-        // 验证 App 根目录是否存在
         if (! is_dir($appDir)) {
             throw new \InvalidArgumentException("App 根目录不存在: {$appDir}");
         }
 
-        // 遍历所有模块，批量注册服务（跳过不存在的目录）
-        foreach (self::MODULES as $namespace => $relativePath) {
-            $fullDir  = $appDir . $relativePath; // 模块完整目录路径
-            $scanPath = $fullDir . '/**/*.php'; // 扫描的文件路径
-
-            // 核心判断：检查目录是否存在且是合法目录
-            if (! is_dir($fullDir)) {
-                // 可选：开发环境下可以打印提示，生产环境建议注释
-                // trigger_error("模块目录不存在，跳过加载: {$fullDir}", E_USER_NOTICE);
-                continue; // 跳过不存在的目录，不执行加载
-            }
-
-            // 注册当前模块的所有类（仅当目录存在时执行）
-            $services->load($namespace, $scanPath)
-                ->autowire()      // 自动注入依赖
-                ->autoconfigure() // 自动配置（如标签、别名等）
-                ->public();       // 标记为公开服务，支持动态获取
+        // 1. 注册公共共享层
+        foreach (self::SHARED_MODULES as $namespace => $relativePath) {
+            $this->registerDir($services, $appDir, $namespace, $relativePath);
         }
+
+        // 2. 自动发现并注册多模块 app/Modules/<Module>/{Controllers,Models,Services,Events,Listeners}
+        if (is_dir($modulesDir)) {
+            foreach (array_diff(scandir($modulesDir), ['.', '..']) as $entry) {
+                $moduleDir = $modulesDir . '/' . $entry;
+                if (! is_dir($moduleDir)) {
+                    continue;
+                }
+                $moduleNs = 'App\\Modules\\' . $entry;
+                foreach (['Controllers', 'Models', 'Services', 'Events', 'Listeners'] as $layer) {
+                    $this->registerDir(
+                        $services,
+                        $modulesDir,
+                        $moduleNs . '\\' . $layer . '\\',
+                        '/' . $entry . '/' . $layer
+                    );
+                }
+                // 模块内其他常见层（Validate/Dao/Repository 等，若存在）
+                foreach (['Validate', 'Dao', 'Repository', 'Providers'] as $extra) {
+                    $this->registerDir(
+                        $services,
+                        $modulesDir,
+                        $moduleNs . '\\' . $extra . '\\',
+                        '/' . $entry . '/' . $extra
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * 注册单个目录下的所有类（仅当目录存在时）.
+     */
+    private function registerDir(
+        ServicesConfigurator $services,
+        string $appDir,
+        string $namespace,
+        string $relativePath
+    ): void {
+        $fullDir  = $appDir . $relativePath;
+        if (! is_dir($fullDir)) {
+            return;
+        }
+
+        $services
+            ->load($namespace, $fullDir . '/**/*.php')
+            ->autowire()      // 自动注入依赖
+            ->autoconfigure() // 自动配置（如标签、别名等）
+            ->public();       // 标记为公开服务，支持动态获取
     }
 
     /**
@@ -73,6 +106,5 @@ final class AppServiceProvider implements ServiceProviderInterface
     public function boot(ContainerInterface $container): void
     {
         // 可选：添加全局启动逻辑
-        // echo "[AppServiceProvider] All existing App services are booted.\n";
     }
 }
