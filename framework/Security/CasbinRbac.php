@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace Framework\Security;
 
-use App\Modules\Auth\Services\Casbin\DatabaseAdapter;
+use App\Modules\System\Services\Casbin\DatabaseAdapter;
 use Casbin\Enforcer;
 use Casbin\Model\Model;
 use Predis\Client;

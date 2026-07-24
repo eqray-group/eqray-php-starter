@@ -1,0 +1,449 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
+namespace App\Modules\System\Models;
+
+use Framework\Basic\BaseLaORMModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * SysMenu 系统菜单模型.
+ *
+ * 菜单表模型，支持无限级层级结构
+ * 菜单类型: 1=目录, 2=菜单, 3=按钮, 4=外链
+ *
+ * 注意：菜单为系统级全局共享资源，不应用租户隔离
+ *
+ * @property int       $id         菜单ID
+ * @property int       $parent_id  父菜单ID
+ * @property string    $name       菜单名称
+ * @property int       $type       菜单类型: 1=目录 2=菜单 3=按钮 4=外链
+ * @property string    $path       路由路径
+ * @property string    $component  组件路径
+ * @property string    $slug       权限标识
+ * @property string    $icon       菜单图标
+ * @property int       $sort       排序
+ * @property int       $visible    是否可见: 0=隐藏 1=显示
+ * @property int       $status     状态: 0=禁用 1=启用
+ * @property int       $is_frame   是否外链: 0=否 1=是
+ * @property int       $is_cache   是否缓存: 0=否 1=是
+ * @property string    $remark     备注
+ * @property int       $created_by 创建人ID
+ * @property int       $updated_by 更新人ID
+ * @property \DateTime $created_at 创建时间
+ * @property \DateTime $updated_at 更新时间
+ * @property \DateTime $deleted_at 删除时间
+ *
+ * @property SysMenu   $parent   父菜单
+ * @property SysMenu[] $children 子菜单
+ * @property SysRole[] $roles    拥有此菜单的角色
+ *
+ * @property mixed  $code
+ * @property mixed  $link_url
+ * @property int    $is_iframe
+ * @property int    $is_keep_alive
+ * @property int    $is_hidden
+ * @property int    $is_fixed_tab
+ * @property int    $is_full_page
+ * @property string $create_time
+ * @property string $update_time
+ * @property string $delete_time
+ * @property mixed  $tenant_id
+ */
+class SysMenu extends BaseLaORMModel
+{
+    use SoftDeletes;
+
+    /**
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    // ==================== 菜单类型常量 ====================
+
+    /** @var int 目录类型 */
+    public const TYPE_DIRECTORY = 1;
+
+    /** @var int 菜单类型 */
+    public const TYPE_MENU = 2;
+
+    /** @var int 按钮类型 */
+    public const TYPE_BUTTON = 3;
+
+    /** @var int 外链类型 */
+    public const TYPE_LINK = 4;
+
+    // ==================== 状态常量 ====================
+
+    /** @var int 禁用状态 */
+    public const STATUS_DISABLED = 0;
+
+    /** @var int 启用状态 */
+    public const STATUS_ENABLED = 1;
+
+    /** @var int 隐藏 */
+    public const VISIBLE_HIDDEN = 0;
+
+    /** @var int 显示 */
+    public const VISIBLE_SHOWN = 1;
+
+    /**
+     * 表名.
+     * @var    string
+     * @return mixed
+     */
+    protected $table = 'system_menu';
+
+    /**
+     * 主键.
+     * @var    string
+     * @return mixed
+     */
+    protected $primaryKey = 'id';
+
+    /**
+     * 可填充字段.
+     * @var    array<int, string>
+     * @return mixed
+     */
+    protected $fillable = [
+        'parent_id',
+        'name',
+        'code',
+        'type',
+        'path',
+        'component',
+        'slug',
+        'icon',
+        'sort',
+        'link_url',
+        'is_iframe',
+        'is_keep_alive',
+        'is_hidden',
+        'is_fixed_tab',
+        'is_full_page',
+        'status',
+        'remark',
+        'created_by',
+        'updated_by',
+    ];
+
+    /**
+     * 类型转换.
+     * @var    array<array-key, mixed>
+     * @return mixed
+     */
+    protected $casts = [
+        'id'            => 'integer',
+        'parent_id'     => 'integer',
+        'type'          => 'integer',
+        'sort'          => 'integer',
+        'is_iframe'     => 'integer',
+        'is_keep_alive' => 'integer',
+        'is_hidden'     => 'integer',
+        'is_fixed_tab'  => 'integer',
+        'is_full_page'  => 'integer',
+        'status'        => 'integer',
+        'created_by'    => 'integer',
+        'updated_by'    => 'integer',
+        'create_time'   => 'datetime',
+        'update_time'   => 'datetime',
+        'delete_time'   => 'datetime',
+    ];
+
+    // ==================== 关联关系 ====================
+
+    /**
+     * 父菜单.
+     *
+     * @return BelongsTo<SysMenu, $this>
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(SysMenu::class, 'parent_id', 'id');
+    }
+
+    /**
+     * 子菜单.
+     *
+     * @return HasMany<SysMenu, $this>
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(SysMenu::class, 'parent_id', 'id');
+    }
+
+    /**
+     * 拥有此菜单的角色 (多对多).
+     *
+     * @return BelongsToMany<SysRole, $this>
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SysRole::class,
+            'system_role_menu',
+            'menu_id',
+            'role_id'
+        )->withTimestamps();
+    }
+
+    // ==================== 业务方法 ====================
+
+    /**
+     * 检查菜单是否被禁用.
+     */
+    public function isDisabled(): bool
+    {
+        return $this->status === self::STATUS_DISABLED;
+    }
+
+    /**
+     * 检查菜单是否启用.
+     */
+    public function isEnabled(): bool
+    {
+        return $this->status === self::STATUS_ENABLED;
+    }
+
+    /**
+     * 检查是否为目录.
+     */
+    public function isDirectory(): bool
+    {
+        return $this->type === self::TYPE_DIRECTORY;
+    }
+
+    /**
+     * 检查是否为菜单.
+     */
+    public function isMenu(): bool
+    {
+        return $this->type === self::TYPE_MENU;
+    }
+
+    /**
+     * 检查是否为按钮.
+     */
+    public function isButton(): bool
+    {
+        return $this->type === self::TYPE_BUTTON;
+    }
+
+    /**
+     * 检查是否为外链.
+     */
+    public function isLink(): bool
+    {
+        return $this->type === self::TYPE_LINK;
+    }
+
+    /**
+     * 检查是否可见
+     */
+    public function isVisible(): bool
+    {
+        return $this->visible === self::VISIBLE_SHOWN;
+    }
+
+    /**
+     * 获取菜单树 (单次查询 + PHP 构建).
+     *
+     * 一次性加载所有启用菜单，在内存中按 parent_id 组织树结构，
+     * 避免递归 SQL 造成的 N+1 查询问题。
+     *
+     * @param  int                     $parentId 根父ID，默认 0
+     * @return array<array-key, mixed>
+     */
+    public static function getMenuTree(int $parentId = 0): array
+    {
+        $allMenus = self::where('status', self::STATUS_ENABLED)
+            ->orderBy('sort')
+            ->get()
+            ->toArray();
+
+        return self::buildTreeFromList($allMenus, $parentId);
+    }
+
+    /**
+     * 获取所有子菜单ID（包含自己）— 单次查询，避免 N+1.
+     *
+     * @param  int             $menuId 菜单ID
+     * @return array<int, int>
+     */
+    public static function getAllChildIds(int $menuId): array
+    {
+        // 一次性加载所有菜单的 id/parent_id 映射
+        $allPairs = self::select(['id', 'parent_id'])
+            ->get()
+            ->keyBy('id')
+            ->toArray();
+
+        $childrenMap = [];
+        foreach ($allPairs as $id => $item) {
+            $pid                 = (int) ($item['parent_id'] ?? 0);
+            $childrenMap[$pid][] = $id;
+        }
+
+        $ids   = [$menuId];
+        $stack = [$menuId];
+        while ($stack !== []) {
+            $currentId = array_pop($stack);
+            if (isset($childrenMap[$currentId])) {
+                foreach ($childrenMap[$currentId] as $childId) {
+                    $ids[]   = $childId;
+                    $stack[] = $childId;
+                }
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * 获取指定菜单ID的所有祖先菜单ID（不含自己）— 单次查询，避免 N+1.
+     *
+     * @param  int             $menuId 菜单ID
+     * @return array<int, int>
+     */
+    public static function getAllParentIds(int $menuId): array
+    {
+        // 一次性加载所有菜单的 id/parent_id 映射
+        $allPairs = self::select(['id', 'parent_id'])
+            ->get()
+            ->keyBy('id')
+            ->toArray();
+
+        $ids       = [];
+        $currentId = $menuId;
+        while (isset($allPairs[$currentId])) {
+            $pid = (int) ($allPairs[$currentId]['parent_id'] ?? 0);
+            if ($pid <= 0) {
+                break;
+            }
+            $ids[]     = $pid;
+            $currentId = $pid;
+        }
+
+        return $ids;
+    }
+
+    /**
+     * 将菜单ID数组补全所有祖先菜单ID，确保父子联动完整性.
+     *
+     * @param  array<array-key, mixed> $menuIds 菜单ID数组
+     * @return array<array-key, mixed> 去重后的完整菜单ID数组
+     */
+    public static function expandWithParentIds(array $menuIds): array
+    {
+        if (empty($menuIds)) {
+            return [];
+        }
+
+        $allIds = [];
+        foreach ($menuIds as $menuId) {
+            $allIds[] = (int) $menuId;
+            $allIds   = array_merge($allIds, self::getAllParentIds((int) $menuId));
+        }
+
+        return array_values(array_unique($allIds));
+    }
+
+    /**
+     * 检查是否有子菜单.
+     */
+    public function hasChildren(): bool
+    {
+        return self::where('parent_id', $this->id)->exists();
+    }
+
+    /**
+     * 获取菜单层级路径.
+     *
+     * @return array<array-key, mixed>
+     */
+    public function getPath(): array
+    {
+        $path    = [];
+        $current = $this;
+
+        while ($current) {
+            array_unshift($path, [
+                'id'   => $current->id,
+                'name' => $current->name,
+            ]);
+            $current = $current->parent;
+        }
+
+        return $path;
+    }
+
+    /**
+     * 获取菜单类型名称.
+     */
+    public function getMenuTypeName(): string
+    {
+        return match ($this->type) {
+            self::TYPE_DIRECTORY => '目录',
+            self::TYPE_MENU      => '菜单',
+            self::TYPE_BUTTON    => '按钮',
+            self::TYPE_LINK      => '外链',
+            default              => '未知',
+        };
+    }
+
+    /**
+     * 从平坦列表中构建树结构 (PHP 内存操作，零额外 SQL).
+     *
+     * @param  array<array-key, mixed> $items    扁平菜单数组
+     * @param  int                     $parentId 根父ID
+     * @return array<array-key, mixed>
+     */
+    private static function buildTreeFromList(array $items, int $parentId = 0): array
+    {
+        $childrenMap = [];
+        foreach ($items as $item) {
+            $pid                 = (int) ($item['parent_id'] ?? 0);
+            $childrenMap[$pid][] = $item;
+        }
+
+        $tree  = [];
+        $stack = [[$parentId, &$tree]];
+        while ($stack !== []) {
+            /** @var array{0: int, 1: array<array-key, mixed>} $frame */
+            $frame      = array_pop($stack);
+            $currentPid = $frame[0];
+            /** @var array<array-key, mixed> $branch */
+            $branch = &$frame[1];
+
+            if (! isset($childrenMap[$currentPid])) {
+                continue;
+            }
+
+            foreach ($childrenMap[$currentPid] as $item) {
+                $itemId   = (int) ($item['id'] ?? 0);
+                $children = [];
+                if (isset($childrenMap[$itemId])) {
+                    $stack[] = [$itemId, &$children];
+                }
+                $item['children'] = $children;
+                $branch[]         = $item;
+            }
+        }
+
+        return $tree;
+    }
+}

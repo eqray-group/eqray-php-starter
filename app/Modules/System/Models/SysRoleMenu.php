@@ -1,0 +1,190 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
+namespace App\Modules\System\Models;
+
+use Framework\Basic\BaseLaORMModel;
+
+/**
+ * SysRoleMenu 角色菜单关联模型.
+ *
+ * 多对多关联表模型
+ *
+ * @property int       $id         主键ID
+ * @property int       $role_id    角色ID
+ * @property int       $menu_id    菜单ID
+ * @property int       $created_by 创建人ID
+ * @property int       $updated_by 更新人ID
+ * @property \DateTime $created_at 创建时间
+ * @property \DateTime $updated_at 更新时间
+ *
+ * @property string $create_time
+ * @property string $update_time
+ * @property string $delete_time
+ * @property mixed  $status
+ * @property mixed  $remark
+ * @property mixed  $deleted_at
+ */
+class SysRoleMenu extends BaseLaORMModel
+{
+    /**
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    /**
+     * 是否自动维护时间戳.
+     * @var    bool
+     * @return mixed
+     */
+    public $timestamps = true;
+
+    /**
+     * 表名.
+     * @var    string
+     * @return mixed
+     */
+    protected $table = 'system_role_menu';
+
+    /**
+     * 主键.
+     * @var    string
+     * @return mixed
+     */
+    protected $primaryKey = 'id';
+    // const DELETED_AT = 'delete_time';
+
+    /**
+     * 可填充字段.
+     * @var    array<int, string>
+     * @return mixed
+     */
+    protected $fillable = [
+        'role_id',
+        'menu_id',
+        'created_by',
+        'updated_by',
+    ];
+
+    /**
+     * 类型转换.
+     * @var    array<array-key, mixed>
+     * @return mixed
+     */
+    protected $casts = [
+        'id'          => 'integer',
+        'role_id'     => 'integer',
+        'menu_id'     => 'integer',
+        'created_by'  => 'integer',
+        'updated_by'  => 'integer',
+        'create_time' => 'datetime',
+        'update_time' => 'datetime',
+        // 'delete_time' => 'datetime',
+    ];
+
+    // ==================== 业务方法 ====================
+
+    /**
+     * 批量插入角色菜单关联.
+     *
+     * @param int                     $roleId    角色ID
+     * @param array<array-key, mixed> $menuIds   菜单ID数组
+     * @param int                     $createdBy 创建人ID
+     */
+    public static function batchInsert(int $roleId, array $menuIds, int $createdBy = 0): bool
+    {
+        if (empty($menuIds)) {
+            return false;
+        }
+
+        $data = [];
+        $now  = date('Y-m-d H:i:s');
+
+        foreach ($menuIds as $menuId) {
+            $data[] = [
+                'role_id'     => $roleId,
+                'menu_id'     => $menuId,
+                'created_by'  => $createdBy,
+                'updated_by'  => $createdBy,
+                'create_time' => $now,
+                'update_time' => $now,
+            ];
+        }
+
+        return (bool) self::insert($data);
+    }
+
+    /**
+     * 删除角色的所有菜单关联.
+     *
+     * @param int $roleId 角色ID
+     */
+    public static function deleteByRoleId(int $roleId): bool
+    {
+        return self::where('role_id', $roleId)->forceDelete() !== false;
+    }
+
+    /**
+     * 删除菜单的所有角色关联.
+     *
+     * @param int $menuId 菜单ID
+     */
+    public static function deleteByMenuId(int $menuId): bool
+    {
+        // return self::where('menu_id', $menuId)->forceDelete() !== false;
+        self::where('menu_id', $menuId)->delete();
+        return true;
+    }
+
+    /**
+     * 同步角色菜单.
+     *
+     * @param int                     $roleId    角色ID
+     * @param array<array-key, mixed> $menuIds   菜单ID数组
+     * @param int                     $createdBy 创建人ID
+     */
+    public static function syncRoleMenus(int $roleId, array $menuIds, int $createdBy = 0): void
+    {
+        // 先删除旧关联
+        self::deleteByRoleId($roleId);
+
+        // 再插入新的关联
+        if (! empty($menuIds)) {
+            self::batchInsert($roleId, $menuIds, $createdBy);
+        }
+    }
+
+    /**
+     * 获取角色菜单ID列表.
+     *
+     * @param  int                     $roleId 角色ID
+     * @return array<array-key, mixed>
+     */
+    public static function getMenuIdsByRoleId(int $roleId): array
+    {
+        return self::where('role_id', $roleId)->pluck('menu_id')->toArray();
+    }
+
+    /**
+     * 批量获取角色菜单ID列表.
+     *
+     * @param  array<array-key, mixed> $roleIds 角色ID数组
+     * @return array<array-key, mixed>
+     */
+    public static function getMenuIdsByRoleIds(array $roleIds): array
+    {
+        if (empty($roleIds)) {
+            return [];
+        }
+
+        return self::whereIn('role_id', $roleIds)->pluck('menu_id')->toArray();
+    }
+}

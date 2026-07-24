@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace App\Middlewares;
 
-use App\Modules\Auth\Services\Casbin\CasbinService;
+use App\Modules\System\Services\Casbin\CasbinService;
 use Framework\Basic\BaseJsonResponse;
 use Framework\Security\CasbinRbac;
 use Symfony\Component\HttpFoundation\Request;

@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace App\Modules\System\Controllers;
 
-use App\Modules\User\Services\SysConfigGroupService;
-use App\Modules\User\Services\SysConfigService;
+use App\Modules\System\Services\SysConfigGroupService;
+use App\Modules\System\Services\SysConfigService;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Permission;
 use Framework\Attributes\Route;

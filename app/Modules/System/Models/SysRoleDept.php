@@ -1,0 +1,184 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
+namespace App\Modules\System\Models;
+
+use Framework\Basic\BaseLaORMModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * SysRoleDept 角色-部门关联模型.
+ *
+ * 用于存储角色的自定义数据权限部门，支持多租户隔离
+ *
+ * @property int $id      主键ID
+ * @property int $role_id 角色ID
+ * @property int $dept_id 部门ID
+ *
+ * @property SysRole $role 关联角色
+ * @property SysDept $dept 关联部门
+ *
+ * @property mixed $tenant_id
+ * @property mixed $created_by
+ * @property mixed $updated_by
+ * @property mixed $status
+ * @property mixed $remark
+ * @property mixed $create_time
+ * @property mixed $update_time
+ * @property mixed $delete_time
+ * @property mixed $created_at
+ * @property mixed $updated_at
+ * @property mixed $deleted_at
+ */
+class SysRoleDept extends BaseLaORMModel
+{
+    /**
+     * @return mixed
+     */
+    public $timestamps = false;
+
+    /**
+     * @return mixed
+     */
+    protected $table = 'system_role_dept';
+
+    /**
+     * @return mixed
+     */
+    protected $primaryKey = 'id';
+
+    /**
+     * @return mixed
+     */
+    protected $fillable = [
+        'role_id',
+        'dept_id',
+    ];
+
+    /** @var array<string, string> */
+    protected $casts = [
+        'id'      => 'integer',
+        'role_id' => 'integer',
+        'dept_id' => 'integer',
+    ];
+
+    // ==================== 关联关系 ====================
+
+    /**
+     * 关联角色.
+     *
+     * @return BelongsTo<SysRole, $this>
+     */
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(SysRole::class, 'role_id', 'id');
+    }
+
+    /**
+     * 关联部门.
+     *
+     * @return BelongsTo<SysDept, $this>
+     */
+    public function dept(): BelongsTo
+    {
+        return $this->belongsTo(SysDept::class, 'dept_id', 'id');
+    }
+
+    // ==================== 查询方法 ====================
+
+    /**
+     * 获取角色的自定义部门ID列表.
+     *
+     * @param  int                     $roleId 角色ID
+     * @return array<array-key, mixed>
+     */
+    public static function getDeptIdsByRole(int|string $roleId): array
+    {
+        return self::where('role_id', $roleId)->pluck('dept_id')->toArray();
+    }
+
+    /**
+     * 获取多个角色的自定义部门ID列表（合并去重）.
+     *
+     * @param  array<array-key, mixed> $roleIds 角色ID数组
+     * @return array<array-key, mixed>
+     */
+    public static function getDeptIdsByRoles(array $roleIds): array
+    {
+        if (empty($roleIds)) {
+            return [];
+        }
+
+        return self::whereIn('role_id', $roleIds)->pluck('dept_id')->unique()->toArray();
+    }
+
+    /**
+     * 检查角色是否有自定义部门.
+     */
+    public static function hasCustomDepts(int|string $roleId): bool
+    {
+        return self::where('role_id', $roleId)->exists();
+    }
+
+    /**
+     * 检查角色是否包含指定部门.
+     */
+    public static function hasDept(int $roleId, int $deptId): bool
+    {
+        return self::where('role_id', $roleId)->where('dept_id', $deptId)->exists();
+    }
+
+    // ==================== 修改方法 ====================
+
+    /**
+     * 同步角色的自定义部门.
+     *
+     * @param int                     $roleId  角色ID
+     * @param array<array-key, mixed> $deptIds 部门ID数组
+     */
+    public static function syncRoleDepts(int $roleId, array $deptIds): void
+    {
+        self::where('role_id', $roleId)->delete();
+
+        if (! empty($deptIds)) {
+            $data = [];
+            foreach ($deptIds as $deptId) {
+                $data[] = [
+                    'role_id' => $roleId,
+                    'dept_id' => (int) $deptId,
+                ];
+            }
+            self::insert($data);
+        }
+    }
+
+    /**
+     * 删除角色的所有部门关联.
+     */
+    public static function deleteByRoleId(int|string $roleId): bool
+    {
+        return self::where('role_id', $roleId)->delete() !== false;
+    }
+
+    /**
+     * 删除部门的所有角色关联.
+     */
+    public static function deleteByDeptId(int|string $deptId): bool
+    {
+        return self::where('dept_id', $deptId)->delete() !== false;
+    }
+
+    /**
+     * 获取角色的自定义部门数量.
+     */
+    public static function getDeptCount(int|string $roleId): int
+    {
+        return self::where('role_id', $roleId)->count();
+    }
+}

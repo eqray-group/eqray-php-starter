@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace App\Modules\System\Controllers;
 
-use App\Modules\User\Models\SysUser;
+use App\Modules\System\Models\SysUser;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Permission;
 use Framework\Attributes\Route;

@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace App\Modules\System\Controllers;
 
-use App\Modules\User\Services\SysDictService;
+use App\Modules\System\Services\SysDictService;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Permission;
 use Framework\Attributes\Route;

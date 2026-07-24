@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace App\Modules\System\Controllers;
 
-use App\Modules\User\Models\SysAttachment;
-use App\Modules\User\Services\SysAttachmentService;
+use App\Modules\System\Models\SysAttachment;
+use App\Modules\System\Services\SysAttachmentService;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Permission;
 use Framework\Attributes\Route;

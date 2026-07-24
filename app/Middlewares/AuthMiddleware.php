@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace App\Middlewares;
 
-use App\Modules\User\Models\SysUser;
+use App\Modules\System\Models\SysUser;
 use Framework\Attributes\Auth;
 use Framework\Basic\BaseJsonResponse;
 use Framework\Utils\JwtFactory;

@@ -19,7 +19,7 @@ return [
                 'config_file_path' => __DIR__ . '/casbin_rbac_model.conf',
             ],
             // 使用统一的 DatabaseAdapter
-            'adapter' => \App\Modules\Auth\Services\Casbin\DatabaseAdapter::class,
+            'adapter' => \App\Modules\System\Services\Casbin\DatabaseAdapter::class,
             // 数据库设置	
             'database' => [
                 'connection' => 'mysql',

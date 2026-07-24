@@ -1,0 +1,312 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @Developer: ck
+ * @Email: ck@eqray.com
+ */
+
+namespace App\Modules\System\Models;
+
+use Framework\Basic\BaseLaORMModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * SysDept 系统部门模型.
+ *
+ * 部门表模型，支持无限级层级结构，支持多租户隔离
+ *
+ * @property int            $id         部门ID
+ * @property int            $parent_id  父部门ID，0为根节点
+ * @property string         $name       部门名称
+ * @property null|string    $code       部门编码
+ * @property null|int       $leader_id  部门负责人ID
+ * @property string         $level      祖级列表，格式: 0,1,5,
+ * @property int            $sort       排序
+ * @property int            $status     状态: 1启用 0禁用
+ * @property null|string    $remark     备注
+ * @property null|int       $created_by 创建人ID
+ * @property null|int       $updated_by 更新人ID
+ * @property \DateTime      $created_at 创建时间
+ * @property \DateTime      $updated_at 更新时间
+ * @property null|\DateTime $deleted_at 删除时间
+ *
+ * @property SysDept   $parent   父部门
+ * @property SysDept[] $children 子部门
+ * @property SysUser[] $users    部门下的用户
+ * @property SysUser   $leader   部门负责人
+ * @property SysRole[] $roles    关联的角色（通过 role_dept）
+ *
+ * @property mixed $create_time
+ * @property mixed $update_time
+ * @property mixed $delete_time
+ */
+class SysDept extends BaseLaORMModel
+{
+    use SoftDeletes;
+
+    /**
+     * 自定义时间戳字段名.
+     */
+    public const CREATED_AT = 'create_time';
+
+    public const UPDATED_AT = 'update_time';
+
+    public const DELETED_AT = 'delete_time';
+
+    // ==================== 状态常量 ====================
+
+    /** @var int 禁用状态 */
+    public const STATUS_DISABLED = 0;
+
+    /** @var int 启用状态 */
+    public const STATUS_ENABLED = 1;
+
+    /**
+     * @return mixed
+     */
+    public $incrementing = true;
+
+    /**
+     * @return mixed
+     */
+    protected $table = 'system_dept';
+
+    /**
+     * 主键.
+     * @var    string
+     * @return mixed
+     */
+    protected $primaryKey = 'id';
+
+    /**
+     * @return mixed
+     */
+    protected $fillable = [
+        'parent_id',
+        'name',
+        'code',
+        'leader_id',
+        'level',
+        'sort',
+        'status',
+        'remark',
+        'created_by',
+        'updated_by',
+    ];
+
+    /** @var array<string, string> */
+    protected $casts = [
+        'id'         => 'integer',
+        'parent_id'  => 'integer',
+        'leader_id'  => 'integer',
+        'sort'       => 'integer',
+        'status'     => 'integer',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+    ];
+
+    // ==================== 关联关系 ====================
+
+    /**
+     * 父部门.
+     *
+     * @return BelongsTo<SysDept, $this>
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(SysDept::class, 'parent_id', 'id');
+    }
+
+    /**
+     * 子部门.
+     *
+     * @return HasMany<SysDept, $this>
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(SysDept::class, 'parent_id', 'id');
+    }
+
+    /**
+     * 部门下的用户.
+     *
+     * @return HasMany<SysUser, $this>
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(SysUser::class, 'dept_id', 'id');
+    }
+
+    /**
+     * 部门负责人.
+     *
+     * @return BelongsTo<SysUser, $this>
+     */
+    public function leader(): BelongsTo
+    {
+        return $this->belongsTo(SysUser::class, 'leader_id', 'id');
+    }
+
+    /**
+     * 关联的角色（数据权限自定义部门）.
+     *
+     * @return BelongsToMany<SysRole, $this>
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SysRole::class,
+            'system_role_dept',
+            'dept_id',
+            'role_id'
+        );
+    }
+
+    // ==================== 业务方法 ====================
+
+    /**
+     * 检查部门是否被禁用.
+     */
+    public function isDisabled(): bool
+    {
+        return $this->status !== self::STATUS_ENABLED;
+    }
+
+    /**
+     * 检查部门是否启用.
+     */
+    public function isEnabled(): bool
+    {
+        return $this->status === self::STATUS_ENABLED;
+    }
+
+    /**
+     * @param  bool                    $enabledOnly 是否只返回启用的部门
+     * @return array<array-key, mixed>
+     */
+    public static function getDeptTree(int $parentId = 0, ?int $tenantId = null, bool $enabledOnly = true): array
+    {
+        $query = self::with('leader')
+            ->where('parent_id', $parentId)
+            ->orderBy('sort');
+
+        if ($enabledOnly) {
+            $query->where('status', self::STATUS_ENABLED);
+        }
+
+        $depts = $query->get()->toArray();
+
+        foreach ($depts as &$dept) {
+            $leader              = $dept['leader']     ?? null;
+            $dept['leader_name'] = $leader['realname'] ?? $leader['username'] ?? null;
+            $dept['children']    = self::getDeptTree($dept['id'], null, $enabledOnly);
+        }
+
+        return $depts;
+    }
+
+    /**
+     * @return array<array-key, mixed>
+     */
+    public static function getSelectTree(int $parentId = 0): array
+    {
+        $query = self::where('parent_id', $parentId)
+            ->where('status', self::STATUS_ENABLED)
+            ->orderBy('sort');
+
+        $depts = $query->get();
+
+        $tree = [];
+        foreach ($depts as $dept) {
+            $node = [
+                'id'        => $dept->id,
+                'value'     => $dept->id,
+                'label'     => $dept->name,
+                'name'      => $dept->name,
+                'code'      => $dept->code,
+                'parent_id' => $dept->parent_id,
+                'children'  => self::getSelectTree($dept->id),
+            ];
+            $tree[] = $node;
+        }
+
+        return $tree;
+    }
+
+    /**
+     * 获取所有子部门ID (包含自己).
+     *
+     * @param  int|string              $deptId 部门ID
+     * @return array<array-key, mixed>
+     */
+    public static function getAllChildIds(int|string $deptId): array
+    {
+        $ids      = [$deptId];
+        $children = self::where('parent_id', $deptId)->pluck('id')->toArray();
+
+        foreach ($children as $childId) {
+            $ids = array_merge($ids, self::getAllChildIds($childId));
+        }
+
+        return $ids;
+    }
+
+    /**
+     * 获取部门层级路径.
+     *
+     * @return array<array-key, mixed>
+     */
+    public function getPath(): array
+    {
+        $path    = [];
+        $current = $this;
+
+        while ($current) {
+            array_unshift($path, [
+                'id'   => $current->id,
+                'name' => $current->name,
+            ]);
+            $current = $current->parent;
+        }
+
+        return $path;
+    }
+
+    /**
+     * 检查部门编码是否唯一
+     *
+     * @param string $deptCode  部门编码
+     * @param int    $excludeId 排除的部门ID
+     */
+    public static function isCodeUnique(string $deptCode, int $excludeId = 0): bool
+    {
+        $query = self::where('code', $deptCode);
+
+        if ($excludeId > 0) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return ! $query->exists();
+    }
+
+    /**
+     * 检查是否有子部门.
+     */
+    public function hasChildren(): bool
+    {
+        return self::where('parent_id', $this->id)->exists();
+    }
+
+    /**
+     * 检查部门下是否有用户.
+     */
+    public function hasUsers(): bool
+    {
+        return SysUser::where('dept_id', $this->id)->exists();
+    }
+}

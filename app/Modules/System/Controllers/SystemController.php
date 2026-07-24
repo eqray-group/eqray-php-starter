@@ -9,17 +9,17 @@ declare(strict_types=1);
 
 namespace App\Modules\System\Controllers;
 
-use App\Modules\User\Models\SysAttachment;
-use App\Modules\System\Models\SysLoginLog;
-use App\Modules\System\Models\SysOperationLog;
-use App\Modules\User\Models\SysUser;
-use App\Modules\System\Services\LoginLogService;
-use App\Modules\System\Services\OperationLogService;
 use App\Modules\Monitor\Services\RedisMonitorService;
 use App\Modules\Monitor\Services\ServerMonitorService;
-use App\Modules\User\Services\SysAttachmentService;
-use App\Modules\User\Services\SysDictService;
-use App\Modules\User\Services\SysUserService;
+use App\Modules\System\Models\SysAttachment;
+use App\Modules\System\Models\SysLoginLog;
+use App\Modules\System\Models\SysOperationLog;
+use App\Modules\System\Models\SysUser;
+use App\Modules\System\Services\LoginLogService;
+use App\Modules\System\Services\OperationLogService;
+use App\Modules\System\Services\SysAttachmentService;
+use App\Modules\System\Services\SysDictService;
+use App\Modules\System\Services\SysUserService;
 use Framework\Attributes\Auth;
 use Framework\Attributes\Permission;
 use Framework\Attributes\Route;
